@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  woodflow_db:
+    image: postgres:16-alpine
+    container_name: woodflow_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: woodflow_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Automatically executes schema.sql and seed data on first startup!
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
+
+volumes:
+  postgres_data:

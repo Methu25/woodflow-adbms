@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WoodFlow - UI Wireframes & Mockup System (Wimalasiri Furniture)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Wimalasiri Furniture Ash & Blue Palette */
+    :root {
+      --brand-blue-dark: #1e3a8a;
+      --brand-blue: #2563eb;
+      --brand-blue-light: #eff6ff;
+      --ash-dark: #334155;
+      --ash-medium: #64748b;
+      --ash-light: #f1f5f9;
+      --ash-border: #cbd5e1;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans antialiased">
+
+  <!-- Top Application Bar -->
+  <header class="bg-blue-900 text-white shadow-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-lg bg-blue-700 border border-blue-400 flex items-center justify-center font-bold text-xl text-white shadow-inner">
+          W
+        </div>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight">WoodFlow Enterprise</h1>
+          <p class="text-xs text-blue-200">Wimalasiri Furniture • Kottawa</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-4">
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-800 text-blue-100 border border-blue-600">
+          ● PostgreSQL Connected
+        </span>
+        <div class="text-right">
+          <p class="text-sm font-semibold">Wimalasiri (Owner)</p>
+          <p class="text-xs text-blue-300">Role: Executive Admin</p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Interactive Navigation Tabs -->
+  <div class="bg-slate-800 text-slate-200 border-b border-slate-700">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-6 overflow-x-auto text-sm font-medium">
+      <button onclick="switchTab('dashboard')" id="tab-dashboard" class="py-3 px-1 border-b-2 border-blue-500 text-white font-semibold">
+        1. Executive Dashboard
+      </button>
+      <button onclick="switchTab('pos')" id="tab-pos" class="py-3 px-1 border-b-2 border-transparent text-slate-400 hover:text-white">
+        2. Billing & POS (1/3 Deposit)
+      </button>
+      <button onclick="switchTab('workshop')" id="tab-workshop" class="py-3 px-1 border-b-2 border-transparent text-slate-400 hover:text-white">
+        3. Workshop Pipeline (6 Stages)
+      </button>
+      <button onclick="switchTab('inventory')" id="tab-inventory" class="py-3 px-1 border-b-2 border-transparent text-slate-400 hover:text-white">
+        4. Dual-Channel Inventory
+      </button>
+      <button onclick="switchTab('payroll')" id="tab-payroll" class="py-3 px-1 border-b-2 border-transparent text-slate-400 hover:text-white">
+        5. Artisan Piecework & Wages
+      </button>
+    </div>
+  </div>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- SCREEN 1: EXECUTIVE DASHBOARD -->
+    <section id="view-dashboard" class="space-y-6">
+      <div class="flex justify-between items-center">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-900">Executive Overview</h2>
+          <p class="text-sm text-slate-500">Real-time financial status, customer credit balances, and workshop load.</p>
+        </div>
+        <span class="text-xs bg-slate-200 text-slate-700 px-3 py-1 rounded-md font-mono">Today: 27-Oct-2026</span>
+      </div>
+
+      <!-- KPI Summary Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Today's Cash Collected</p>
+          <p class="text-2xl font-bold text-blue-900 mt-1">Rs. 87,500.00</p>
+          <span class="text-xs text-emerald-600 font-medium">↑ Advances + Settlements</span>
+        </div>
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Outstanding Customer Credit</p>
+          <p class="text-2xl font-bold text-amber-600 mt-1">Rs. 248,000.00</p>
+          <span class="text-xs text-slate-500">Across 6 active custom orders</span>
+        </div>
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Active Workshop Jobs</p>
+          <p class="text-2xl font-bold text-blue-700 mt-1">9 Pieces</p>
+          <span class="text-xs text-blue-600 font-medium">5 Carpenters assigned</span>
+        </div>
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Low Stock Warnings</p>
+          <p class="text-2xl font-bold text-rose-600 mt-1">3 Materials</p>
+          <span class="text-xs text-rose-500 font-medium">Teak 2x4 & Clear Varnish</span>
+        </div>
+      </div>
+
+      <!-- Recent Jobs and Debtor Table -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+          <h3 class="font-bold text-slate-900 text-base mb-3 flex items-center justify-between">
+            <span>Customer Outstanding Balances (View: vw_customer_outstanding_balances)</span>
+            <span class="text-xs text-blue-600 cursor-pointer">View All</span>
+          </h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-100 text-slate-700 border-b">
+                <tr>
+                  <th class="p-2">Customer</th>
+                  <th class="p-2">Phone / WhatsApp</th>
+                  <th class="p-2">Order Billed</th>
+                  <th class="p-2">Balance Due</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <tr>
+                  <td class="p-2 font-medium">Sunil Jayakody</td>
+                  <td class="p-2 text-slate-500">077-4581290</td>
+                  <td class="p-2">Rs. 135,000</td>
+                  <td class="p-2 font-bold text-rose-600">Rs. 45,000</td>
+                </tr>
+                <tr>
+                  <td class="p-2 font-medium">Dr. Nimal Perera</td>
+                  <td class="p-2 text-slate-500">071-8893421</td>
+                  <td class="p-2">Rs. 220,000</td>
+                  <td class="p-2 font-bold text-rose-600">Rs. 90,000</td>
+                </tr>
+                <tr>
+                  <td class="p-2 font-medium">Kumari Silva</td>
+                  <td class="p-2 text-slate-500">076-1239845</td>
+                  <td class="p-2">Rs. 65,000</td>
+                  <td class="p-2 font-bold text-rose-600">Rs. 20,000</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+          <h3 class="font-bold text-slate-900 text-base mb-3">Workshop Deadlines Approaching</h3>
+          <div class="space-y-3 text-xs">
+            <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg flex justify-between items-center">
+              <div>
+                <p class="font-semibold text-slate-900">Job #WT-802: Teak 6-Seater Dining Table</p>
+                <p class="text-slate-600">Stage: <strong>Sanding & Spray Polishing</strong> • Lead: Jagath (Carpenter)</p>
+              </div>
+              <div class="text-right">
+                <span class="px-2 py-1 bg-amber-200 text-amber-900 rounded font-bold">Due in 2 Days</span>
+              </div>
+            </div>
+            <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg flex justify-between items-center">
+              <div>
+                <p class="font-semibold text-slate-900">Job #WT-805: Mahogany 3-Door Wardrobe</p>
+                <p class="text-slate-600">Stage: <strong>Timber Cutting & Framework</strong> • Lead: Kamal (Carpenter)</p>
+              </div>
+              <div class="text-right">
+                <span class="px-2 py-1 bg-blue-200 text-blue-900 rounded font-bold">Due in 6 Days</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCREEN 2: BILLING & POS (1/3 DEPOSIT CALCULATOR) -->
+    <section id="view-pos" class="hidden space-y-6">
+      <div class="flex justify-between items-center">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-900">Sales Invoicing & Advance Billing</h2>
+          <p class="text-sm text-slate-500">Create customer invoices with automated 1/3 deposit calculation and WhatsApp delivery.</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left: Customer & Item Selection -->
+        <div class="lg:col-span-2 bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+          <h3 class="font-bold text-slate-800 text-sm border-b pb-2">1. Customer Information</h3>
+          <div class="grid grid-cols-2 gap-3 text-xs">
+            <div>
+              <label class="block text-slate-600 font-medium mb-1">Customer Full Name</label>
+              <input type="text" value="Anura Wickramasinghe" class="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+              <label class="block text-slate-600 font-medium mb-1">Mobile / WhatsApp Number</label>
+              <input type="text" value="0773948512" class="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+            </div>
+          </div>
+
+          <h3 class="font-bold text-slate-800 text-sm border-b pb-2 pt-2">2. Order Type & Items</h3>
+          <div class="flex space-x-4 text-xs font-semibold">
+            <label class="flex items-center space-x-1">
+              <input type="radio" name="ordertype" checked class="text-blue-600">
+              <span>Custom Workshop Order</span>
+            </label>
+            <label class="flex items-center space-x-1">
+              <input type="radio" name="ordertype" class="text-blue-600">
+              <span>Showroom Ready-Made Stock</span>
+            </label>
+          </div>
+
+          <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs space-y-2">
+            <div class="grid grid-cols-3 gap-2">
+              <div class="col-span-2">
+                <label class="block text-slate-600 font-medium">Furniture Description & Specs</label>
+                <input type="text" value="King Size Bed - Teak Wood (Honey Varnish, Cushion Headboard)" class="w-full p-2 border rounded bg-white">
+              </div>
+              <div>
+                <label class="block text-slate-600 font-medium">Agreed Price (LKR)</label>
+                <input type="number" id="agreed-price" value="120000" oninput="calcDeposit()" class="w-full p-2 border rounded bg-white font-bold text-slate-900">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Invoice Payment Summary -->
+        <div class="bg-slate-900 text-white p-5 rounded-xl shadow-lg space-y-4">
+          <h3 class="font-bold text-base border-b border-slate-700 pb-2 text-blue-400">Invoice Checkout</h3>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between">
+              <span class="text-slate-400">Total Quotation Value:</span>
+              <span class="font-bold" id="lbl-total">Rs. 120,000.00</span>
+            </div>
+            <div class="flex justify-between p-2 bg-blue-950 border border-blue-800 rounded">
+              <span class="text-blue-300 font-medium">Mandatory 1/3 Deposit:</span>
+              <span class="font-bold text-blue-200" id="lbl-min-deposit">Rs. 40,000.00</span>
+            </div>
+            <div class="pt-2">
+              <label class="block text-xs text-slate-300 mb-1">Advance Received Today (LKR)</label>
+              <input type="number" id="input-advance" value="40000" oninput="calcBalance()" class="w-full p-2 text-slate-900 rounded font-bold text-base">
+            </div>
+            <div class="flex justify-between text-xs text-slate-400 pt-1">
+              <span>Payment Mode:</span>
+              <select class="text-slate-900 rounded p-1 text-xs">
+                <option>Cash at Counter</option>
+                <option>Commercial Bank Transfer</option>
+                <option>Card Payment</option>
+              </select>
+            </div>
+            <div class="flex justify-between border-t border-slate-700 pt-3 text-base">
+              <span class="font-semibold text-slate-300">Remaining Balance on Delivery:</span>
+              <span class="font-bold text-amber-400" id="lbl-balance">Rs. 80,000.00</span>
+            </div>
+          </div>
+
+          <div class="pt-4 space-y-2">
+            <button class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-sm shadow transition">
+              ✓ Process Invoice & Spawn Production Job
+            </button>
+            <button class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg text-xs flex items-center justify-center space-x-2">
+              <span>Send PDF Receipt to WhatsApp</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCREEN 3: WORKSHOP PRODUCTION KANBAN (THE 6 STAGES) -->
+    <section id="view-workshop" class="hidden space-y-4">
+      <div class="flex justify-between items-center">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-900">Workshop Production Control</h2>
+          <p class="text-sm text-slate-500">Live progression of custom orders across Wimalasiri Furniture's 6 verified manufacturing stages.</p>
+        </div>
+        <button class="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow hover:bg-blue-700">
+          + New Job Ticket
+        </button>
+      </div>
+
+      <!-- 6 Columns Kanban Board -->
+      <div class="grid grid-cols-1 md:grid-cols-6 gap-3 pt-2 text-xs">
+        
+        <!-- Stage 1 -->
+        <div class="bg-slate-200 rounded-lg p-2.5 border border-slate-300">
+          <div class="flex justify-between items-center font-bold text-slate-700 mb-2 pb-1 border-b border-slate-300">
+            <span>1. Design Approval</span>
+            <span class="bg-slate-300 text-slate-800 px-1.5 py-0.5 rounded text-[10px]">1</span>
+          </div>
+          <div class="bg-white p-2.5 rounded shadow-sm border border-slate-200 space-y-1.5">
+            <span class="text-[10px] bg-blue-100 text-blue-800 font-bold px-1 rounded">#JOB-810</span>
+            <p class="font-semibold text-slate-900">Teak Dressing Table</p>
+            <p class="text-slate-500 text-[11px]">Client: Saman Kumara</p>
+            <p class="text-[10px] text-amber-700 font-medium">Awaiting 3D sketch sign-off</p>
+          </div>
+        </div>
+
+        <!-- Stage 2 -->
+        <div class="bg-slate-200 rounded-lg p-2.5 border border-slate-300">
+          <div class="flex justify-between items-center font-bold text-slate-700 mb-2 pb-1 border-b border-slate-300">
+            <span>2. Timber & Frame</span>
+            <span class="bg-slate-300 text-slate-800 px-1.5 py-0.5 rounded text-[10px]">2</span>
+          </div>
+          <div class="bg-white p-2.5 rounded shadow-sm border border-slate-200 space-y-1.5 mb-2">
+            <span class="text-[10px] bg-blue-100 text-blue-800 font-bold px-1 rounded">#JOB-805</span>
+            <p class="font-semibold text-slate-900">3-Door Wardrobe</p>
+            <p class="text-slate-500 text-[11px]">Wood: Mahogany (50 bd.ft)</p>
+            <p class="text-[10px] text-slate-600">Lead: Kamal (Craftsman)</p>
+          </div>
+          <div class="bg-white p-2.5 rounded shadow-sm border border-slate-200 space-y-1.5">
+            <span class="text-[10px] bg-blue-100 text-blue-800 font-bold px-1 rounded">#JOB-808</span>
+            <p class="font-semibold text-slate-900">Coffee Table Set</p>
+            <p class="text-slate-500 text-[11px]">Wood: Teak Frame</p>
+            <p class="text-[10px] text-slate-600">Lead: Jagath (Craftsman)</p>
+          </div>
+        </div>
+
+        <!-- Stage 3 -->
+        <div class="bg-slate-200 rounded-lg p-2.5 border border-slate-300">
+          <div class="flex justify-between items-center font-bold text-slate-700 mb-2 pb-1 border-b border-slate-300">
+            <span>3. Cushioning</span>
+            <span class="bg-slate-300 text-slate-800 px-1.5 py-0.5 rounded text-[10px]">1</span>
+          </div>
+          <div class="bg-white p-2.5 rounded shadow-sm border border-slate-200 space-y-1.5">
+            <span class="text-[10px] bg-blue-100 text-blue-800 font-bold px-1 rounded">#JOB-801</span>
+            <p class="font-semibold text-slate-900">L-Shape Sofa Set</p>
+            <p class="text-slate-500 text-[11px]">Fabric: Ash Grey Velvet</p>
+            <p class="text-[10px] text-slate-600">Lead: Nihal (Upholsterer)</p>
+          </div>
+        </div>
+
+        <!-- Stage 4 -->
+        <div class="bg-slate-200 rounded-lg p-2.5 border border-slate-300">
+          <div class="flex justify-between items-center font-bold text-slate-700 mb-2 pb-1 border-b border-slate-300">
+            <span>4. Sand & Polish</span>
+            <span class="bg-slate-300 text-slate-800 px-1.5 py-0.5 rounded text-[10px]">2</span>
+          </div>
+          <div class="bg-white p-2.5 rounded shadow-sm border border-slate-200 space-y-1.5 mb-2">
+            <span class="text-[10px] bg-blue-100 text-blue-800 font-bold px-1 rounded">#JOB-798</span>
+            <p class="font-semibold text-slate-900">Dining Table (6 Chairs)</p>
+            <p class="text-slate-500 text-[11px]">Spray: High Gloss Clear</p>
+            <p class="text-[10px] text-slate-600">Lead: Bandara (Polisher)</p>
+          </div>
+        </div>
+
+        <!-- Stage 5 -->
+        <div class="bg-slate-200 rounded-lg p-2.5 border border-slate-300">
+          <div class="flex justify-between items-center font-bold text-slate-700 mb-2 pb-1 border-b border-slate-300">
+            <span>5. Quality Check</span>
+            <span class="bg-slate-300 text-slate-800 px-1.5 py-0.5 rounded text-[10px]">1</span>
+          </div>
+          <div class="bg-white p-2.5 rounded shadow-sm border border-emerald-300 space-y-1.5">
+            <span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1 rounded">#JOB-792</span>
+            <p class="font-semibold text-slate-900">King Size Teak Bed</p>
+            <p class="text-slate-500 text-[11px]">Status: Pass • Hardware checked</p>
+            <p class="text-[10px] text-emerald-700 font-semibold">Ready for Packing</p>
+          </div>
+        </div>
+
+        <!-- Stage 6 -->
+        <div class="bg-blue-100 rounded-lg p-2.5 border border-blue-300">
+          <div class="flex justify-between items-center font-bold text-blue-900 mb-2 pb-1 border-b border-blue-200">
+            <span>6. Delivery</span>
+            <span class="bg-blue-200 text-blue-900 px-1.5 py-0.5 rounded text-[10px]">1</span>
+          </div>
+          <div class="bg-white p-2.5 rounded shadow-sm border border-blue-300 space-y-1.5">
+            <span class="text-[10px] bg-blue-100 text-blue-800 font-bold px-1 rounded">#JOB-789</span>
+            <p class="font-semibold text-slate-900">Office Executive Desk</p>
+            <p class="text-slate-500 text-[11px]">Lorry: WP-CAR-4402</p>
+            <p class="text-[10px] font-bold text-blue-700">Collect Balance: Rs. 35,000</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SCREEN 4: DUAL-CHANNEL INVENTORY -->
+    <section id="view-inventory" class="hidden space-y-6">
+      <div class="flex justify-between items-center">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-900">Dual-Channel Inventory Master</h2>
+          <p class="text-sm text-slate-500">Separation of showroom finished furniture from workshop raw materials.</p>
+        </div>
+        <div class="flex space-x-2">
+          <button class="bg-slate-200 text-slate-800 px-3 py-1.5 rounded-lg text-xs font-semibold">
+            Finished Furniture (18)
+          </button>
+          <button class="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold">
+            Raw Materials (Workshop)
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden text-xs">
+        <table class="w-full text-left">
+          <thead class="bg-slate-100 text-slate-700 border-b">
+            <tr>
+              <th class="p-3">SKU Code</th>
+              <th class="p-3">Material Name</th>
+              <th class="p-3">Category</th>
+              <th class="p-3">Current Stock</th>
+              <th class="p-3">Unit</th>
+              <th class="p-3">Reorder Alert</th>
+              <th class="p-3">Avg Cost (LKR)</th>
+              <th class="p-3">Action</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <tr class="hover:bg-slate-50">
+              <td class="p-3 font-mono font-bold text-blue-700">RAW-TIM-01</td>
+              <td class="p-3 font-medium">Teak Timber Planks (2"x4"x8')</td>
+              <td class="p-3">Timber Logs & Slabs</td>
+              <td class="p-3 font-bold text-rose-600">14.50</td>
+              <td class="p-3">Board Feet</td>
+              <td class="p-3"><span class="px-2 py-0.5 bg-rose-100 text-rose-800 rounded font-bold">LOW STOCK (&lt;25)</span></td>
+              <td class="p-3">Rs. 1,450.00</td>
+              <td class="p-3"><button class="text-blue-600 font-semibold hover:underline">+ Purchase Stock</button></td>
+            </tr>
+            <tr class="hover:bg-slate-50">
+              <td class="p-3 font-mono font-bold text-blue-700">RAW-POL-04</td>
+              <td class="p-3 font-medium">Jchem Clear Polyurethane Spray Polish</td>
+              <td class="p-3">Chemicals & Paints</td>
+              <td class="p-3 font-bold text-rose-600">3.00</td>
+              <td class="p-3">Gallons</td>
+              <td class="p-3"><span class="px-2 py-0.5 bg-rose-100 text-rose-800 rounded font-bold">LOW STOCK (&lt;5)</span></td>
+              <td class="p-3">Rs. 8,200.00</td>
+              <td class="p-3"><button class="text-blue-600 font-semibold hover:underline">+ Purchase Stock</button></td>
+            </tr>
+            <tr class="hover:bg-slate-50">
+              <td class="p-3 font-mono font-bold text-blue-700">RAW-FAB-02</td>
+              <td class="p-3 font-medium">Heavy GSM Velvet Fabric (Ash Grey)</td>
+              <td class="p-3">Upholstery & Foam</td>
+              <td class="p-3 font-bold text-emerald-600">42.00</td>
+              <td class="p-3">Meters</td>
+              <td class="p-3"><span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-semibold">Adequate</span></td>
+              <td class="p-3">Rs. 2,100.00</td>
+              <td class="p-3"><button class="text-blue-600 font-semibold hover:underline">+ Purchase Stock</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SCREEN 5: ARTISAN PIECEWORK & PAYROLL -->
+    <section id="view-payroll" class="hidden space-y-6">
+      <div class="flex justify-between items-center">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-900">Workforce & Artisan Piecework Accounting</h2>
+          <p class="text-sm text-slate-500">Resolving per-job craft labor fees and mid-month cash advances without double counting.</p>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
+        <h3 class="font-bold text-slate-800 text-base">Monthly Artisan Settlement: October 2026</h3>
+        
+        <div class="overflow-x-auto text-xs">
+          <table class="w-full text-left">
+            <thead class="bg-slate-100 text-slate-700 border-b">
+              <tr>
+                <th class="p-3">Craftsman / Employee</th>
+                <th class="p-3">Employment Model</th>
+                <th class="p-3">Base Salary</th>
+                <th class="p-3">Piecework Jobs Completed</th>
+                <th class="p-3">Total Piecework Credit</th>
+                <th class="p-3">Cash Advances Taken</th>
+                <th class="p-3">Net Payout Due</th>
+                <th class="p-3">Action</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <tr>
+                <td class="p-3 font-bold text-slate-900">Kamal Gunasekara (Senior Carpenter)</td>
+                <td class="p-3"><span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-[11px]">Hybrid (Base + Piecework)</span></td>
+                <td class="p-3">Rs. 45,000</td>
+                <td class="p-3">3 Jobs (#805, #798, #789)</td>
+                <td class="p-3 font-bold text-emerald-600">Rs. 28,000</td>
+                <td class="p-3 font-bold text-rose-600">- Rs. 10,000</td>
+                <td class="p-3 font-bold text-slate-900 bg-slate-50 text-sm">Rs. 63,000.00</td>
+                <td class="p-3"><button class="bg-blue-600 text-white px-2.5 py-1 rounded font-semibold">Settle Payout</button></td>
+              </tr>
+              <tr>
+                <td class="p-3 font-bold text-slate-900">Jagath Kumara (Craftsman)</td>
+                <td class="p-3"><span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-[11px]">Piecework Only</span></td>
+                <td class="p-3">Rs. 0</td>
+                <td class="p-3">2 Jobs (#808, #792)</td>
+                <td class="p-3 font-bold text-emerald-600">Rs. 22,000</td>
+                <td class="p-3 font-bold text-rose-600">- Rs. 5,000</td>
+                <td class="p-3 font-bold text-slate-900 bg-slate-50 text-sm">Rs. 17,000.00</td>
+                <td class="p-3"><button class="bg-blue-600 text-white px-2.5 py-1 rounded font-semibold">Settle Payout</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    function switchTab(tabId) {
+      const views = ['dashboard', 'pos', 'workshop', 'inventory', 'payroll'];
+      views.forEach(v => {
+        document.getElementById('view-' + v).classList.add('hidden');
+        const tabBtn = document.getElementById('tab-' + v);
+        tabBtn.classList.remove('border-blue-500', 'text-white', 'font-semibold');
+        tabBtn.classList.add('border-transparent', 'text-slate-400');
+      });
+      document.getElementById('view-' + tabId).classList.remove('hidden');
+      const activeBtn = document.getElementById('tab-' + tabId);
+      activeBtn.classList.add('border-blue-500', 'text-white', 'font-semibold');
+      activeBtn.classList.remove('border-transparent', 'text-slate-400');
+    }
+
+    function calcDeposit() {
+      const price = parseFloat(document.getElementById('agreed-price').value) || 0;
+      const minDeposit = Math.round(price / 3.0);
+      document.getElementById('lbl-total').innerText = 'Rs. ' + price.toLocaleString() + '.00';
+      document.getElementById('lbl-min-deposit').innerText = 'Rs. ' + minDeposit.toLocaleString() + '.00';
+      document.getElementById('input-advance').value = minDeposit;
+      calcBalance();
+    }
+
+    function calcBalance() {
+      const price = parseFloat(document.getElementById('agreed-price').value) || 0;
+      const advance = parseFloat(document.getElementById('input-advance').value) || 0;
+      const balance = Math.max(0, price - advance);
+      document.getElementById('lbl-balance').innerText = 'Rs. ' + balance.toLocaleString() + '.00';
+    }
+  </script>
+</body>
+</html>

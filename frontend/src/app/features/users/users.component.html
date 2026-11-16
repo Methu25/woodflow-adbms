@@ -1,0 +1,137 @@
+<section class="user-management" aria-labelledby="users-title">
+  <header class="page-heading">
+    <div><p class="eyebrow">WORKSPACE / ADMINISTRATION</p><h1 id="users-title">Users &amp; Roles</h1>
+      <p>One place to manage your team and their access.</p></div>
+    <button class="primary" (click)="createView()" [disabled]="saving()">+ Create New User</button>
+  </header>
+  <div #feedback tabindex="-1">
+    @if (error()) { <div class="notice" role="alert"><p>{{ error() }}</p><button (click)="load(); refreshCounts()">Retry / refresh</button></div> }
+    @if (success()) { <p class="notice" role="status">{{ success() }}</p> }
+  </div>
+  <div class="workspace">
+    <nav class="cards" aria-label="User management categories">
+      <button class="card" [class.selected]="creating()" (click)="createView()" [disabled]="saving()">
+        <span>Create New User <b aria-hidden="true">+</b></span><small>Welcome someone to the team</small>
+      </button>
+      @for (item of categories; track item.key) {
+        <button class="card" [class.selected]="!creating() && category() === item.key"
+          [attr.aria-pressed]="!creating() && category() === item.key" (click)="select(item.key)" [disabled]="saving()">
+          <span>{{ item.label }} <strong>{{ counts()?.[item.count] ?? '—' }}</strong></span>
+          <small>{{ item.key === 'owners' || item.key === 'assistants' ? 'Currently enabled accounts' : item.key === 'suspended' ? 'Access paused temporarily' : 'Retained for business history' }}</small>
+        </button>
+      }
+    </nav>
+    <div class="panel">
+      @if (creating()) {
+        <div class="panel-heading"><img class="panel-art" src="/assets/dashboard/welcome-room.png" alt="" aria-hidden="true" /><div><p class="eyebrow">GROW YOUR TEAM</p><h2>Create New User</h2><p>Set up a secure account for a team member.</p></div><span class="badge">OWNER ONLY</span></div>
+        <div class="create-layout">
+          <form [formGroup]="form" (ngSubmit)="create()">
+            <fieldset [disabled]="saving()">
+              <div class="form-grid">
+                <div><label for="full-name">Full Name</label><input id="full-name" formControlName="fullName" maxlength="100" autocomplete="name" placeholder="Enter full name" [attr.aria-invalid]="invalid('fullName')" [attr.aria-describedby]="invalid('fullName') ? 'name-error' : null" />
+                  @if (invalid('fullName')) { <p id="name-error" class="validation">Enter a name of up to 100 characters.</p> }</div>
+                <div><label for="new-username">Username</label><input id="new-username" formControlName="username" maxlength="50" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Choose a unique username" [attr.aria-invalid]="invalid('username')" [attr.aria-describedby]="invalid('username') ? 'username-error' : 'username-hint'" />
+                  @if (invalid('username')) { <p id="username-error" class="validation">Use 3–50 letters, numbers, dots, underscores or hyphens.</p> }
+                  <p id="username-hint" class="hint">3–50 characters · No spaces</p></div>
+                <div><label for="new-password">Password</label><input id="new-password" type="password" formControlName="password" minlength="8" maxlength="128" autocomplete="new-password" placeholder="Create a password" [attr.aria-invalid]="invalid('password')" [attr.aria-describedby]="invalid('password') ? 'password-error' : 'password-hint'" />
+                  @if (invalid('password')) { <p id="password-error" class="validation">Enter 8–128 characters. The password cannot be only spaces.</p> }
+                  <p id="password-hint" class="hint">8–128 characters · Letters, numbers and symbols</p></div>
+                <div><label for="new-role">Role</label><select id="new-role" formControlName="role" [class.role-owner]="form.controls.role.value === 'OWNER'" [class.role-assistant]="form.controls.role.value === 'ASSISTANT'" aria-describedby="new-role-guide"><option value="ASSISTANT">ASSISTANT · Assigned business access</option><option value="OWNER">OWNER · Full administrative access</option></select>
+                  <div id="new-role-guide" class="role-guide" [class.role-owner]="form.controls.role.value === 'OWNER'" [class.role-assistant]="form.controls.role.value === 'ASSISTANT'" aria-live="polite">
+                    <strong>{{ form.controls.role.value === 'OWNER' ? 'OWNER — full system access' : 'ASSISTANT — controlled access' }}</strong>
+                    <p>{{ form.controls.role.value === 'OWNER' ? 'Can manage users, roles and permissions. Choose this only for a trusted owner or administrator.' : 'Can use assigned business features. Cannot manage accounts, roles or permissions.' }}</p>
+                  </div>
+                </div>
+              </div>
+              <div class="form-actions"><button class="primary" type="submit">{{ saving() ? 'Creating…' : 'Create User' }}</button><button type="button" (click)="select(category())">Cancel</button></div>
+            </fieldset>
+          </form>
+          <aside class="access-guide" aria-label="Role guidance"><span class="avatar" aria-hidden="true"><img src="/assets/navigation/users.svg" alt="" /></span>
+            <h3>The right access, from day one.</h3><p>Choose the role that matches this person's responsibilities.</p>
+            <h4>OWNER</h4><p>Full administrative access, including managing users and account access.</p>
+            <h4>ASSISTANT</h4><p>Daily business operations. Cannot create users or manage accounts.</p>
+            <small>Only trusted team members should receive OWNER access.</small>
+          </aside>
+        </div>
+      } @else {
+        <div class="panel-heading"><img class="panel-art" src="/assets/dashboard/welcome-room.png" alt="" aria-hidden="true" /><div><p class="eyebrow">TEAM DIRECTORY</p><h2>{{ title() }}</h2><p>Review account details and manage access.</p></div><button (click)="load(); refreshCounts()" [disabled]="loading() || saving()">Refresh</button></div>
+        <form class="search" (submit)="$event.preventDefault(); searchUsers(searchInput.value)">
+          <label class="sr-only" for="user-search">Search by name or username</label>
+          <input #searchInput id="user-search" type="search" [value]="search" maxlength="100" placeholder="Search by name or username…" />
+          <button type="submit" [disabled]="saving()">Search</button>
+        </form>
+        @if (loading()) { <p class="empty" role="status">Loading your team directory…</p> }
+        @if (result(); as result) {
+          <div class="table-scroll" tabindex="0" role="region" aria-label="Scrollable account directory">
+            <table><caption class="sr-only">{{ title() }}</caption><thead><tr><th scope="col">Full Name</th><th scope="col">Username</th><th scope="col">Role</th><th scope="col">Account Status</th><th scope="col">Created Date</th><th scope="col">Actions</th></tr></thead>
+              <tbody>@for (user of result.items; track user.userId) {
+                <tr><td><div class="person"><span class="avatar" aria-hidden="true">{{ initials(user.fullName) }}</span><div><b>{{ user.fullName }}</b><small>Account #{{ user.userId }} @if (own(user)) { · You }</small></div></div></td>
+                  <td>{{ user.username }}</td><td><span class="badge" [class.owner-badge]="user.role === 'OWNER'" [class.assistant-badge]="user.role === 'ASSISTANT'">{{ user.role }}</span></td><td><span class="badge" [class.muted]="user.status !== 'ACTIVE'">{{ user.status }}</span></td>
+                  <td>{{ user.createdAt ? (user.createdAt | date:'mediumDate') : 'Unavailable' }}</td>
+                  <td><div class="actions"><button class="action-view" (click)="view(user)" [disabled]="detailLoading() || saving()">View</button>
+                    @if (user.role === 'ASSISTANT' && user.status !== 'DEACTIVATED') {
+                      <button class="action-permissions" [routerLink]="['/users', user.userId, 'permissions']" [disabled]="saving()">Manage Permissions</button>
+                    }
+                    @if (user.status !== 'DEACTIVATED' && !own(user)) {
+                      @if (user.status === 'ACTIVE') { <button class="action-suspend" (click)="change(user, 'SUSPENDED')" [disabled]="saving()">Suspend</button> }
+                      @else { <button class="action-reactivate" (click)="change(user, 'ACTIVE')" [disabled]="saving()">Reactivate</button> }
+                      <button class="action-deactivate" (click)="change(user, 'DEACTIVATED')" [disabled]="saving()">Deactivate</button>
+                    }
+                  </div></td></tr>
+              } @empty { <tr><td colspan="6" class="empty"><h3>No accounts found</h3><p>Try another search or choose a different account category.</p></td></tr> }</tbody>
+            </table>
+          </div>
+          <footer class="pagination"><span>{{ result.total }} accounts · Page {{ result.page }} of {{ pages() }}</span><div><button (click)="paginate(-1)" [disabled]="result.page <= 1 || saving()">Previous</button><button (click)="paginate(1)" [disabled]="result.page >= pages() || saving()">Next</button></div></footer>
+        }
+      }
+    </div>
+    <aside class="integration-space" aria-label="Notifications and access tools">
+      <p class="eyebrow">WORKSPACE TOOLS</p>
+      <div class="tools-actions">
+        <button class="tool-button" routerLink="/users/password-recovery" title="View password recovery requests assigned to you.">
+          <span class="tool-copy"><span class="tool-label">Password Reset Requests @if (recovery.pendingCount() !== null) { <span class="pending-badge">{{ recovery.pendingCount() }}</span> }</span><small>{{ recovery.pendingCount() === null ? 'Open inbox to refresh count' : 'Assigned to you · Review requests' }}</small></span>
+        </button>
+        <button class="tool-button" disabled title="Future in-system updates and shared reports, documents and bills. No sharing functionality is implemented yet.">
+          <span class="tool-copy"><span class="tool-label">Notifications</span><small>Coming soon</small></span>
+        </button>
+        <button class="tool-button" disabled title="Your teammate will connect user activity and audit logging here.">
+          <span class="tool-copy"><span class="tool-label">Audit Logs</span><small>Coming soon</small></span>
+        </button>
+        <button class="tool-button tool-primary" routerLink="/users/permissions" title="Change shared permissions for all assistants using role defaults. Individual overrides stay unchanged.">
+          <span class="tool-copy"><span class="tool-label">Manage Permissions</span><small>Shared role defaults</small></span>
+        </button>
+      </div>
+    </aside>
+  </div>
+</section>
+<dialog #detailsDialog aria-labelledby="detail-title" (cancel)="closeDetails()">
+  @if (selected(); as user) {
+    <div class="panel-heading"><div><p class="eyebrow">TEAM MEMBER</p><h2 id="detail-title">Account details</h2></div><button (click)="closeDetails()" aria-label="Close account details">Close</button></div>
+    <div class="save-feedback" tabindex="-1">
+      @if (saving()) { <p class="notice" role="status">Saving account changes…</p> }
+      @if (error()) { <div class="notice" role="alert"><p>{{ error() }}</p><button (click)="view(user)" [disabled]="detailLoading() || saving()">Reload account</button></div> }
+    </div>
+    <div class="profile"><span class="avatar" aria-hidden="true">{{ initials(user.fullName) }}</span><h3>{{ user.fullName }}</h3><span class="badge">{{ user.status }}</span></div>
+    <dl><dt>Full Name</dt><dd>{{ user.fullName }}</dd><dt>Username</dt><dd>{{ user.username }}</dd><dt>Role</dt><dd><span class="badge" [class.owner-badge]="user.role === 'OWNER'" [class.assistant-badge]="user.role === 'ASSISTANT'">{{ user.role }}</span></dd><dt>Account Status</dt><dd>{{ user.status }}</dd><dt>Created Date</dt><dd>{{ user.createdAt ? (user.createdAt | date:'medium') : 'Unavailable' }}</dd></dl>
+    <section class="access-summary" aria-labelledby="access-summary-title">
+      <h3 id="access-summary-title">System access</h3>
+      @if (user.role === 'OWNER') { <p>Full OWNER access. Administrative permissions are fixed.</p> }
+      @else {
+        @if (permissionsLoading()) { <p role="status">Loading effective permissions…</p> }
+        @if (permissionError()) { <p role="alert">{{ permissionError() }}</p><button (click)="loadPermissionDetails(user)">Retry</button> }
+        @if (selectedPermissions(); as access) {
+          <span class="badge">{{ access.inheritsRole ? 'Using role defaults' : 'Individual override' }}</span>
+          <dl>@for (module of access.modules; track module.key) { <dt>{{ module.label }}</dt><dd>{{ allowedActions(access, module) }}</dd> }</dl>
+          @if (user.status !== 'ACTIVE') { <p class="hint">This account cannot sign in while {{ user.status.toLowerCase() }}.</p> }
+        }
+        @if (user.status !== 'DEACTIVATED') { <button class="primary" (click)="openPermissions(user)">Manage Permissions</button> }
+      }
+    </section>
+    @if (user.status === 'ACTIVE' && !own(user)) {
+      <div class="role-editor"><label for="change-role">Change role</label><select id="change-role" [formControl]="roleControl" [class.role-owner]="roleControl.value === 'OWNER'" [class.role-assistant]="roleControl.value === 'ASSISTANT'" aria-describedby="change-role-guide"><option value="OWNER">OWNER · Full access</option><option value="ASSISTANT">ASSISTANT · Assigned access</option></select><p id="change-role-guide" class="hint">{{ roleControl.value === 'OWNER' ? 'OWNER can manage the entire system, including users and permissions.' : 'ASSISTANT can only use assigned business features and cannot manage accounts.' }} Changing the role signs this user out.</p><button class="primary" (click)="change(user, user.status, roleControl.value)" [disabled]="saving() || roleControl.value === user.role">{{ saving() ? 'Saving role change…' : 'Confirm Role Change' }}</button></div>
+    }
+    @if (own(user)) { <p class="notice">You cannot suspend, deactivate or demote your own account.</p> }
+    @if (user.status === 'DEACTIVATED') { <p class="notice">Permanently deactivated. This account is retained for business history.</p> }
+  }
+</dialog>
+<app-user-feedback-dialog />

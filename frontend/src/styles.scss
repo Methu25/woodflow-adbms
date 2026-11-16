@@ -1,0 +1,20 @@
+@use './app/shared/auth-forms';
+
+@font-face {
+  font-family: 'Inter';
+  src: url('/assets/fonts/InterVariable.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+/* Screen styling is scoped to auth/startup; preserve the existing dashboard. */
+body:has(.wf-auth), body:has(.wf-startup) { margin: 0; }
+
+/* Blend the loading and login screens directly, avoiding an abrupt replacement. */
+::view-transition-old(root), ::view-transition-new(root) {
+  animation-duration: 1.2s;
+  animation-timing-function: ease-in-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+}

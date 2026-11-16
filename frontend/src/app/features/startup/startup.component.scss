@@ -1,0 +1,60 @@
+:host { display: block; }
+.wf-startup {
+  min-height: 100svh; position: relative; overflow: hidden; color: #073763;
+  background: #eaf3fc url('/assets/auth/215-1551/36c46.png') center / cover no-repeat;
+  font-family: 'Inter', sans-serif;
+  &.loading { background-image: url('/assets/auth/215-1560/765d7.png'); }
+}
+.startup-main { position: absolute; top: 41.4%; width: 100%; padding: 0 24px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; }
+h1 { margin: 0; max-width: 100%; line-height: 0; img { max-width: 100%; } }
+.startup-eyebrow { color: #075b91; font-size: 13.5px; font-weight: 700; line-height: 16px; margin: 9px 0 18px; text-align: center; }
+.startup-rule { display: block; }
+.wf-startup button.startup-start { width: 220px; max-width: 100%; margin-top: 28px; }
+.startup-tagline { color: #526b85; text-align: center; font-size: 14px; margin: 17px 0 0; }
+.loading .startup-main { top: 32.96%; }
+.session-progress { width: 440px; max-width: 100%; margin-top: 34px; }
+.progress-track { height: 9px; border-radius: 10px; overflow: hidden; background: url('/assets/auth/215-1560/37690.svg') center / 100% 100%; }
+.progress-fill { display: block; height: 100%; border-radius: inherit; background: #1685c5 url('/assets/auth/215-1560/cf4a6.svg') center / 100% 100%; transition: width 100ms linear; }
+.progress-status {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  color: #102d50; font-size: 12.5px; font-weight: 700; margin: 14px 0 20px;
+  p { display: flex; align-items: center; gap: 8px; margin: 0; }
+}
+.progress-percent { color: #075b91; font-variant-numeric: tabular-nums; }
+.module-pills {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;
+  list-style: none; margin: 0; padding: 0;
+  li {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    min-width: 0; min-height: 36px; box-sizing: border-box;
+    font-size: 11.5px; line-height: 1.4; font-weight: 700; text-align: center;
+    padding: 9px 8px; color: #073763; background: #fff;
+    border: 1px solid #dcebfa; border-radius: 10px;
+  }
+  img { flex-shrink: 0; }
+}
+.startup-footer { position: absolute; bottom: 2.67%; left: 50%; transform: translateX(-50%); width: max-content; max-width: calc(100% - 40px); box-sizing: border-box; color: #526b85; font-size: 11.5px; font-weight: 700; padding: 10px 15px; border-radius: 25px; text-align: center; margin: 0; background: url('/assets/auth/215-1551/60a25.svg') center / 100% 100%; }
+.startup-error { background: #ffffffed; border: 1px solid #dcebfa; padding: 20px; border-radius: 14px; font-size: 14px; text-align: center; a { display: inline-block; margin-top: 14px; color: #075b91; } }
+@media (max-width: 700px), (max-height: 500px) {
+  .wf-startup {
+    display: flex; flex-direction: column; box-sizing: border-box; overflow: visible;
+    padding: max(24px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-left), env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom));
+  }
+  .startup-main, .loading .startup-main {
+    position: static; flex: 1; justify-content: center;
+    padding: clamp(28px, 8svh, 72px) 0;
+  }
+  .startup-eyebrow { font-size: 11px; line-height: 1.5; }
+  .wf-startup.loading { background-position: 20% center; }
+  .startup-tagline { max-width: 320px; line-height: 1.6; }
+  .wf-startup button.startup-start { width: 100%; max-width: 320px; }
+  .session-progress { margin-top: 28px; }
+  .progress-status { align-items: flex-start; p { min-width: 0; line-height: 1.5; } img { flex-shrink: 0; } }
+  .progress-percent { flex-shrink: 0; line-height: 1.5; }
+  .startup-footer { position: static; transform: none; align-self: center; width: auto; max-width: 100%; font-size: 11px; line-height: 1.6; }
+  .startup-error a { display: inline-flex; align-items: center; min-height: 44px; }
+}
+@media (max-width: 480px) {
+  .module-pills { grid-template-columns: 1fr; li { justify-content: flex-start; min-height: 40px; padding: 10px 14px; font-size: 12px; } }
+}
+@media (prefers-reduced-motion: reduce) { .progress-fill { transition: none; } }

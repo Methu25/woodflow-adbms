@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="WoodFlow.Api/WoodFlow.Api.csproj" />
+  <Project Path="WoodFlow.Application/WoodFlow.Application.csproj" />
+  <Project Path="WoodFlow.Domain/WoodFlow.Domain.csproj" />
+  <Project Path="WoodFlow.Infrastructure/WoodFlow.Infrastructure.csproj" />
+  <Project Path="WoodFlow.Tests/WoodFlow.Tests.csproj" />
+</Solution>

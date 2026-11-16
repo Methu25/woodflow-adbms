@@ -1,0 +1,63 @@
+<section class="user-management recovery-inbox">
+  <header class="page-heading"><div><p class="eyebrow">WORKSPACE / ACCOUNT RECOVERY</p><h1>Password Reset Requests</h1><p>A helping hand. A private code. A fresh start.</p></div><a class="back-link" routerLink="/users">← Users & Roles</a></header>
+  <nav class="status-tabs" aria-label="Recovery request categories">
+    @for (item of statuses; track item.key) {
+      <button class="status-tab" [class.active]="status === item.key" [attr.aria-pressed]="status === item.key" [disabled]="saving() || !!issued()" (click)="filter(item.key)"><strong>{{ item.label }}</strong><span>{{ item.detail }}</span></button>
+    }
+  </nav>
+  <div class="recovery-layout">
+    <div class="panel">
+      <div class="panel-heading"><img class="panel-art" src="/assets/dashboard/welcome-room.png" alt="" aria-hidden="true" /><div><p class="eyebrow">YOUR ASSIGNED INBOX</p><h2>{{ status === 'pending' ? 'Ready for your review' : status === 'denied' ? 'Declined requests' : 'Your completed recovery tasks' }}</h2><p>{{ api.pendingCount() === null ? 'Pending count unavailable' : api.pendingCount() + ' requests waiting for review' }}</p></div><button (click)="load()" [disabled]="loading() || saving()">Refresh</button></div>
+      <div class="resolution-entry"><button (click)="openResolution()" [disabled]="saving() || !!issued()">Resolve a blocked request</button><small>After verifying identity, take over a pending request sent to another owner.</small></div>
+      @if (error()) { <p class="notice error" role="alert">{{ error() }}</p> }
+      @if (loading()) { <p class="notice" role="status">Loading your recovery requests…</p> }
+      @else { @if (result(); as result) {
+        @if (!result.items.length) { <div class="empty"><p class="eyebrow">ALL CLEAR</p><h3>No {{ status }} requests</h3><p>Requests assigned to you will appear here. Choose another category or refresh when needed.</p></div> }
+        @else {
+          <div class="table-scroll"><table><caption class="sr-only">Password recovery requests assigned to you</caption><thead><tr><th>Team member</th><th>Role</th><th>Requested</th><th>Progress</th><th>Actions</th></tr></thead><tbody>
+          @for (request of result.items; track request.requestId) {
+            <tr><td><div class="request-person"><span class="request-avatar" aria-hidden="true">{{ request.fullName.slice(0,1) }}</span><div><strong>{{ request.fullName }}</strong><small>{{ request.username }}</small></div></div></td><td><span class="role-pill" [class.assistant]="request.role === 'ASSISTANT'">{{ request.role }}</span></td><td>{{ request.createdAt | date:'mediumDate' }}<small class="date-time">{{ request.createdAt | date:'shortTime' }}</small></td><td><span class="status-pill" [class.denied]="request.status === 'DENIED'">{{ categoryLabel(request) }}</span><small class="outcome">{{ outcome(request) }}</small></td><td><div class="actions"><button class="action-view" (click)="view(request)" [disabled]="saving() || detailLoading()">{{ request.status === 'PENDING' ? 'Review request' : 'View details' }}</button>@if (request.status === 'PENDING') { <button class="action-deactivate" (click)="deny(request)" [disabled]="saving()">Deny</button> }</div></td></tr>
+          }
+          </tbody></table></div>
+        }
+        <footer class="pagination"><span>{{ result.total }} requests · Page {{ page }} of {{ pages() }}</span><div class="buttons"><button (click)="paginate(-1)" [disabled]="page <= 1 || saving()">Previous</button><button (click)="paginate(1)" [disabled]="page >= pages() || saving()">Next</button></div></footer>
+      } }
+    </div>
+    <aside class="recovery-guide"><p class="eyebrow">A LITTLE CARE GOES A LONG WAY</p><h2>Help your team get back to work.</h2><ol><li><strong>Verify the person</strong><span>Speak through a trusted channel before approving.</span></li><li><strong>Share the code privately</strong><span>It appears once and expires in 10 minutes.</span></li><li><strong>Let them choose a password</strong><span>Your task moves to Completed once a code is issued. Their reset progress stays visible.</span></li></ol></aside>
+  </div>
+</section>
+<dialog #requestDialog class="request-dialog" aria-labelledby="request-title" (cancel)="closeDetails($event)">
+  @if (selected(); as request) {
+    <div class="dialog-banner"><p class="eyebrow">ACCOUNT RECOVERY</p><h2 id="request-title" tabindex="-1">A fresh start for {{ request.fullName }}</h2></div>
+    <div class="dialog-content"><div class="request-identity"><span class="request-avatar" aria-hidden="true">{{ request.fullName.slice(0,1) }}</span><div><strong>{{ request.fullName }}</strong><small>{{ request.username }}</small></div><span class="status-pill">{{ categoryLabel(request) }}</span></div>
+    <dl class="request-facts"><div><dt>Role</dt><dd>{{ request.role }}</dd></div><div><dt>Requested</dt><dd>{{ request.createdAt | date:'medium' }}</dd></div><div><dt>Progress</dt><dd>{{ outcome(request) }}</dd></div><div><dt>{{ request.status === 'APPROVED' ? 'Code expires' : 'Request expires' }}</dt><dd>{{ request.expiresAt | date:'medium' }}</dd></div></dl>
+    @if (detailError()) { <p class="notice error" role="alert">{{ detailError() }}</p><button (click)="view(request)" [disabled]="saving() || detailLoading()">Reload request</button> }
+    @if (request.status === 'PENDING') {
+      <div class="verify-note"><h3>One important check before you help</h3><p>Confirm this person's identity outside WoodFlow. A username alone is not proof of identity.</p><label class="verification"><input type="checkbox" [checked]="verified()" (change)="verified.set($any($event.target).checked)" [disabled]="saving()" />I have personally verified the requester's identity.</label></div>
+      <div class="decision-buttons"><button class="primary" (click)="approve()" [disabled]="!verified() || saving()">{{ saving() ? 'Processing…' : 'Approve & Issue Code' }}</button><button class="deny" (click)="deny()" [disabled]="saving()">Deny Request</button></div>
+    } @else { <p class="notice">{{ request.status === 'APPROVED' ? 'Your approval is complete. The requester still needs to use the code before it expires. The code cannot be displayed again.' : 'This request is closed. No further approval or denial is available.' }}</p> }
+    <footer class="dialog-footer"><button class="close" (click)="closeDetails()" [disabled]="saving()">Back to requests</button></footer></div>
+  }
+</dialog>
+<dialog #codeDialog class="code-dialog" aria-labelledby="code-title" (cancel)="finishCode($event)">
+  @if (issued(); as issued) {
+    <div class="dialog-banner"><p class="eyebrow">APPROVAL COMPLETE</p><h2 id="code-title" tabindex="-1">Request approved. You're all set.</h2></div>
+    <div class="dialog-content"><p class="code-intro">A one-time reset code is ready for <strong>{{ issuedFor() }}</strong>. Share it privately with the person you verified.</p><div class="expiry"><span>SINGLE USE · SHOWN ONCE</span><strong>Expires {{ issued.expiresAt | date:'shortTime' }}</strong><small>{{ issued.expiresAt | date:'mediumDate' }}</small></div>
+    <pre class="reset-code" tabindex="0" aria-label="One-time reset code">{{ issued.code }}</pre>
+    @if (copied()) { <p class="copy-success" role="status">Code copied. Your recovery task is complete.</p> }
+    @if (copyError()) { <p class="notice error" role="alert">{{ copyError() }}</p> }
+    <p class="code-warning">The requester enters this code on Set New Password. Copy or privately deliver it before closing. Closing or hiding this page clears the code permanently.</p>
+    <footer class="code-actions"><button class="primary copy-code" (click)="copyCode()">{{ copied() ? 'Copied' : 'Copy Code' }}</button><button class="close-code" (click)="finishCode()">Done & Close</button></footer></div>
+  }
+</dialog>
+<app-user-feedback-dialog />
+<dialog #resolveDialog aria-labelledby="resolve-title" (cancel)="closeResolution($event)">
+  <div class="dialog-banner"><p class="eyebrow">OWNER ASSISTANCE</p><h2 id="resolve-title">Resolve a pending request</h2></div>
+  <div class="dialog-content"><p>Verify the person's identity using a trusted channel first. You can take over or close a pending request assigned to another OWNER. Approved codes cannot be changed here.</p>
+    <label for="resolve-username">Exact username</label><input class="resolution-input" id="resolve-username" [formControl]="resolveUsername" maxlength="50" autocomplete="off" spellcheck="false" [attr.aria-invalid]="resolveUsername.touched && resolveUsername.invalid" [readOnly]="saving()" />
+    @if (resolveUsername.touched && resolveUsername.invalid) { <p class="error" role="alert">Enter the person's username.</p> }
+    <label class="verification"><input type="checkbox" [checked]="resolveVerified()" (change)="resolveVerified.set($any($event.target).checked)" [disabled]="saving()" />I have personally verified this person's identity outside WoodFlow.</label>
+    @if (resolveError()) { <p class="notice error" role="alert">{{ resolveError() }}</p> }
+    <div class="decision-buttons"><button class="primary" (click)="resolvePending('REASSIGN_TO_ME')" [disabled]="saving() || !resolveVerified()">Assign to me</button><button class="deny" (click)="resolvePending('DENY')" [disabled]="saving() || !resolveVerified()">Close pending request</button></div><footer class="dialog-footer"><button (click)="closeResolution()" [disabled]="saving()">Cancel</button></footer>
+  </div>
+</dialog>

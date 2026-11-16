@@ -1,0 +1,29 @@
+// Furniture artwork and blue blends reused from the Thisari-inspired welcome screens.
+.page-heading {
+  min-height: 170px; padding: 26px; border: 1px solid #d0e5f7; border-radius: 18px;
+  background: linear-gradient(95deg, #f6fbff 35%, #eaf3fcb3 60%, #eaf3fc22), url('/assets/dashboard/welcome-room.png') right 72% / 390px auto no-repeat;
+  box-shadow: 0 8px 28px #07376308;
+}
+.panel { box-shadow: 0 12px 32px #07376308; }
+.panel-heading { background: linear-gradient(100deg, white, #eaf3fc); }
+.panel > .panel-heading { position: relative; isolation: isolate; overflow: hidden; }
+.panel-art { position: absolute; z-index: -1; inset: 0 0 0 auto; width: 44%; height: 100%; object-fit: cover; object-position: left 70%; opacity: .65; transform: scaleX(-1); mask-image: linear-gradient(90deg, #000 40%, transparent); pointer-events: none; }
+.card { box-shadow: 0 5px 18px #07376306; min-height: 98px; }
+.card:hover:not(:disabled):not(.selected) { background: #f2faff; border-color: #08a9c9; }
+.card.selected:hover { background: linear-gradient(125deg, #075b91, #1685c5); }
+.actions { display: grid; grid-template-columns: 108px; gap: 7px; }
+.actions button { min-height: 34px; padding: 8px 12px; border-radius: 9px; font-weight: 600; background: var(--action-bg); color: var(--action-text); border-color: var(--action-border); box-shadow: 0 2px 4px #0737630a; }
+.action-view { --action-bg: #e7f2ff; --action-text: #075b91; --action-border: #b6d6f4; }
+.action-suspend { --action-bg: #f8dfa0; --action-text: #76520e; --action-border: #e8c775; }
+.action-reactivate { --action-bg: #c6eae2; --action-text: #125b50; --action-border: #94cdbf; }
+.action-deactivate { --action-bg: #f3c5ca; --action-text: #a4313b; --action-border: #e2a0a8; }
+.actions button:hover:not(:disabled) { background: var(--action-bg); filter: brightness(.94); }
+td:nth-child(2), td:nth-child(5) { white-space: nowrap; }
+dialog { background: linear-gradient(150deg, white 45%, #eaf3fc); box-shadow: 0 20px 60px #07376330; }
+dialog:focus-visible { outline: none; }
+.profile { position: relative; isolation: isolate; overflow: hidden; border-radius: 14px; margin: 20px 0; border: 1px solid #d0e5f7; }
+.profile::before { content: ''; position: absolute; z-index: -1; inset: -6px; background: linear-gradient(110deg, #f4faffef, #eaf3fcdd), url('/assets/dashboard/welcome-room.png') left center / cover; filter: blur(3px); }
+.avatar { background: linear-gradient(135deg, #073763, #1685c5, #08a9c9); box-shadow: 0 4px 12px #075b911a; }
+.access-guide { background: linear-gradient(160deg, #f3f8fef5, #eaf3fcf2), url('/assets/dashboard/welcome-room.png') center / cover; }
+@media (max-width: 600px) { .page-heading { padding: 20px; } .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } .card { padding: 12px; } }
+@media (max-width: 360px) { .cards { grid-template-columns: 1fr; } }

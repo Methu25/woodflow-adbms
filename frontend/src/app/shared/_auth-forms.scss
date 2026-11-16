@@ -1,0 +1,74 @@
+.wf-auth, .wf-startup {
+  button, input { font: inherit; }
+  a:focus-visible, button:focus-visible { outline: 3px solid #1685c5; outline-offset: 4px; }
+  button { cursor: pointer; }
+  button:disabled { cursor: wait; opacity: .65; }
+  .wf-primary {
+    width: 100%; min-height: 48px; border: 0; border-radius: 10px;
+    color: #fff; font-size: 14.5px; font-weight: 700;
+    background: #1685c5 url('/assets/auth/226-1551/78aa7.svg') center / 100% 100%;
+    display: flex; justify-content: center; align-items: center; gap: 9px;
+    &:hover:not(:disabled) { filter: brightness(.94); }
+  }
+}
+.wf-auth {
+  fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+  .wf-field { margin-bottom: 20px; min-width: 0; }
+  label { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px; font-size: 12px; line-height: 1.5; font-weight: 700; color: #102d50; margin-bottom: 8px; }
+  label small { font-size: 11px; font-weight: 400; color: #526b85; }
+  .wf-input {
+    display: flex; align-items: center; gap: 12px; padding: 0 15px;
+    min-height: 44px; border: 1px solid #bfd5ed; border-radius: 9px; background: #fff;
+    &:focus-within { border-color: #1685c5; box-shadow: 0 0 0 3px #1685c538; }
+    &.invalid { border-color: #b42318; background-color: #fff; }
+    > img { flex: 0 0 auto; }
+    input { width: 100%; min-width: 0; border: 0; outline: 0; color: #073763; background: transparent; font-size: 13.5px; line-height: 1.5; padding: 11px 0; }
+    // Keep saved credentials visually consistent with manually entered values.
+    input:-webkit-autofill {
+      -webkit-box-shadow: 0 0 0 1000px #fff inset;
+      -webkit-text-fill-color: #073763;
+      caret-color: #073763;
+    }
+    input:autofill { box-shadow: 0 0 0 1000px #fff inset; }
+  }
+  .wf-reveal { flex: 0 0 auto; width: 32px; height: 36px; border: 0; background: transparent; display: grid; place-items: center; padding: 0; }
+  .wf-password-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; app-password-field { min-width: 0; } .wf-input { gap: 8px; padding: 0 10px; } }
+  .wf-code { border-color: #08a9c9; background: #f7fcff; }
+  .wf-help, .wf-session-note { font-size: 11px; color: #526b85; line-height: 1.5; margin: 8px 0 0; }
+  .wf-session-note { margin: -2px 0 20px; font-size: 12.5px; }
+  .wf-field-error { margin: 6px 0 0; color: #b42318; font-size: 11.5px; line-height: 1.5; }
+  .wf-field-error:empty { display: none; }
+  .wf-error { border: 1px solid #b42318; background: #fff4f2; padding: 12px; color: #b42318; border-radius: 9px; font-size: 12px; line-height: 1.6; }
+  .wf-info { display: flex; align-items: flex-start; gap: 12px; margin-top: 20px; padding: 14px; border: 1px solid #dcebfa; border-radius: 10px; background: #f3f8fe url('/assets/auth/226-1551/b53db.svg') center / 100% 100%; p { margin: 0; color: #526b85; font-size: 11.5px; line-height: 1.6; } strong { color: #073763; font-weight: 700; } > img { margin-top: 3px; } }
+  .wf-owner-info { margin: 0 0 20px; background-image: url('/assets/auth/237-1551/af9ad.svg'); }
+  .wf-shield { width: 30px; height: 30px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 7px; background: url('/assets/auth/237-1551/0809c.svg'); }
+  .wf-login-link { font-size: 12.5px; text-align: center; color: #526b85; margin: 20px 0 0; a { color: #1685c5; font-weight: 700; text-decoration: none; } }
+  .wf-notice { font-size: 13px; padding: 12px; line-height: 1.5; background: #eaf3fc; border-radius: 9px; color: #073763; margin-top: 0; }
+  .wf-spinner { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #ffffff66; border-top-color: #fff; animation: wf-spin .7s linear infinite; }
+}
+.wf-auth.wf-setup {
+  .wf-field { margin-bottom: 12px; }
+  label { line-height: 15px; margin-bottom: 6px; }
+  .wf-input { min-height: 40px; input { padding: 9px 0; } }
+  .wf-owner-info { padding: 10px; margin-bottom: 12px; p { line-height: 1.25; } }
+  .wf-primary { background-image: url('/assets/auth/237-1551/54b72.svg'); }
+}
+@media (min-width: 481px) and (max-width: 1000px) {
+  .wf-auth.wf-setup .wf-password-pair label { min-height: 30px; }
+}
+@keyframes wf-spin { to { transform: rotate(360deg); } }
+@media (max-width: 480px) { .wf-auth .wf-password-pair { grid-template-columns: 1fr; gap: 0; } }
+@media (max-width: 700px), (max-height: 500px) {
+  .wf-auth .wf-password-pair { grid-template-columns: 1fr; gap: 0; }
+  .wf-auth.wf-setup .wf-password-pair label { min-height: 0; }
+  .wf-auth label, .wf-auth.wf-setup label { font-size: 13px; line-height: 1.5; margin-bottom: 8px; }
+  .wf-auth .wf-input, .wf-auth.wf-setup .wf-input {
+    min-height: 50px; gap: 10px; padding: 0 12px;
+    input { font-size: 16px; padding: 11px 0; }
+  }
+  .wf-auth .wf-reveal { width: 44px; min-width: 44px; height: 44px; }
+  .wf-auth .wf-primary, .wf-startup .wf-primary { min-height: 50px; font-size: 16px; }
+  .wf-auth .wf-info p, .wf-auth .wf-help, .wf-auth .wf-field-error { font-size: 12px; line-height: 1.6; }
+  .wf-auth .wf-login-link { font-size: 13px; a { display: inline-flex; align-items: center; min-height: 44px; } }
+}
+@media (prefers-reduced-motion: reduce) { .wf-auth .wf-spinner { animation: none; } }

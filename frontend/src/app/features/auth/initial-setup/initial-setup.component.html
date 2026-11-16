@@ -1,0 +1,53 @@
+<app-auth-layout title="Create Owner Account" [setup]="true">
+  <aside class="wf-info wf-owner-info">
+    <span class="wf-shield"><img src="/assets/auth/237-1551/f3a6d.svg" alt="" aria-hidden="true" /></span>
+    <p><strong>Authorized first owner setup</strong><br />
+      Requires a one-time code from your administrator. Staff accounts are managed by the owner.</p>
+  </aside>
+  <form [formGroup]="form" (ngSubmit)="submit()" [attr.aria-busy]="pending()" novalidate>
+    <fieldset [disabled]="pending()">
+      <div class="wf-field">
+        <label for="setup-full-name">Full Name <small>Owner's name</small></label>
+        <div class="wf-input" [class.invalid]="!!fieldError('fullName')">
+          <img src="/assets/auth/237-1551/46d78.svg" alt="" aria-hidden="true" />
+          <input id="setup-full-name" formControlName="fullName" autocomplete="name" maxlength="100"
+            [attr.aria-invalid]="!!fieldError('fullName')" [attr.aria-describedby]="fieldError('fullName') ? 'full-name-error' : null" />
+        </div>
+        @if (fieldError('fullName')) { <p id="full-name-error" class="wf-field-error">{{ fieldError('fullName') }}</p> }
+      </div>
+      <div class="wf-field">
+        <label for="setup-username">Username <small>3–50 characters · no spaces</small></label>
+        <div class="wf-input" [class.invalid]="!!fieldError('username')">
+          <img src="/assets/auth/237-1551/3fc6e.svg" alt="" aria-hidden="true" />
+          <input id="setup-username" formControlName="username" autocomplete="username" maxlength="50"
+            spellcheck="false" autocapitalize="none" [attr.aria-invalid]="!!fieldError('username')"
+            [attr.aria-describedby]="fieldError('username') ? 'setup-username-error' : null" />
+        </div>
+        @if (fieldError('username')) { <p id="setup-username-error" class="wf-field-error">{{ fieldError('username') }}</p> }
+      </div>
+      <div class="wf-password-pair">
+        <app-password-field [control]="form.controls.password" inputId="setup-password"
+          autocomplete="new-password" hint="12–128 characters" [error]="fieldError('password')" />
+        <app-password-field [control]="form.controls.confirmPassword" inputId="setup-confirm"
+          label="Confirm Password" autocomplete="new-password" [error]="fieldError('confirmPassword')" />
+      </div>
+      <div class="wf-field">
+        <label for="setup-code">One-time Setup Code <small>From your administrator</small></label>
+        <div class="wf-input wf-code" [class.invalid]="!!fieldError('setupCode')">
+          <img src="/assets/auth/237-1551/5728d.svg" alt="" aria-hidden="true" />
+          <input id="setup-code" type="password" formControlName="setupCode" autocomplete="off" maxlength="64"
+            spellcheck="false" autocapitalize="none" [attr.aria-invalid]="!!fieldError('setupCode')"
+            aria-describedby="setup-code-help setup-code-error" />
+        </div>
+        <p id="setup-code-help" class="wf-help">Valid for 10 minutes. Single use. Never share or save this code.</p>
+        <p id="setup-code-error" class="wf-field-error">{{ fieldError('setupCode') }}</p>
+      </div>
+      @if (error()) { <p class="wf-error" role="alert">{{ error() }}</p> }
+      <button type="submit" class="wf-primary" [disabled]="pending()">
+        @if (pending()) { <span class="wf-spinner" aria-hidden="true"></span> }
+        {{ pending() ? 'Creating owner account…' : 'Create Owner Account' }}
+      </button>
+      <p class="wf-login-link">Already have an account? <a routerLink="/login">Log In</a></p>
+    </fieldset>
+  </form>
+</app-auth-layout>

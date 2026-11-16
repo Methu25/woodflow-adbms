@@ -16,7 +16,9 @@ namespace WoodFlow.Tests;
 
 public sealed class SessionAndThrottleTests
 {
-    private const string Password = "Session test password 42!";
+    // Generated for isolated in-memory test accounts only; never a database credential.
+    private static readonly string TestOnlyPassword =
+        Convert.ToHexString(System.Security.Cryptography.RandomNumberGenerator.GetBytes(24));
     private static async Task<HttpResponseMessage> Post(HttpClient client, string path, object body, string ip = "198.51.100.1")
     {
         var csrf = await client.GetAsync("/api/auth/csrf"); csrf.EnsureSuccessStatusCode();
@@ -26,8 +28,8 @@ public sealed class SessionAndThrottleTests
         r.Headers.Add("X-XSRF-TOKEN", token); r.Headers.Add("X-Test-IP", ip);
         return await client.SendAsync(r);
     }
-    private static Task<HttpResponseMessage> Login(HttpClient c, string password = Password, string ip = "198.51.100.1", string username = "owner") =>
-        Post(c, "/api/auth/login", new { username, password }, ip);
+    private static Task<HttpResponseMessage> Login(HttpClient c, string? password = null, string ip = "198.51.100.1", string username = "owner") =>
+        Post(c, "/api/auth/login", new { username, password = password ?? TestOnlyPassword }, ip);
 
     [Fact]
     public async Task LogoutRevokesCopiedTicketButKeepsOtherSession()
@@ -67,13 +69,13 @@ public sealed class SessionAndThrottleTests
         await using var f = new Factory(); using var c = f.Client();
         for (var i = 1; i <= 10; i++)
             Assert.Equal(HttpStatusCode.Unauthorized, (await Login(c, "incorrect test password", $"198.51.100.{i}", username)).StatusCode);
-        var blocked = await Login(c, Password, "198.51.100.11", username);
+        var blocked = await Login(c, TestOnlyPassword, "198.51.100.11", username);
         Assert.Equal(HttpStatusCode.TooManyRequests, blocked.StatusCode);
         Assert.NotNull(blocked.Headers.RetryAfter);
         Assert.DoesNotContain(username, await blocked.Content.ReadAsStringAsync());
         f.Clock.Advance(TimeSpan.FromSeconds(6));
         Assert.Equal(username == "owner" ? HttpStatusCode.OK : HttpStatusCode.Unauthorized,
-            (await Login(c, Password, "198.51.100.12", username)).StatusCode);
+            (await Login(c, TestOnlyPassword, "198.51.100.12", username)).StatusCode);
         Assert.True(f.Users.Users[1].IsActive); // No persistent account lockout/status change.
     }
 
@@ -127,7 +129,7 @@ public sealed class SessionAndThrottleTests
     private sealed class Factory : WebApplicationFactory<Program>
     {
         public Clock Clock { get; } = new();
-        public AuthApiTests.MemoryUsers Users { get; } = new(Password);
+        public AuthApiTests.MemoryUsers Users { get; } = new(TestOnlyPassword);
         public HttpClient Client() => CreateClient(new() { BaseAddress = new Uri("https://localhost"), AllowAutoRedirect = false });
         protected override void ConfigureWebHost(IWebHostBuilder builder) => builder.ConfigureTestServices(services =>
         {

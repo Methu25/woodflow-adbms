@@ -18,6 +18,11 @@ $RECYCLE.BIN/
 *.sln.docstates
 
 # .NET / Build Outputs
+.vs/
+TestResults/
+artifacts/
+*.nupkg
+*.snupkg
 bin/
 obj/
 Debug/
@@ -35,6 +40,19 @@ yarn-debug.log*
 yarn-error.log*
 
 # Environment and Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+database/exports/
+database/backups/
+*.dump
+*.backup
+/My database.sql
+appsettings.*.local.json
+*.pfx
+*.p12
 *.env
 *.env.local
 *.env.production

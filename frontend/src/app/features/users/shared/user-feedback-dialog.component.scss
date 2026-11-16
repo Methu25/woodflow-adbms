@@ -1,0 +1,23 @@
+:host { --accent: #075b91; --soft: #eaf5ff; --line: #bfd5ed; }
+dialog { --accent: #075b91; --soft: #eaf5ff; --line: #bfd5ed; box-sizing: border-box; width: min(480px, calc(100% - 32px)); max-height: calc(100dvh - 40px); overflow-y: auto; padding: 0; border: 1px solid var(--line); border-radius: 20px; color: #073763; background: #fff; box-shadow: 0 24px 80px #07376340; font-family: 'Inter', sans-serif; }
+dialog::backdrop { background: #07376370; backdrop-filter: blur(3px); }
+dialog:focus { outline: none; }
+.tone-warning { --accent: #76520e; --soft: #fff2d0; --line: #e8cf91; }
+.tone-danger { --accent: #a4313b; --soft: #fce8eb; --line: #e8b9bf; }
+.banner { position: relative; isolation: isolate; overflow: hidden; box-sizing: border-box; padding: 26px 28px; min-height: 124px; background: linear-gradient(110deg, #f1f8ff, #dceefa); border-bottom: 3px solid var(--line); }
+.banner::before { content: ''; position: absolute; z-index: -1; inset: 0 0 0 auto; width: 48%; background: url('/assets/dashboard/welcome-room.png') left 75% / cover no-repeat; transform: scaleX(-1); mask-image: linear-gradient(90deg, #000 55%, transparent); opacity: .9; }
+.banner p, .banner span { position: relative; display: block; max-width: 65%; }
+.banner p { margin: 0 0 8px; color: #075b91; font-size: 10px; font-weight: 700; letter-spacing: .07em; }
+.banner span { font-size: 12px; color: #526b85; }
+.content { padding: 26px 28px 28px; }
+h2 { margin: 0 0 14px; font-size: 24px; line-height: 1.3; letter-spacing: -.02em; color: var(--accent); }
+p { font-size: 14px; line-height: 1.8; overflow-wrap: anywhere; }
+.detail { padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--soft); color: #526b85; font-size: 12px; margin: 22px 0; }
+footer { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 12px; }
+button { min-height: 44px; min-width: 90px; padding: 12px 20px; border: 1px solid #bfd5ed; border-radius: 9px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.primary { background: linear-gradient(110deg, #1685c5, #08a9c9); color: white; border-color: #1685c5; }
+.secondary { color: #075b91; background: white; }
+.tone-warning .primary { background: #f8dfa0; border-color: #e8c775; color: #76520e; }
+.tone-danger .primary { background: #f3c5ca; border-color: #e2a0a8; color: #a4313b; }
+button:hover { filter: brightness(.96); } button:focus-visible { outline: 3px solid #075b91; outline-offset: 3px; }
+@media (max-width: 480px) { .banner, .content { padding: 20px; } h2 { font-size: 22px; } footer button { flex: 1; } }

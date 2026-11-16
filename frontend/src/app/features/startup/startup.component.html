@@ -1,0 +1,41 @@
+<main class="wf-startup" [class.loading]="loading" [attr.aria-busy]="pending()">
+  <div class="startup-main">
+    <h1><img src="/assets/auth/215-1551/e3b64.svg" alt="WoodFlow — Wimalasiri Furniture" /></h1>
+    <p class="startup-eyebrow">WIMALASIRI FURNITURE · ENTERPRISE ERP</p>
+    <img class="startup-rule" src="/assets/auth/215-1551/5a98b.svg" alt="" aria-hidden="true" />
+    @if (!loading) {
+      <p class="startup-tagline">Fine Ceylon Teak Craftsmanship · Workshop to Showroom</p>
+      <button type="button" class="wf-primary startup-start" routerLink="/loading" [replaceUrl]="true">
+        Start WoodFlow
+      </button>
+    } @else {
+      <div class="session-progress">
+        @if (pending() || progress() === 100) {
+          <div class="progress-track" role="progressbar" aria-label="Workspace startup progress"
+            aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="progress()"
+            [attr.aria-valuetext]="progress() + '% — ' + status()">
+            <span class="progress-fill" [style.width.%]="progress()"></span>
+          </div>
+          <div class="progress-status">
+            <p role="status"><img src="/assets/auth/215-1560/815a5.svg" alt="" />{{ status() }}</p>
+            <span class="progress-percent" aria-hidden="true">{{ progress() }}%</span>
+          </div>
+        }
+        @if (error()) {
+          <div class="startup-error">
+            <p role="alert">{{ error() }}</p>
+            <button type="button" class="wf-primary" (click)="check()">Try again</button>
+            <a routerLink="/login">Back to sign in</a>
+          </div>
+        } @else {
+          <ul class="module-pills" aria-label="WoodFlow workspace areas">
+            <li><img src="/assets/auth/215-1560/815a5.svg" alt="" />Showroom POS</li>
+            <li><img src="/assets/auth/215-1560/815a5.svg" alt="" />Workshop Queue</li>
+            <li><img src="/assets/auth/215-1560/815a5.svg" alt="" />Payroll &amp; Ledger</li>
+          </ul>
+        }
+      </div>
+    }
+  </div>
+  <p class="startup-footer">{{ loading ? 'WoodFlow · Establishing a secure workspace session…' : 'WoodFlow · Showroom POS · Custom Orders · Workshop · Finance' }}</p>
+</main>

@@ -1,84 +1,65 @@
-# Team Local Database Setup Guide (PostgreSQL 16)
-**System:** WoodFlow — Wimalasiri Furniture, Kottawa  
-**Target Audience:** All 10 Team Members  
-**Database Engine:** PostgreSQL 16 (Local RDBMS via pgAdmin 4 or Docker)
+# Team local database setup (PostgreSQL 16)
 
----
+Each developer owns an independent local `woodflow_db`. Install PostgreSQL 16
+with pgAdmin, .NET 10 SDK, Node.js 22 and npm 10 or newer. Choose your own private
+PostgreSQL password; never put credentials in source control or shared messages.
 
-## Which Local Setup Option Should You Use?
+## New, empty database only
 
-* **Option 1 (Recommended for All Members): Standard PostgreSQL 16 + pgAdmin 4 Installer**
-  * Uses the official PostgreSQL 16 Windows installer and **pgAdmin 4** GUI.
-  * Best for our university ADBMS demonstration and individual viva (lets you visually show tables, stored procedures, triggers, EER diagrams, and `EXPLAIN ANALYZE` query plans offline).
+From the repository root in PowerShell (adjust the executable path if needed):
 
-* **Option 2 (For Docker Users): 1-Command Docker Setup**
-  * Use this if you already have **Docker Desktop** installed on your laptop.
-
----
-
-## Option 1 (Recommended): Standard Local PostgreSQL 16 + pgAdmin 4
-
-### Step 1: Install PostgreSQL 16
-1. Download **PostgreSQL 16 for Windows** (includes pgAdmin 4):  
-   [https://www.postgresql.org/download/windows/](https://www.postgresql.org/download/windows/)
-2. Run the installer:
-   * Keep the default port: **`5432`**
-   * Set the superuser (`postgres`) password to: **`password123`** (or your own password)
-
-### Step 2: Create the Database & Run `schema.sql`
-1. Open **pgAdmin 4** on your laptop.
-2. In the left sidebar, expand **Servers** &rarr; **PostgreSQL 16**.
-3. Right-click on **Databases** &rarr; **Create** &rarr; **Database...**
-4. Enter Database name: **`woodflow_db`** and click **Save**.
-5. Right-click on **`woodflow_db`** &rarr; select **Query Tool**.
-6. In the Query Tool, click the **Open File** folder icon (or open [`database/schema.sql`](schema.sql) in VS Code, press `Ctrl + A` and `Ctrl + C`, and paste it into the Query Tool).
-7. Click the **Execute / Run** button (play icon or press **`F5`**).
-8. Refresh **Schemas &rarr; public &rarr; Tables** on the left sidebar — all **16 tables, 2 stored procedures, 2 triggers, views, and sample furniture records** are now live on your machine!
-
-### Step 3: Configure Your ASP.NET Core Connection String
-Place this connection string in your `appsettings.json` (or `appsettings.Development.json`):
-
-```json
-{
-  "ConnectionStrings": {
-    "WoodFlowDb": "Host=localhost;Port=5432;Database=woodflow_db;Username=postgres;Password=password123"
-  }
-}
+```powershell
+$pgUser = Read-Host 'Local PostgreSQL administrator username'
+& "$env:ProgramFiles\PostgreSQL\16\bin\createdb.exe" -h localhost -p 5432 -U $pgUser -W woodflow_db
+if ($LASTEXITCODE -ne 0) { throw 'Database creation failed; stop and inspect before proceeding.' }
+& "$env:ProgramFiles\PostgreSQL\16\bin\psql.exe" -h localhost -p 5432 -U $pgUser -W -d woodflow_db -v ON_ERROR_STOP=1 -f database/schema.sql
+if ($LASTEXITCODE -ne 0) { throw 'Schema initialization failed; do not start the application yet.' }
 ```
-*(If you chose a different password during PostgreSQL installation, replace `password123` with your local password.)*
 
----
+Enter your password privately at each prompt. Alternatively create an EMPTY
+`woodflow_db` in pgAdmin and execute the entire `schema.sql` there once.
+The consolidated schema includes migrations 001–007, required system rows and
+sample data. Do NOT apply 001–007 afterward. Standard PostgreSQL 16 supplies
+`uuid-ossp`; initialization needs permission to install this extension.
+Demo password hashes cannot log in. Initialize your own OWNER using
+[AUTH_SETUP.md](../backend/AUTH_SETUP.md); never share an account or setup code.
 
-## Option 2: The 1-Command Docker Setup
+## Existing databases
 
-If you have **Docker Desktop** installed and running:
+Back up first. Never rerun the full schema or reset a working database.
+Apply only outstanding files from `database/migrations/`, in numeric order,
+with the backend stopped and `psql -v ON_ERROR_STOP=1 -f <migration-path>`
+against the intended database (or execute each complete file in pgAdmin).
+There is no automatic migration runner/history table: keep an explicit record
+of applied migrations. If unsure, inspect the database before applying anything.
+Future changes need explicit upgrade migrations; do not tell teammates to paste
+arbitrary updated schema sections into an existing database.
 
-1. Open PowerShell / Terminal in the project root folder:
-   ```bash
-   cd woodflow-adbms
-   ```
-2. Run:
-   ```bash
-   docker compose up -d
-   ```
-   Docker will automatically download PostgreSQL 16, start it on `localhost:5432` with database `woodflow_db` and password `password123`, and execute [`database/schema.sql`](schema.sql) automatically.
+## Optional Docker database
 
----
+Use either native PostgreSQL or Docker on port 5432, not both simultaneously.
+From the root, copy the non-secret template and privately edit the ignored file:
 
-## How All 10 Members Keep Database Changes in Sync via GitHub
+```powershell
+Copy-Item .env.example .env
+notepad .env
+docker compose up -d
+```
 
-Since everyone runs PostgreSQL 16 locally on their laptop:
-1. **Your Initial Database:** [`database/schema.sql`](schema.sql) already contains all 16 tables, foreign keys, core stored procedures, triggers, views, and seed data so every module works immediately.
-2. **Adding Stored Procedures / Triggers / Columns for Your Module:**
-   * Write and test your new SQL procedure, trigger, view, or `ALTER TABLE` in your local **pgAdmin 4 Query Tool**.
-   * Copy that new SQL into [`database/schema.sql`](schema.sql) in your feature branch and commit it to GitHub.
-   * When teammates pull the latest `main` branch, they simply re-run the updated section of [`database/schema.sql`](schema.sql) in pgAdmin 4!
+Set `POSTGRES_PASSWORD` to your own unique local password before startup.
+Docker binds only `127.0.0.1:5432`, creates `woodflow_db` with user `postgres`,
+and initializes the schema ONLY when its named `postgres_data` volume is empty.
+Existing volumes/data are preserved. Changing `.env` does NOT change an existing
+volume's PostgreSQL password. Do not delete volumes to fix a connection problem.
+If you previously used the shared credential, rotate it through a deliberate
+administrator password change and update your private local configuration.
+Never commit `.env`, database exports, private certificates or password hashes.
 
----
+## Application connection and HTTPS
 
-## Verifying That Your Local Database Works
-
-Run these test queries in your pgAdmin 4 Query Tool:
-* `SELECT * FROM finished_furniture;` &rarr; Displays King Size Teak Bed, Dining Table, Wardrobe, Sofa.
-* `SELECT * FROM customers;` &rarr; Displays sample Kottawa customers.
-* `SELECT * FROM raw_materials;` &rarr; Displays timber planks, varnish, and velvet fabric.
+Use [backend/README.md](../backend/README.md) to enter credentials privately into
+`ConnectionStrings__WoodFlowDb` for your current PowerShell session.
+Use [frontend/README.md](../frontend/README.md) to generate and trust your OWN
+localhost HTTPS certificate and start Angular. Defaults: API
+`https://localhost:7001`, frontend `https://localhost:4200`, PostgreSQL
+`localhost:5432`. Credentials and certificates are never supplied by Git.

@@ -1,0 +1,19 @@
+<dialog #modal [attr.role]="state()?.kind === 'confirm' ? 'alertdialog' : 'dialog'" aria-labelledby="user-feedback-title" aria-describedby="user-feedback-message user-feedback-detail" (cancel)="cancel($event)"
+  [class.tone-warning]="state()?.tone === 'warning'" [class.tone-danger]="state()?.tone === 'danger'">
+  @if (state(); as state) {
+    <div class="banner"><p>WOODFLOW · TEAM &amp; ACCESS</p><span>{{ state.kind === 'confirm' ? 'Before you continue' : state.kind === 'error' ? 'Let’s take another look' : 'Action completed' }}</span></div>
+    <div class="content">
+      <h2 id="user-feedback-title">{{ state.title }}</h2>
+      <p id="user-feedback-message">{{ state.message }}</p>
+      <p id="user-feedback-detail" class="detail">{{ state.detail || (state.kind === 'confirm' ? 'Please confirm this change before continuing.' : 'Select OK to return to your workspace.') }}</p>
+      <footer>
+        @if (state.kind === 'confirm') {
+          <button type="button" class="secondary" data-initial-focus (click)="finish(false)">{{ state.cancelLabel || 'Cancel' }}</button>
+          <button type="button" class="primary" (click)="finish(true)">{{ state.confirmLabel || 'Confirm' }}</button>
+        } @else {
+          <button type="button" class="primary" data-initial-focus (click)="finish(true)">OK</button>
+        }
+      </footer>
+    </div>
+  }
+</dialog>

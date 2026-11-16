@@ -1,0 +1,30 @@
+:host { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 100dvh; margin: -8px; font-family: 'Inter', sans-serif; color: #073763; background: #eaf3fc; }
+header { box-sizing: border-box; position: sticky; top: 0; height: 100dvh; display: flex; flex-direction: column; padding: 20px 14px; color: #cfe4f5; background: #073763 url('/assets/navigation/background.png') center bottom / cover no-repeat; overflow-y: auto; }
+.brand { display: flex; align-items: center; gap: 12px; margin: 0 6px 22px; }
+.brand-mark { flex-shrink: 0; display: grid; place-items: center; width: 40px; height: 40px; background: url('/assets/navigation/brand.svg') center / contain no-repeat; font-size: 24px; font-weight: 700; color: white; }
+h1 { margin: 0; font-size: 14px; line-height: 1.3; color: white; }
+.brand p { margin: 7px 0 0; font-size: 10.5px; color: #9fd8ee; }
+.menu-label { margin: 0 10px 10px; font-size: 10px; font-weight: 700; color: #7fa9cc; }
+nav { display: grid; gap: 6px; }
+nav a, .menu-item, .logout { box-sizing: border-box; display: flex; align-items: center; gap: 20px; width: 100%; min-height: 40px; padding: 10px 18px; border: 0; border-radius: 8px; color: #cfe4f5; background: transparent; font: inherit; font-size: 13px; text-align: left; text-decoration: none; }
+nav a.active { position: relative; background: linear-gradient(90deg, #1685c5, #08a9c9); color: white; font-weight: 700; }
+nav a.active::before { content: ''; position: absolute; left: -14px; width: 4px; height: 24px; border-radius: 0 3px 3px 0; background: #9fd8ee; }
+nav img, .logout img { flex-shrink: 0; }
+.menu-item:disabled { cursor: not-allowed; opacity: .75; }
+.sidebar-footer { margin-top: auto; padding-top: 30px; }
+.account-name { margin: 0 10px 12px; font-size: 11px; overflow-wrap: anywhere; }
+.logout { border-top: 1px solid #7fa9cc66; border-radius: 0; padding-top: 20px; cursor: pointer; }
+.logout:hover { background: #ffffff12; }
+.logout:disabled { cursor: wait; opacity: .6; }
+.showroom { margin: 20px 10px 0; font-size: 10px; color: #7fa9cc; }
+a:focus-visible, button:focus-visible { outline: 3px solid #9fd8ee; outline-offset: 2px; }
+main { min-width: 0; padding: 24px; }
+@media (max-width: 700px) {
+  :host { grid-template-columns: 1fr; }
+  header { position: static; height: auto; background-position: center; }
+  nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  nav a, .menu-item { gap: 12px; padding: 10px; }
+  nav a::before { display: none; }
+  .sidebar-footer { padding-top: 20px; }
+  main { padding: 12px; }
+}

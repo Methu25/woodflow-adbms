@@ -1,0 +1,59 @@
+<app-auth-layout [recovery]="true" [title]="done() ? (resetting ? 'A Fresh Start' : 'Request Submitted') : resetting ? 'Set New Password' : 'Forgot Your Password?'" backLink="/login" backLabel="← Back to Log In" [section]="resetting ? 'PASSWORD RESET' : 'PASSWORD HELP'">
+  <div class="recovery-steps" aria-label="Recovery steps"><span [class.current]="!resetting && !done()"><b>1</b> Request help</span><span [class.current]="!resetting && done()"><b>2</b> Owner review</span><span [class.current]="resetting"><b>3</b> Fresh start</span></div>
+  @if (done()) {
+    <div class="recovery-result" role="status">
+      <p class="result-eyebrow">{{ resetting ? 'YOU’RE READY TO RETURN' : 'YOUR NEXT STEPS' }}</p>
+      <h2>{{ resetting ? 'Your new password is ready.' : 'A little help is on the way.' }}</h2>
+      <p>{{ resetting ? 'Your password has been updated. Log in with your new password.' : 'Your request has been submitted. Please wait for the selected owner to contact you.' }}</p>
+      @if (!resetting) { <ol><li>Speak privately with your selected owner.</li><li>After verification, receive your one-time code.</li><li>Set your new password and return to WoodFlow.</li></ol> }
+    </div>
+  } @else if (!resetting) {
+    <p class="intro">Let's get you back to your workspace. Enter your username and choose an owner you know.</p>
+    <form [formGroup]="requestForm" (ngSubmit)="submitRequest()" [attr.aria-busy]="pending()" novalidate>
+      <fieldset [disabled]="pending()">
+        <div class="wf-field">
+          <label for="recovery-username">Username <small>Account to recover</small></label>
+          <div class="wf-input" [class.invalid]="invalid('username')">
+            <img src="/assets/auth/226-1551/1e4c3.svg" alt="" aria-hidden="true" />
+            <input id="recovery-username" formControlName="username" autocomplete="username" maxlength="50" autocapitalize="none" spellcheck="false" [attr.aria-invalid]="invalid('username')" aria-describedby="recovery-username-error" />
+          </div>
+          @if (invalid('username')) { <p id="recovery-username-error" class="wf-field-error">Enter your username (up to 50 characters).</p> }
+        </div>
+        <div class="wf-field">
+          <label for="recovery-owner">OWNER contact <small>Choose someone you know</small></label>
+          <select id="recovery-owner" formControlName="ownerId" [attr.aria-invalid]="invalid('ownerId')" aria-describedby="owner-help owner-error">
+            <option [ngValue]="0">{{ contactsLoading() ? 'Loading owner contacts…' : 'Select an owner' }}</option>
+            @for (owner of contacts(); track owner.ownerId) { <option [ngValue]="owner.ownerId">{{ owner.fullName }}</option> }
+          </select>
+          @if (invalid('ownerId')) { <p id="owner-error" class="wf-field-error">Select the owner who will verify your identity.</p> }
+          <p id="owner-help" class="wf-help">If you are an OWNER, choose another OWNER. Nobody can approve their own recovery.</p>
+        </div>
+        @if (contactsError()) { <p class="wf-error" role="alert">{{ contactsError() }}</p><button class="retry" type="button" (click)="loadContacts()">Retry loading contacts</button> }
+        @else if (!contactsLoading() && !contacts().length) { <p class="wf-notice" role="status">No owner contact is available. Contact your trusted system administrator for help.</p> }
+        @if (error()) { <p class="wf-error" role="alert">{{ error() }}</p> }
+        <button class="wf-primary" type="submit" [disabled]="pending() || contactsLoading() || !contacts().length">{{ pending() ? 'Sending request…' : 'Send Request' }}</button>
+      </fieldset>
+    </form>
+    <aside class="wf-info"><img src="/assets/auth/226-1551/47813.svg" alt="" aria-hidden="true" /><p><strong>Private, owner-assisted recovery.</strong> Your owner must verify your identity before privately giving you a short-lived reset code. No email or message is sent automatically.</p></aside>
+  } @else {
+    <p class="intro">A fresh password, a fresh start. Use the private code from your owner to safely return to WoodFlow.</p>
+    <form [formGroup]="resetForm" (ngSubmit)="submitReset()" [attr.aria-busy]="pending()" novalidate autocomplete="off">
+      <fieldset [disabled]="pending()">
+        <div class="wf-field">
+          <label for="reset-code">Reset code <small>Single use · expires in 10 minutes</small></label>
+          <div class="wf-input wf-code" [class.invalid]="!!resetError('code')"><input id="reset-code" type="password" formControlName="code" autocomplete="off" maxlength="64" autocapitalize="none" spellcheck="false" [attr.aria-invalid]="!!resetError('code')" aria-describedby="reset-code-error" /></div>
+          @if (resetError('code')) { <p id="reset-code-error" class="wf-field-error">{{ resetError('code') }}</p> }
+        </div>
+        <app-password-field [control]="resetForm.controls.newPassword" inputId="reset-password" label="New Password" hint="8–128 characters" autocomplete="new-password" [error]="resetError('newPassword')" />
+        <p class="wf-help strength">{{ strength() }}. A longer passphrase with letters, numbers or symbols is safer.</p>
+        <app-password-field [control]="resetForm.controls.confirmPassword" inputId="reset-confirm" label="Confirm New Password" autocomplete="new-password" [error]="resetError('confirmPassword')" />
+        @if (error()) { <p class="wf-error" role="alert">{{ error() }}</p> }
+        <button class="wf-primary" type="submit" [disabled]="pending()">{{ pending() ? 'Updating password…' : 'Save Password & Log In' }}</button>
+      </fieldset>
+    </form>
+  }
+  <p class="wf-login-link"><a routerLink="/login">Back to Login</a></p>
+  @if (!resetting) { <p class="wf-login-link">Already have your code? <a routerLink="/reset-password">Set a new password</a></p> }
+  @else if (!done()) { <p class="wf-login-link">Need a new code? <a routerLink="/forgot-password">Request owner assistance</a></p> }
+</app-auth-layout>
+<app-user-feedback-dialog />

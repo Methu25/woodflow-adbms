@@ -3,6 +3,8 @@
 -- Target: Wimalasiri Furniture, High Level Road, Kottawa
 -- Academic Module: CS304.3 Advanced Database Management Systems
 -- Team: 10 Full-Stack Modular Vertical Slices
+-- Consolidated structure through migration 007. Run once in an EMPTY database.
+-- Existing installations must use outstanding migrations, not reapply this file.
 -- ============================================================================
 
 -- Enable UUID extension if required
@@ -17,10 +19,128 @@ CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(50) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     full_name VARCHAR(100) NOT NULL,
-    role VARCHAR(30) NOT NULL CHECK (role IN ('OWNER', 'CASHIER', 'WORKSHOP_SUPERVISOR')),
+    role VARCHAR(30) NOT NULL CHECK (role IN ('OWNER', 'ASSISTANT')),
     is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    account_status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE'
+        CONSTRAINT users_account_status_check CHECK (account_status IN ('ACTIVE', 'SUSPENDED', 'DEACTIVATED')),
+    auth_version INTEGER NOT NULL DEFAULT 0
 );
+
+CREATE OR REPLACE FUNCTION public.sync_user_account_status() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+    IF TG_OP = 'INSERT' THEN
+        IF NEW.is_active IS NOT TRUE AND NEW.account_status = 'ACTIVE' THEN
+            NEW.account_status := 'DEACTIVATED';
+        END IF;
+    ELSE
+        IF OLD.account_status = 'DEACTIVATED' AND
+            (NEW.account_status <> 'DEACTIVATED' OR NEW.is_active IS TRUE) THEN
+            RAISE EXCEPTION 'Deactivated accounts cannot be restored' USING ERRCODE = '23514';
+        END IF;
+        IF NEW.account_status = OLD.account_status AND NEW.is_active IS DISTINCT FROM OLD.is_active THEN
+            NEW.account_status := CASE WHEN NEW.is_active IS TRUE THEN 'ACTIVE' ELSE 'DEACTIVATED' END;
+        END IF;
+        IF NEW.account_status IS DISTINCT FROM OLD.account_status OR NEW.role IS DISTINCT FROM OLD.role THEN
+            NEW.auth_version := OLD.auth_version + 1;
+        END IF;
+    END IF;
+    NEW.is_active := (NEW.account_status = 'ACTIVE');
+    RETURN NEW;
+END $$;
+CREATE OR REPLACE TRIGGER users_sync_account_status BEFORE INSERT OR UPDATE ON public.users
+FOR EACH ROW EXECUTE FUNCTION public.sync_user_account_status();
+
+-- Role-wide assistant permissions; no administrative permission keys are editable.
+CREATE TABLE IF NOT EXISTS public.assistant_permission_settings (
+    id SMALLINT PRIMARY KEY CHECK (id = 1),
+    granted_keys TEXT[] NOT NULL DEFAULT ARRAY['dashboard.view']::TEXT[],
+    version BIGINT NOT NULL DEFAULT 0 CHECK (version >= 0)
+);
+INSERT INTO public.assistant_permission_settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
+
+CREATE TABLE IF NOT EXISTS public.assistant_user_permissions (
+    user_id INTEGER PRIMARY KEY REFERENCES public.users(user_id) ON DELETE RESTRICT,
+    granted_keys TEXT[], -- NULL means inherit the ASSISTANT role defaults.
+    version BIGINT NOT NULL DEFAULT 0 CHECK (version >= 0)
+);
+-- Retain the version on reset, preventing stale edits after override/reset cycles.
+-- Role changes discard old overrides so they cannot resurface after promotion/demotion.
+CREATE OR REPLACE FUNCTION public.clear_assistant_permission_override() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+    IF NEW.role IS DISTINCT FROM OLD.role THEN
+        UPDATE public.assistant_user_permissions SET granted_keys = NULL, version = version + 1
+        WHERE user_id = NEW.user_id;
+    END IF;
+    RETURN NEW;
+END $$;
+CREATE OR REPLACE TRIGGER users_clear_permission_override AFTER UPDATE OF role ON public.users
+FOR EACH ROW EXECUTE FUNCTION public.clear_assistant_permission_override();
+
+-- Secure first-owner bootstrap state. Existing installations apply migration 002 manually.
+CREATE TABLE IF NOT EXISTS owner_setup_state (
+    id SMALLINT PRIMARY KEY CHECK (id = 1),
+    code_hash BYTEA CHECK (code_hash IS NULL OR octet_length(code_hash) = 32),
+    expires_at TIMESTAMPTZ,
+    consumed_at TIMESTAMPTZ,
+    initialized_at TIMESTAMPTZ,
+    initialized_owner_id INT REFERENCES users(user_id) ON DELETE RESTRICT,
+    CHECK ((code_hash IS NULL) = (expires_at IS NULL)),
+    CHECK (initialized_at IS NULL OR (code_hash IS NULL AND consumed_at IS NOT NULL))
+);
+INSERT INTO owner_setup_state (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
+
+-- Password recovery: final structure from migrations 006 and 007.
+-- New installations start with no requests or reset-code hashes.
+CREATE TABLE IF NOT EXISTS public.password_recovery_requests (
+    request_id UUID PRIMARY KEY,
+    requester_user_id INTEGER NOT NULL REFERENCES public.users(user_id),
+    selected_owner_id INTEGER NOT NULL REFERENCES public.users(user_id),
+    status VARCHAR(12) NOT NULL DEFAULT 'PENDING'
+        CHECK (status IN ('PENDING','APPROVED','COMPLETED','DENIED','EXPIRED')),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
+    expires_at TIMESTAMPTZ NOT NULL,
+    requester_auth_version INTEGER NOT NULL,
+    processed_by_owner_id INTEGER REFERENCES public.users(user_id),
+    approving_owner_auth_version INTEGER,
+    processed_at TIMESTAMPTZ,
+    code_hash BYTEA,
+    consumed_at TIMESTAMPTZ,
+    previous_owner_id INTEGER REFERENCES public.users(user_id),
+    resolved_by_owner_id INTEGER REFERENCES public.users(user_id),
+    resolved_at TIMESTAMPTZ,
+    CHECK (requester_user_id <> selected_owner_id),
+    CHECK (processed_by_owner_id IS NULL OR processed_by_owner_id = selected_owner_id),
+    CHECK (code_hash IS NULL OR octet_length(code_hash) = 32),
+    CHECK ((status = 'APPROVED') = (code_hash IS NOT NULL)),
+    CHECK ((status = 'COMPLETED') = (consumed_at IS NOT NULL)),
+    CHECK (status NOT IN ('APPROVED','COMPLETED','DENIED') OR
+        (processed_by_owner_id IS NOT NULL AND processed_at IS NOT NULL)),
+    CHECK (status NOT IN ('APPROVED','COMPLETED') OR approving_owner_auth_version IS NOT NULL)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS recovery_one_open_per_user
+    ON public.password_recovery_requests(requester_user_id) WHERE status IN ('PENDING','APPROVED');
+CREATE UNIQUE INDEX IF NOT EXISTS recovery_code_hash
+    ON public.password_recovery_requests(code_hash) WHERE code_hash IS NOT NULL;
+CREATE INDEX IF NOT EXISTS recovery_owner_inbox
+    ON public.password_recovery_requests(selected_owner_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS recovery_requester_history
+    ON public.password_recovery_requests(requester_user_id, created_at DESC);
+
+-- Server-side authentication sessions: only hashes of random handles are stored.
+-- No sessions are seeded. Logout revocation and account versioning remain independent.
+CREATE TABLE IF NOT EXISTS public.auth_sessions (
+    session_hash BYTEA PRIMARY KEY CHECK (octet_length(session_hash)=32),
+    user_id INTEGER NOT NULL REFERENCES public.users(user_id) ON DELETE RESTRICT,
+    auth_version INTEGER NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
+    expires_at TIMESTAMPTZ NOT NULL DEFAULT (clock_timestamp()+interval '8 hours'),
+    revoked_at TIMESTAMPTZ,
+    CHECK (expires_at > created_at)
+);
+CREATE INDEX IF NOT EXISTS auth_sessions_expiry ON public.auth_sessions(expires_at);
+CREATE INDEX IF NOT EXISTS auth_sessions_user ON public.auth_sessions(user_id);
 
 CREATE TABLE IF NOT EXISTS audit_logs (
     log_id BIGSERIAL PRIMARY KEY,
@@ -458,11 +578,14 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_mat_vw_month ON mat_vw_monthly_profit_summ
 -- 10. REALISTIC SEED DATA (FOR IMMEDIATE TESTING & DEMO)
 -- ============================================================================
 
+-- Demo placeholders cannot authenticate. Never treat them as initialized owners.
+-- Bootstrap creates a separate account with an unused username; no automatic cleanup.
+-- Production installations should omit these demo rows.
 -- Initial Users
 INSERT INTO users (username, password_hash, full_name, role) VALUES
 ('wimalasiri', 'hash_owner_123', 'Wimalasiri (Owner)', 'OWNER'),
-('kasun_cashier', 'hash_cashier_123', 'Kasun (Counter Clerk)', 'CASHIER'),
-('bandara_foreman', 'hash_foreman_123', 'Bandara (Workshop Lead)', 'WORKSHOP_SUPERVISOR')
+('kasun_cashier', 'hash_cashier_123', 'Kasun (Counter Clerk)', 'ASSISTANT'),
+('bandara_foreman', 'hash_foreman_123', 'Bandara (Workshop Lead)', 'ASSISTANT')
 ON CONFLICT (username) DO NOTHING;
 
 -- Initial Customers

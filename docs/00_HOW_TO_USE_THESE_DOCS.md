@@ -24,8 +24,8 @@ Welcome to the WoodFlow repository! Everything in this project is organized into
 👉 **Open:** [`database/team_database_setup_guide.md`](../database/team_database_setup_guide.md)  
 * **What it is:** Step-by-step guide to setting up **PostgreSQL 16 locally** (using **pgAdmin 4** or **Docker**).
 * **How to use it:**
-  1. Create a local database named `woodflow_db` in **pgAdmin 4** (or run `docker compose up -d`).
-  2. Open [`database/schema.sql`](../database/schema.sql), copy everything, and execute it in pgAdmin 4 (`F5`) to create all 16 tables, triggers, stored procedures, views, and sample data locally.
+  1. Follow the database guide to create a local EMPTY `woodflow_db` in **pgAdmin 4**, or configure the ignored Docker `.env` first and use Docker (which initializes fresh volumes automatically; skip step 2 in that case).
+  2. Open [`database/schema.sql`](../database/schema.sql), copy everything, and execute it in pgAdmin 4 (`F5`) once in a NEW EMPTY database; it includes migrations 001–007 and sample data. Existing databases must use only outstanding numbered migrations, not rerun the schema.
   3. Reference [`database/schema.sql`](../database/schema.sql) to see the exact column names, data types, foreign keys, triggers, and stored procedures for your tables.
 
 ---
@@ -55,4 +55,4 @@ Welcome to the WoodFlow repository! Everything in this project is organized into
 ## Rules When Updating the Database During Development
 1. **ADBMS Requirement:** Every member must implement and demonstrate Stored Procedures, Functions, Triggers, or Views for their module in local PostgreSQL.
 2. **Safe Schema Updates:** If you need a new column or procedure while coding, use `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` or `CREATE OR REPLACE` (never `DROP` existing tables/columns without asking the team).
-3. **Keep `database/schema.sql` Updated:** Whenever you add a new column, trigger, view, or stored procedure in your local pgAdmin 4, also paste it into [`database/schema.sql`](../database/schema.sql) and commit it to your Git branch so the whole team stays in sync.
+3. **Keep `database/schema.sql` Updated:** Provide a versioned SQL upgrade migration for existing databases and update the fresh-install definitions in [`database/schema.sql`](../database/schema.sql) and commit it to your Git branch so the whole team stays in sync.

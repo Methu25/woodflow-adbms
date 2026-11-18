@@ -49,3 +49,6 @@ scratch/
 ~$*
 furniture shop kottawa/
 
+# Local environment files
+compose.local.yml
+Dockerfile.frontend.local

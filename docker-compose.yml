@@ -8,15 +8,9 @@ services:
     environment:
       POSTGRES_DB: woodflow_db
       POSTGRES_USER: postgres
-<<<<<<< HEAD
-      POSTGRES_PASSWORD: password123
-    ports:
-      - "5432:5432"
-=======
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set your own POSTGRES_PASSWORD in the ignored .env file}
     ports:
       - "127.0.0.1:5432:5432"
->>>>>>> a0e16ba2e8ac0fc5540fc667b8e32ed131ca8aea
     volumes:
       - postgres_data:/var/lib/postgresql/data
       # Automatically executes schema.sql and seed data on first startup!
@@ -24,3 +18,6 @@ services:
 
 volumes:
   postgres_data:
+
+# Ignore the .env file containing sensitive information
+.env

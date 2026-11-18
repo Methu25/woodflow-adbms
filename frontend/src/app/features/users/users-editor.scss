@@ -1,0 +1,25 @@
+label { display: block; font-size: 12px; font-weight: 600; margin: 0 0 8px; }
+input, select { width: 100%; min-width: 0; min-height: 44px; border: 1px solid #bfd5ed; border-radius: 8px; padding: 12px; background: white; color: #073763; }
+fieldset { border: 0; padding: 0; margin: 0; } .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 18px; }
+.create-layout { display: grid; grid-template-columns: minmax(0, 1fr) 230px; gap: 28px; padding: 28px; }
+.access-guide { background: var(--ash); border: 1px solid var(--line); border-radius: 12px; padding: 20px; } .access-guide p, .access-guide small { font-size: 11px; line-height: 1.7; }
+dialog { inset: 12px 12px 12px auto; margin: 0; width: min(400px, calc(100% - 24px)); max-height: calc(100dvh - 24px); overflow-y: auto; border: 1px solid var(--line); border-radius: 16px; padding: 24px; color: #073763; }
+dialog::backdrop { background: #07376366; } dialog .panel-heading { padding: 0 0 20px; } .profile { text-align: center; padding: 24px 0; } .profile .avatar { width: 56px; height: 56px; font-size: 20px; } .role-editor button { width: 100%; margin-top: 16px; }
+dl { margin: 0 0 24px; } dt { font-size: 10px; color: #526b85; margin-top: 18px; } dd { margin: 6px 0 0; font-size: 13px; overflow-wrap: anywhere; }
+@media (max-width: 1250px) { .create-layout { grid-template-columns: 1fr; } }
+.avatar { display: inline-grid; place-items: center; flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; background: #075b91; color: white; font-weight: 600; }
+.badge { display: inline-block; border-radius: 20px; padding: 5px 8px; background: #eaf3fc; font-size: 10px; white-space: nowrap; } .muted { background: #f1f5f9; color: #526b85; }
+.access-summary { padding: 18px; margin-bottom: 24px; border: 1px solid var(--line); border-radius: 12px; background: #f3f8fe; }
+.access-summary dd { text-transform: capitalize; }
+.action-permissions { --action-bg: #d9edf9; --action-text: #075b91; --action-border: #a8d4ef; }
+.role-owner, .owner-badge { background: #e0ecfc; border-color: #7da7ce; color: #073763; }
+.role-assistant, .assistant-badge { background: #d9f3ef; border-color: #79bdb2; color: #075b50; }
+.role-guide { margin-top: 10px; padding: 12px; border: 1px solid; border-radius: 10px; font-size: 11px; line-height: 1.6; }
+.role-guide p { font-size: 11px; margin-top: 6px; color: inherit; }
+option[value='OWNER'] { color: #073763; background: #e0ecfc; }
+option[value='ASSISTANT'] { color: #075b50; background: #d9f3ef; }
+@media (min-width: 1101px) and (max-height: 760px) {
+  .user-management > .page-heading { min-height: 130px; padding: 18px 22px; margin-bottom: 20px; }
+  .user-management .cards > .card { min-height: 82px; padding: 12px 14px; }
+}
+@media (max-width: 600px) { .form-grid, .cards { grid-template-columns: 1fr; } .panel-heading, .create-layout { padding: 18px; } .panel-heading { flex-wrap: wrap; } .search { padding: 18px; } }

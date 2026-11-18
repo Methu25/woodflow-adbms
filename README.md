@@ -2,7 +2,7 @@
 
 **Client:** Wimalasiri Furniture, High Level Road, Kottawa  
 **Module:** CS304.3 — Advanced Database Management Systems (ADBMS)  
-**Tech Stack:** Angular (Standalone UI) • ASP.NET Core 8 Web API • PostgreSQL 16 (Supabase Cloud)
+**Tech Stack:** Angular 18 (Standalone UI) • ASP.NET Core 10 Web API • PostgreSQL 16 (Local RDBMS via pgAdmin 4 / Docker)
 
 ---
 
@@ -10,9 +10,8 @@
 
 ```text
 ├── database/
-│   ├── schema.sql                         # Master PostgreSQL 16 schema (16 tables, SPs, triggers, views, seed data)
-│   ├── supabase_setup_guide.md            # Cloud Supabase database setup guide
-│   └── team_database_setup_guide.md       # Quick connection guide for all 10 team members
+│   ├── schema.sql                         # Consolidated PostgreSQL 16 schema through migration 007
+│   └── team_database_setup_guide.md       # Step-by-step local PostgreSQL 16 setup guide (pgAdmin 4 & Docker)
 ├── docs/
 │   ├── 00_HOW_TO_USE_THESE_DOCS.md        # START HERE: Guide on how to navigate & use all project files
 │   ├── CS304_3_Final_Project_Proposal_WoodFlow.docx  # Finalized Project Proposal Report
@@ -30,6 +29,10 @@
 
 ## Quick Start for Team Members
 
+**Start with [TEAM_DEVELOPMENT_SETUP.md](TEAM_DEVELOPMENT_SETUP.md).** It is the
+authoritative setup, security ownership, design and pre-push safety guide.
+The notes below are a short summary; linked feature guides provide API details.
+
 ### 1. Clone the Repository & Create Your Feature Branch
 Never commit directly to `main`. Create a feature branch for your assigned module:
 ```bash
@@ -38,13 +41,39 @@ cd woodflow-adbms
 git checkout -b feature/member-XX-module-name
 ```
 
-### 2. Connect to the Shared Database
-Read **[`database/team_database_setup_guide.md`](database/team_database_setup_guide.md)** for full instructions.
-- **Recommended (Zero Install):** Copy the `appsettings.secrets.json` file shared in the team group chat into your project root to connect directly to our live **Supabase Cloud PostgreSQL 16** database.
-- **Offline Alternative (Docker):** Run `docker compose up -d` in the root folder to spin up a local PostgreSQL 16 container pre-loaded with [`database/schema.sql`](database/schema.sql).
+### 2. Initialize your local database
+
+Follow [database/team_database_setup_guide.md](database/team_database_setup_guide.md).
+For a NEW empty PostgreSQL 16 database, apply `database/schema.sql` once only;
+it includes migrations 001–007. Existing databases use outstanding migrations
+in order instead. Never rerun the schema on a working database.
+Optional Docker requires your own password in ignored `.env` (see `.env.example`);
+its existing named volume is preserved. Native PostgreSQL and Docker cannot both
+bind the same port.
+
+### 3. Restore and start the applications
+
+Install .NET 10 SDK, Node.js 22 and npm 10+. Source projects and tests are in
+`backend/`; Angular source, local assets and startup scripts are in `frontend/`;
+upgrade scripts remain in `database/migrations/`.
+
+```powershell
+dotnet restore backend/WoodFlow.slnx
+dotnet build backend/WoodFlow.slnx
+npm.cmd --prefix frontend ci
+```
+
+[backend/README.md](backend/README.md) explains private database configuration and
+starting the API at **https://localhost:7001**.
+[frontend/README.md](frontend/README.md) explains generating/trusting each laptop's
+own development certificate and `npm start` at **https://localhost:4200**.
+Follow [backend/AUTH_SETUP.md](backend/AUTH_SETUP.md) for your own first OWNER.
+Never commit secrets, `.env`, private keys, local appsettings, generated folders
+or database exports. Existing shared database credentials should be rotated.
+Older proposal/design documents describe planned modules; current runtime setup
+is documented in the linked backend/frontend guides.
 
 ---
-
 ## 10-Member Modular Workload Division
 
 Full details: **[`docs/02_modular_architecture_and_workload_division.md`](docs/02_modular_architecture_and_workload_division.md)**

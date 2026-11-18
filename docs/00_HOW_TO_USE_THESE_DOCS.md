@@ -3,7 +3,7 @@
 **Project:** WoodFlow — Wimalasiri Furniture, Kottawa  
 **Target Audience:** All 10 Team Members  
 
-Welcome to the WoodFlow repository! Everything in this project is organized into two folders (`database/` and `docs/`) so every member can build their assigned Full-Stack Vertical Slice (PostgreSQL + ASP.NET Core + Angular) without getting blocked.
+Welcome to the WoodFlow repository! Everything in this project is organized into two folders (`database/` and `docs/`) so every member can build their assigned Full-Stack Vertical Slice (PostgreSQL 16 + ASP.NET Core + Angular) without getting blocked.
 
 ---
 
@@ -20,12 +20,12 @@ Welcome to the WoodFlow repository! Everything in this project is organized into
 
 ---
 
-### Step 2: Connect Your Laptop to the Shared Database
+### Step 2: Set Up Your Local PostgreSQL 16 Database
 👉 **Open:** [`database/team_database_setup_guide.md`](../database/team_database_setup_guide.md)  
-* **What it is:** Beginner-friendly guide to connecting to our live **Supabase Cloud PostgreSQL 16** database.
+* **What it is:** Step-by-step guide to setting up **PostgreSQL 16 locally** (using **pgAdmin 4** or **Docker**).
 * **How to use it:**
-  1. Download the `appsettings.secrets.json` file shared in our **private WhatsApp group** and place it in your project root folder.
-  2. Do **NOT** install PostgreSQL locally unless you want to work offline — all 16 tables and seed data are already live in Supabase!
+  1. Follow the database guide to create a local EMPTY `woodflow_db` in **pgAdmin 4**, or configure the ignored Docker `.env` first and use Docker (which initializes fresh volumes automatically; skip step 2 in that case).
+  2. Open [`database/schema.sql`](../database/schema.sql), copy everything, and execute it in pgAdmin 4 (`F5`) once in a NEW EMPTY database; it includes migrations 001–007 and sample data. Existing databases must use only outstanding numbered migrations, not rerun the schema.
   3. Reference [`database/schema.sql`](../database/schema.sql) to see the exact column names, data types, foreign keys, triggers, and stored procedures for your tables.
 
 ---
@@ -48,11 +48,11 @@ Welcome to the WoodFlow repository! Everything in this project is organized into
 ### Step 5: Reference the UI Wireframes (Initial Prototype Only)
 👉 **Open:** [`docs/ui_wireframes_ash_blue.html`](ui_wireframes_ash_blue.html) *(Double-click this file on your computer to open it in Chrome/Edge)*  
 * **What it is:** An interactive HTML layout showing the **Ash & Blue** color theme and sample screen layouts.
-* **⚠️ IMPORTANT NOTE ON UI:** **This wireframe file is ONLY an initial visual concept/reference — it is NOT the final UI!** The layout, components, and fields **will change and improve** as each member develops their actual Angular screens.
+* **IMPORTANT NOTE ON UI:** **This wireframe file is ONLY an initial visual concept/reference — it is NOT the final UI!** The layout, components, and fields **will change and improve** as each member develops their actual Angular screens.
 
 ---
 
 ## Rules When Updating the Database During Development
-1. **ADBMS Requirement:** Every member must implement/demonstrate Stored Procedures, Functions, Triggers, or Views for their module.
-2. **Safe Schema Updates:** If you need a new column or procedure while coding, run `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` or `CREATE OR REPLACE` in Supabase (never `DROP` existing tables/columns without asking the team).
-3. **Keep `database/schema.sql` Updated:** Whenever you add a new column, trigger, view, or stored procedure in Supabase, also add it to [`database/schema.sql`](../database/schema.sql) and commit it to your Git branch.
+1. **ADBMS Requirement:** Every member must implement and demonstrate Stored Procedures, Functions, Triggers, or Views for their module in local PostgreSQL.
+2. **Safe Schema Updates:** If you need a new column or procedure while coding, use `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` or `CREATE OR REPLACE` (never `DROP` existing tables/columns without asking the team).
+3. **Keep `database/schema.sql` Updated:** Provide a versioned SQL upgrade migration for existing databases and update the fresh-install definitions in [`database/schema.sql`](../database/schema.sql) and commit it to your Git branch so the whole team stays in sync.

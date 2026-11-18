@@ -1,0 +1,31 @@
+<app-auth-layout title="Sign In to Workspace">
+  @if (setupComplete) {
+    <p class="wf-notice" role="status">Your owner account is ready. Sign in to continue.</p>
+  }
+  <form [formGroup]="form" (ngSubmit)="submit()" [attr.aria-busy]="pending()" novalidate>
+    <fieldset [disabled]="pending()">
+      <div class="wf-field">
+        <label for="login-username">Username <small>Owner or staff username</small></label>
+        <div class="wf-input" [class.invalid]="!!fieldError('username')">
+          <img src="/assets/auth/226-1551/1e4c3.svg" alt="" aria-hidden="true" />
+          <input id="login-username" formControlName="username" autocomplete="username" maxlength="50"
+            spellcheck="false" autocapitalize="none" [attr.aria-invalid]="!!fieldError('username')"
+            [attr.aria-describedby]="fieldError('username') ? 'login-username-error' : null" />
+        </div>
+        @if (fieldError('username')) { <p id="login-username-error" class="wf-field-error">{{ fieldError('username') }}</p> }
+      </div>
+      <app-password-field [control]="form.controls.password" inputId="login-password" [error]="fieldError('password')" />
+      <div class="login-help"><span>Your session is protected.</span><a routerLink="/forgot-password">Forgot Password?</a></div>
+      @if (error()) { <p class="wf-error" role="alert">{{ error() }}</p> }
+      <button class="wf-primary" type="submit" [disabled]="pending()">
+        @if (pending()) { <span class="wf-spinner" aria-hidden="true"></span> }
+        {{ pending() ? 'Signing in…' : 'Log In' }}
+      </button>
+      <aside class="wf-info">
+        <img src="/assets/auth/226-1551/47813.svg" alt="" aria-hidden="true" />
+        <p><strong>Staff account?</strong> Staff logins are managed by the business owner.
+          Contact your owner if you need access or password assistance.</p>
+      </aside>
+    </fieldset>
+  </form>
+</app-auth-layout>

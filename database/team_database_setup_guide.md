@@ -1,87 +1,65 @@
-# Team Database Setup Guide (Simple & Beginner-Friendly)
-**System:** WoodFlow — Wimalasiri Furniture, Kottawa  
-**Target Audience:** All 10 Team Members  
-**Primary Recommendation:** Option 1 (Cloud Supabase) — Zero Installation Required!
+# Team local database setup (PostgreSQL 16)
 
----
+Each developer owns an independent local `woodflow_db`. Install PostgreSQL 16
+with pgAdmin, .NET 10 SDK, Node.js 22 and npm 10 or newer. Choose your own private
+PostgreSQL password; never put credentials in source control or shared messages.
 
-## Which Option Should You Use?
+## New, empty database only
 
-* **Option 1 (Recommended for All 10 Members): Cloud Supabase Database**
-  * **Zero software installation required** on your laptop (No Docker, no pgAdmin needed).
-  * Everyone connects to the **same live database**; no database drift or missing tables.
-  * Web interface lets you view and edit data like an online spreadsheet.
-  * See full setup instructions: [`supabase_setup_guide.md`](supabase_setup_guide.md).
+From the repository root in PowerShell (adjust the executable path if needed):
 
-* **Option 2 (Offline Alternative): Direct Local pgAdmin Setup**
-  * Use this if you want to work completely offline without internet access.
-  * Lightweight native Windows installer.
-
-* **Option 3 (Containerized): 1-Command Docker Setup**
-  * Use this if you already use Docker Desktop on your machine.
-
----
-
-## Option 1 (Recommended): Shared Cloud Database via Supabase
-
-### Why We Use Supabase (And Not Firebase)
-Your university module is **CS304.3 Advanced Database Management Systems (ADBMS)**.
-* **Why not Firebase?** Firebase is a NoSQL document database. It does not support SQL stored procedures, triggers, 3NF relational normalization, foreign keys, or ACID multi-table transactions. Using Firebase would fail the grading rubric for this course!
-* **Why Supabase?** Supabase provides the exact same cloud convenience as Firebase, but runs **enterprise PostgreSQL 16**. It runs all 16 relational tables, triggers, and stored procedures in our [`database/schema.sql`](schema.sql) file while letting all 10 members share one live URL.
-
-### How to Connect (For Team Members)
-Once the project lead creates the Supabase database and runs [`database/schema.sql`](schema.sql), each member only needs to paste the connection string into their ASP.NET Core `appsettings.json`:
-
-```json
-{
-  "ConnectionStrings": {
-    "WoodFlowDb": "Host=aws-0-ap-northeast-1.pooler.supabase.com;Port=5432;Database=postgres;Username=postgres.[PROJECT-REF];Password=[YOUR-PASSWORD];SSL Mode=Require;Trust Server Certificate=true;"
-  }
-}
+```powershell
+$pgUser = Read-Host 'Local PostgreSQL administrator username'
+& "$env:ProgramFiles\PostgreSQL\16\bin\createdb.exe" -h localhost -p 5432 -U $pgUser -W woodflow_db
+if ($LASTEXITCODE -ne 0) { throw 'Database creation failed; stop and inspect before proceeding.' }
+& "$env:ProgramFiles\PostgreSQL\16\bin\psql.exe" -h localhost -p 5432 -U $pgUser -W -d woodflow_db -v ON_ERROR_STOP=1 -f database/schema.sql
+if ($LASTEXITCODE -ne 0) { throw 'Schema initialization failed; do not start the application yet.' }
 ```
 
----
+Enter your password privately at each prompt. Alternatively create an EMPTY
+`woodflow_db` in pgAdmin and execute the entire `schema.sql` there once.
+The consolidated schema includes migrations 001–007, required system rows and
+sample data. Do NOT apply 001–007 afterward. Standard PostgreSQL 16 supplies
+`uuid-ossp`; initialization needs permission to install this extension.
+Demo password hashes cannot log in. Initialize your own OWNER using
+[AUTH_SETUP.md](../backend/AUTH_SETUP.md); never share an account or setup code.
 
-## Option 2: The Direct pgAdmin Setup (Offline Local Database)
+## Existing databases
 
-If any member wants to develop offline without an internet connection:
+Back up first. Never rerun the full schema or reset a working database.
+Apply only outstanding files from `database/migrations/`, in numeric order,
+with the backend stopped and `psql -v ON_ERROR_STOP=1 -f <migration-path>`
+against the intended database (or execute each complete file in pgAdmin).
+There is no automatic migration runner/history table: keep an explicit record
+of applied migrations. If unsure, inspect the database before applying anything.
+Future changes need explicit upgrade migrations; do not tell teammates to paste
+arbitrary updated schema sections into an existing database.
 
-1. Download and install standard **PostgreSQL 16 for Windows** (includes pgAdmin 4): [https://www.postgresql.org/download/windows/](https://www.postgresql.org/download/windows/)
-2. Open **pgAdmin 4**.
-3. Right-click on **Databases** &rarr; **Create** &rarr; **Database...**
-4. Name the database: `woodflow_db` and click **Save**.
-5. Right-click `woodflow_db` &rarr; click **Query Tool**.
-6. Open [`database/schema.sql`](schema.sql), copy everything (`Ctrl + A`, `Ctrl + C`), paste into the Query Tool, and press **Execute (F5)**.
-7. Set your local `appsettings.json`:
-   ```json
-   {
-     "ConnectionStrings": {
-       "WoodFlowDb": "Host=localhost;Port=5432;Database=woodflow_db;Username=postgres;Password=password123"
-     }
-   }
-   ```
+## Optional Docker database
 
----
+Use either native PostgreSQL or Docker on port 5432, not both simultaneously.
+From the root, copy the non-secret template and privately edit the ignored file:
 
-## Option 3: The 1-Command Docker Setup (For Docker Users)
+```powershell
+Copy-Item .env.example .env
+notepad .env
+docker compose up -d
+```
 
-If you already have **Docker Desktop** installed and running:
+Set `POSTGRES_PASSWORD` to your own unique local password before startup.
+Docker binds only `127.0.0.1:5432`, creates `woodflow_db` with user `postgres`,
+and initializes the schema ONLY when its named `postgres_data` volume is empty.
+Existing volumes/data are preserved. Changing `.env` does NOT change an existing
+volume's PostgreSQL password. Do not delete volumes to fix a connection problem.
+If you previously used the shared credential, rotate it through a deliberate
+administrator password change and update your private local configuration.
+Never commit `.env`, database exports, private certificates or password hashes.
 
-1. Open PowerShell in the project root directory:
-   ```bash
-   cd c:\Projects\adbms
-   ```
-2. Run:
-   ```bash
-   docker compose up -d
-   ```
-   Docker will automatically download PostgreSQL 16, start it on port `5432`, and run [`database/schema.sql`](schema.sql) to seed the database.
+## Application connection and HTTPS
 
----
-
-## Verifying That Your Connection Works
-
-Regardless of which option you use, running the following test query will return the pre-populated seed data:
-* `SELECT * FROM finished_furniture;` &rarr; Displays King Size Teak Bed, Dining Table, Wardrobe.
-* `SELECT * FROM customers;` &rarr; Displays sample Kottawa customers.
-* `SELECT * FROM raw_materials;` &rarr; Displays timber planks, varnish, and velvet fabric.
+Use [backend/README.md](../backend/README.md) to enter credentials privately into
+`ConnectionStrings__WoodFlowDb` for your current PowerShell session.
+Use [frontend/README.md](../frontend/README.md) to generate and trust your OWN
+localhost HTTPS certificate and start Angular. Defaults: API
+`https://localhost:7001`, frontend `https://localhost:4200`, PostgreSQL
+`localhost:5432`. Credentials and certificates are never supplied by Git.

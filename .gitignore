@@ -18,6 +18,14 @@ $RECYCLE.BIN/
 *.sln.docstates
 
 # .NET / Build Outputs
+<<<<<<< HEAD
+=======
+.vs/
+TestResults/
+artifacts/
+*.nupkg
+*.snupkg
+>>>>>>> a0e16ba2e8ac0fc5540fc667b8e32ed131ca8aea
 bin/
 obj/
 Debug/
@@ -35,6 +43,22 @@ yarn-debug.log*
 yarn-error.log*
 
 # Environment and Secrets
+<<<<<<< HEAD
+=======
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+database/exports/
+database/backups/
+*.dump
+*.backup
+/My database.sql
+appsettings.*.local.json
+*.pfx
+*.p12
+>>>>>>> a0e16ba2e8ac0fc5540fc667b8e32ed131ca8aea
 *.env
 *.env.local
 *.env.production
@@ -49,6 +73,9 @@ scratch/
 ~$*
 furniture shop kottawa/
 
+<<<<<<< HEAD
 # Local environment files
 compose.local.yml
 Dockerfile.frontend.local
+=======
+>>>>>>> a0e16ba2e8ac0fc5540fc667b8e32ed131ca8aea

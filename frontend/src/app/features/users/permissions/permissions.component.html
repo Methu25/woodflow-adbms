@@ -1,0 +1,38 @@
+<section aria-labelledby="permissions-title">
+  <header class="page-heading"><div><p class="eyebrow">WORKSPACE / ACCESS CONTROL</p><h1 id="permissions-title">{{ matrix()?.user ? matrix()!.user!.fullName + ': Permissions' : 'Assistant Role Defaults' }}</h1><p>{{ userId ? 'Manage access for this assistant without changing the rest of the team.' : 'Change shared permissions for all assistants using role defaults, in one place.' }}</p></div><a class="back-link" routerLink="/users">← Users &amp; Roles</a></header>
+  <div class="permissions-layout">
+    <div class="panel">
+      <header class="panel-heading"><img class="panel-art" src="/assets/dashboard/welcome-room.png" alt="" aria-hidden="true" /><div><p class="eyebrow">{{ userId ? 'INDIVIDUAL ASSISTANT ACCESS' : 'ROLE-WIDE DEFAULTS' }}</p><h2>Permission matrix</h2><p>{{ matrix()?.user ? matrix()!.user!.username + ' · ' + matrix()!.user!.status : 'Default access for ASSISTANT accounts.' }}</p></div><button (click)="load()" [disabled]="loading() || saving()">Reload</button></header>
+      @if (error()) { <p class="notice" role="alert">{{ error() }}</p> }
+      @if (success()) { <p class="notice" role="status">{{ success() }}</p> }
+      @if (loading()) { <p class="empty" role="status">Loading current permissions…</p> }
+      @if (matrix(); as matrix) {
+        @if (!matrix.user) {
+          <div class="scope-note"><strong>Update shared access for your assistant team</strong><p>Saving here updates all ASSISTANT accounts that use role defaults at once. Assistants with individual overrides keep their custom permissions. To change one person's access, use Manage Permissions on their account row.</p></div>
+        }
+        @if (matrix.user) {
+          <div class="scope-note"><span class="integration-tag">{{ matrix.inheritsRole ? 'Using role defaults' : 'Individual override' }}</span><p>{{ matrix.inheritsRole ? 'Saving a change creates an override for this person only.' : 'Role-default changes do not replace this person’s custom permissions.' }}</p>
+            @if (!matrix.inheritsRole) { <button (click)="save(true)" [disabled]="saving() || conflict() || readonlyAccount()">Restore role defaults</button> }
+            @if (readonlyAccount()) { <p>This account is permanently deactivated. Permissions are read-only.</p> }
+          </div>
+        }
+        <p class="matrix-hint">Enable an action to include View automatically. Disabling View removes the other actions for that module.</p>
+        <div class="table-scroll" role="region" aria-label="Assistant permissions matrix" tabindex="0">
+          <table><caption class="sr-only">Assistant permissions by module and action</caption><thead><tr><th scope="col">Module</th>@for (action of actions; track action) { <th scope="col">{{ action }}</th> }</tr></thead>
+            <tbody>@for (module of matrix.modules; track module.key) {
+              <tr><th scope="row"><strong>{{ module.label }}</strong><small>{{ module.description }}</small><span class="integration-tag">{{ module.key === 'dashboard' ? 'Dashboard navigation connected' : 'Future module integration' }}</span></th>
+                @for (action of actions; track action) {
+                  <td>@if (definition(module, action); as permission) {
+                    <label class="permission-toggle"><input #permissionInput type="checkbox" [checked]="grants().has(permission.key)" [disabled]="saving() || loading() || conflict() || readonlyAccount()" (change)="toggle(module, permission, permissionInput.checked)" [attr.aria-label]="module.label + ': ' + action" /><span aria-hidden="true"></span></label>
+                  } @else { <span class="not-applicable" aria-label="Not applicable">—</span> }</td>
+                }
+              </tr>
+            }</tbody></table>
+        </div>
+        <footer class="save-bar"><p>{{ dirty() ? 'You have unsaved changes' : 'All changes saved' }}</p><div><button (click)="reset()" [disabled]="!dirty() || saving()">Discard</button><button class="primary" (click)="save()" [disabled]="!dirty() || saving() || conflict() || loading() || readonlyAccount()">{{ saving() ? 'Saving…' : 'Save Permissions' }}</button></div></footer>
+      } @else if (!loading()) { <div class="empty"><h3>Unable to load permissions</h3><button (click)="load()">Try again</button></div> }
+    </div>
+    <aside class="guidance"><span class="lock-icon" aria-hidden="true"><img src="/assets/navigation/users.svg" alt="" /></span><p class="eyebrow">OWNER CONTROLLED</p><h2>The right access.<br />For each responsibility.</h2><p>{{ userId ? 'Changes here affect this assistant only. Restore role defaults whenever shared access is appropriate.' : 'Role defaults apply to assistants without individual overrides. Custom access is managed from each account’s table row.' }}</p><hr /><h3>OWNER access is fixed</h3><p>Owners retain full access. This matrix cannot grant administrative access to assistants.</p><h3>Administrative areas stay locked</h3><p>User management, permission administration, security settings and audit administration remain OWNER-only.</p><hr /><p class="hint">Business permission keys are ready for your teammates to connect. Unimplemented modules do not have protected business endpoints yet.</p></aside>
+  </div>
+</section>
+<app-user-feedback-dialog />

@@ -56,6 +56,146 @@ export interface UpsertFinishedFurnitureRequest {
   isActive?: boolean;
 }
 
+export interface StockMovementDto {
+  movementId: number;
+  movementCode: string;
+  productId: number;
+  skuCode: string;
+  itemName: string;
+  movementType: string;
+  movementLabel: string;
+  quantityChanged: number;
+  stockBefore: number;
+  stockAfter: number;
+  referenceId: string;
+  performedByName: string;
+  notes: string | null;
+  createdAt: string;
+}
+
+export interface StockMovementLedgerResponse {
+  movements: StockMovementDto[];
+  totalCount: number;
+  inboundCount: number;
+  salesOutCount: number;
+  auditAdjustmentCount: number;
+}
+
+const FALLBACK_MOVEMENTS: StockMovementDto[] = [
+  {
+    movementId: 1,
+    movementCode: '#MOV-9048',
+    productId: 1001,
+    skuCode: 'FF-LIV-001',
+    itemName: 'Aurelia 3-Piece Lounge Suite',
+    movementType: 'POS_SALE',
+    movementLabel: 'POS Sale Out',
+    quantityChanged: -2,
+    stockBefore: 10,
+    stockAfter: 8,
+    referenceId: 'INV-2026-0892 · Yohan M.',
+    performedByName: 'Yohan M.',
+    notes: 'POS Sale (trg_pos_stock_deduct)',
+    createdAt: '2026-11-13T10:42:00+05:30',
+  },
+  {
+    movementId: 2,
+    movementCode: '#MOV-9047',
+    productId: 1002,
+    skuCode: 'FF-BED-004',
+    itemName: 'Kandy Royal King Teak Bed',
+    movementType: 'WORKSHOP_COMPLETED',
+    movementLabel: 'Workshop In',
+    quantityChanged: 3,
+    stockBefore: 2,
+    stockAfter: 5,
+    referenceId: 'PROD-JOB-145 · Sanith N.',
+    performedByName: 'Sanith N.',
+    notes: 'Workshop Finishing In',
+    createdAt: '2026-11-13T09:15:00+05:30',
+  },
+  {
+    movementId: 3,
+    movementCode: '#MOV-9046',
+    productId: 1003,
+    skuCode: 'FF-DIN-002',
+    itemName: 'Riviera 6-Chair Dining Set',
+    movementType: 'CUSTOM_DELIVERY',
+    movementLabel: 'Custom Delivery',
+    quantityChanged: -1,
+    stockBefore: 3,
+    stockAfter: 2,
+    referenceId: 'DEL-2026-108 · Dilshan S.',
+    performedByName: 'Dilshan S.',
+    notes: 'Custom Delivery Dispatch',
+    createdAt: '2026-11-12T16:30:00+05:30',
+  },
+  {
+    movementId: 4,
+    movementCode: '#MOV-9045',
+    productId: 1006,
+    skuCode: 'FF-BED-012',
+    itemName: 'Royal Arch 3-Door Wardrobe',
+    movementType: 'STOCK_CORRECTION',
+    movementLabel: 'Audit Adjustment',
+    quantityChanged: -1,
+    stockBefore: 2,
+    stockAfter: 1,
+    referenceId: 'AUD-NOV-04 · P Rejishanth',
+    performedByName: 'P Rejishanth',
+    notes: 'Transferred display unit to Kandy branch',
+    createdAt: '2026-11-12T11:20:00+05:30',
+  },
+  {
+    movementId: 5,
+    movementCode: '#MOV-9044',
+    productId: 1004,
+    skuCode: 'FF-OFF-009',
+    itemName: 'Moratuwa Executive Suite',
+    movementType: 'WORKSHOP_COMPLETED',
+    movementLabel: 'Workshop In',
+    quantityChanged: 2,
+    stockBefore: 2,
+    stockAfter: 4,
+    referenceId: 'PROD-JOB-139 · Rakshan P.',
+    performedByName: 'Rakshan P.',
+    notes: 'Workshop Finishing In',
+    createdAt: '2026-11-11T15:05:00+05:30',
+  },
+  {
+    movementId: 6,
+    movementCode: '#MOV-9043',
+    productId: 1005,
+    skuCode: 'FF-LIV-007',
+    itemName: 'Ceylon Heritage Sofa Bed',
+    movementType: 'POS_SALE',
+    movementLabel: 'POS Sale Out',
+    quantityChanged: -2,
+    stockBefore: 2,
+    stockAfter: 0,
+    referenceId: 'INV-2026-0874 · Yohan M.',
+    performedByName: 'Yohan M.',
+    notes: 'POS Sale (trg_pos_stock_deduct)',
+    createdAt: '2026-11-10T14:50:00+05:30',
+  },
+  {
+    movementId: 7,
+    movementCode: '#MOV-9042',
+    productId: 1010,
+    skuCode: 'FF-LIV-014',
+    itemName: 'Teak Verandah Lounge Chair',
+    movementType: 'SHOWROOM_RETURN',
+    movementLabel: 'Showroom Return',
+    quantityChanged: 1,
+    stockBefore: 5,
+    stockAfter: 6,
+    referenceId: 'RET-2026-019 · P Rejishanth',
+    performedByName: 'P Rejishanth',
+    notes: 'Customer exchange returned to showroom floor',
+    createdAt: '2026-11-09T12:10:00+05:30',
+  },
+];
+
 const FALLBACK_CATALOG_ITEMS: FinishedFurnitureItem[] = [
   {
     productId: 1001,
@@ -252,6 +392,47 @@ export class FinishedFurnitureService {
       switchMap(() => this.http.delete<void>(`${this.baseUrl}/${productId}`)),
       timeout(12000),
     );
+  }
+
+  listMovements(productId: number | null = null, filterType = 'ALL'): Observable<StockMovementLedgerResponse> {
+    const params: Record<string, string> = {};
+    if (productId !== null && productId > 0) params['productId'] = String(productId);
+    if (filterType && filterType !== 'ALL') params['filterType'] = filterType;
+
+    return this.http.get<StockMovementLedgerResponse>(`${this.baseUrl}/movements`, { params }).pipe(
+      timeout(12000),
+      catchError(() => of(this.filterLocalMovements(productId, filterType))),
+    );
+  }
+
+  private filterLocalMovements(productId: number | null, filterType: string): StockMovementLedgerResponse {
+    let base = [...FALLBACK_MOVEMENTS];
+    if (productId !== null && productId > 0) {
+      base = base.filter(m => m.productId === productId);
+    }
+
+    const inboundCount = base.filter(m => m.quantityChanged > 0 && m.movementType !== 'STOCK_CORRECTION').length;
+    const salesOutCount = base.filter(m => m.quantityChanged < 0 && m.movementType !== 'STOCK_CORRECTION').length;
+    const auditAdjustmentCount = base.filter(m => m.movementType === 'STOCK_CORRECTION').length;
+
+    let filtered = base;
+    if (filterType && filterType !== 'ALL') {
+      if (filterType === 'INBOUND') {
+        filtered = base.filter(m => m.quantityChanged > 0 && m.movementType !== 'STOCK_CORRECTION');
+      } else if (filterType === 'SALES_OUT') {
+        filtered = base.filter(m => m.quantityChanged < 0 && m.movementType !== 'STOCK_CORRECTION');
+      } else if (filterType === 'AUDIT') {
+        filtered = base.filter(m => m.movementType === 'STOCK_CORRECTION');
+      }
+    }
+
+    return {
+      movements: filtered,
+      totalCount: base.length,
+      inboundCount,
+      salesOutCount,
+      auditAdjustmentCount,
+    };
   }
 
   private filterLocalCatalog(category: string, search: string): FinishedCatalogResponse {

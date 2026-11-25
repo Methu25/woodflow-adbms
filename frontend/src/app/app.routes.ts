@@ -54,6 +54,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/inventory/furniture-item-editor.component').then(m => m.FurnitureItemEditorComponent),
       },
       {
+        path: 'inventory/movements',
+        canActivate: [permissionGuard], data: { permission: 'inventory.view' },
+        title: 'Stock Movement Ledger | WoodFlow',
+        loadComponent: () => import('./features/inventory/stock-movement-ledger.component').then(m => m.StockMovementLedgerComponent),
+      },
+      {
         path: 'inventory',
         canActivate: [permissionGuard], data: { permission: 'inventory.view' },
         title: 'Finished Furniture Inventory | WoodFlow',

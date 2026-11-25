@@ -229,6 +229,9 @@ export class FinishedFurnitureService {
     return this.auth.refreshCsrf().pipe(
       switchMap(() => this.http.post<FinishedFurnitureItem>(this.baseUrl, request)),
       timeout(12000),
+      tap(created => {
+        this.localItems.update(list => [created, ...list]);
+      }),
     );
   }
 
@@ -236,6 +239,11 @@ export class FinishedFurnitureService {
     return this.auth.refreshCsrf().pipe(
       switchMap(() => this.http.put<FinishedFurnitureItem>(`${this.baseUrl}/${productId}`, request)),
       timeout(12000),
+      tap(updated => {
+        this.localItems.update(list =>
+          list.map(item => (item.productId === productId ? updated : item)),
+        );
+      }),
     );
   }
 

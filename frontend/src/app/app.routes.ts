@@ -41,6 +41,12 @@ export const routes: Routes = [
         title: 'Dashboard | WoodFlow',
         loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent),
       },
+      {
+        path: 'inventory',
+        canActivate: [permissionGuard], data: { permission: 'inventory.view' },
+        title: 'Finished Furniture Inventory | WoodFlow',
+        loadComponent: () => import('./features/inventory/showroom-catalog.component').then(m => m.ShowroomCatalogComponent),
+      },
     ],
   },
   { path: '**', redirectTo: 'dashboard' },

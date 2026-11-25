@@ -1,0 +1,37 @@
+.btn-apply-top, .btn-apply-bottom { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 38px; padding: 0 22px; border: 0; border-radius: 10px; background: linear-gradient(95deg, #1685c5, #08a9c9); color: #fff; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.btn-apply-bottom { height: 44px; padding: 0 26px; }
+.btn-apply-top:disabled, .btn-apply-bottom:disabled { opacity: .55; cursor: not-allowed; }
+.audit-banner { padding: 12px 16px; margin-bottom: 14px; border-radius: 10px; font-size: 13px; font-weight: 600; }
+.audit-banner.error { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }
+.audit-banner.success { background: #ecfdf5; border: 1px solid #a7f3d0; color: #047857; }
+.audit-session-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 24px; margin-bottom: 18px; background: #fff; border: 1px solid #cfe2f3; border-radius: 14px; flex-wrap: wrap; }
+.session-info h2 { margin: 0 0 4px; font-size: 16px; font-weight: 700; color: #073763; }
+.session-info p { margin: 0; font-size: 12.5px; color: #5c7690; }
+.session-metrics { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.metric-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+.metric-pill .dot { width: 6.5px; height: 6.5px; border-radius: 50%; }
+.pos-pill { background: #e6f7ed; color: #15803d; border: 1px solid #bbf7d0; } .pos-pill .dot { background: #16a34a; }
+.neg-pill { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; } .neg-pill .dot { background: #dc2626; }
+.net-pill { background: #eaf3fc; color: #075b91; border: 1px solid #cfe2f3; }
+.btn-reset-counts { height: 40px; padding: 0 20px; border-radius: 9px; border: 1px solid #b8d4ec; background: #f8fbff; color: #075b91; font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+.btn-reset-counts:hover:not(:disabled) { background: #e5f1fc; border-color: #1685c5; }
+.audit-card { background: #fff; border: 1px solid #cfe2f3; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 8px rgba(7, 55, 99, .04); }
+.table-responsive { overflow-x: auto; }
+.audit-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.audit-table thead th { height: 38px; padding: 0 22px; background: #f3f8fe; border-bottom: 1px solid #d8e8f7; color: #526b85; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-align: left; white-space: nowrap; }
+.audit-table tbody td { height: 88px; padding: 14px 22px; border-bottom: 1px solid #e6f0fa; vertical-align: middle; }
+.audit-table tbody tr:hover { background: #f8fbff; }
+.audit-product-cell { display: flex; flex-direction: column; gap: 4px; }
+.audit-product-cell strong { font-size: 14px; font-weight: 700; color: #073763; }
+.sku-cat-sub { font-size: 12px; font-weight: 500; color: #68839e; }
+.col-system, .col-physical, .col-variance { text-align: center !important; white-space: nowrap; }
+.system-count-text { font-size: 14px; font-weight: 700; color: #073763; }
+.physical-input { width: 104px; height: 40px; border-radius: 9px; border: 1.5px solid #9cc5e8; background: #f8fbff; color: #073763; font: inherit; font-size: 15px; font-weight: 800; text-align: center; }
+.physical-input:focus, .reason-input:focus { outline: 2px solid #1685c5; background: #fff; }
+.variance-badge { display: inline-grid; place-items: center; min-width: 76px; height: 30px; padding: 0 12px; border-radius: 8px; font-size: 14px; font-weight: 800; }
+.var-neutral { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+.var-positive { background: #e6f7ed; color: #15803d; border: 1px solid #bbf7d0; }
+.var-negative { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
+.reason-input { width: 100%; min-width: 260px; height: 40px; padding: 0 14px; border-radius: 9px; border: 1px solid #c5dcf0; background: #f8fbff; color: #073763; font: inherit; font-size: 13px; }
+.audit-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 24px; background: #fbfdff; flex-wrap: wrap; }
+.summary-text { margin: 0; font-size: 13px; font-weight: 600; color: #526b85; }

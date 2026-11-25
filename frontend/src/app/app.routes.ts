@@ -60,6 +60,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/inventory/stock-movement-ledger.component').then(m => m.StockMovementLedgerComponent),
       },
       {
+        path: 'inventory/audit',
+        canActivate: [permissionGuard], data: { permission: 'inventory.view' },
+        title: 'Stock Audit & Adjustment | WoodFlow',
+        loadComponent: () => import('./features/inventory/stock-audit-adjustment.component').then(m => m.StockAuditAdjustmentComponent),
+      },
+      {
         path: 'inventory',
         canActivate: [permissionGuard], data: { permission: 'inventory.view' },
         title: 'Finished Furniture Inventory | WoodFlow',

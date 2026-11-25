@@ -81,6 +81,25 @@ export interface StockMovementLedgerResponse {
   auditAdjustmentCount: number;
 }
 
+export interface AuditAdjustmentItemRequest {
+  productId: number;
+  physicalCount: number;
+  reason: string;
+}
+
+export interface ApplyStockAuditRequest {
+  sessionCode: string;
+  items: AuditAdjustmentItemRequest[];
+}
+
+export interface StockAuditSessionResultDto {
+  sessionCode: string;
+  adjustedItemsCount: number;
+  netVariance: number;
+  appliedAt: string;
+  updatedItems: FinishedFurnitureItem[];
+}
+
 const FALLBACK_MOVEMENTS: StockMovementDto[] = [
   {
     movementId: 1,
@@ -402,6 +421,20 @@ export class FinishedFurnitureService {
     return this.http.get<StockMovementLedgerResponse>(`${this.baseUrl}/movements`, { params }).pipe(
       timeout(12000),
       catchError(() => of(this.filterLocalMovements(productId, filterType))),
+    );
+  }
+
+  applyStockAudit(request: ApplyStockAuditRequest): Observable<StockAuditSessionResultDto> {
+    return this.auth.refreshCsrf().pipe(
+      switchMap(() => this.http.post<StockAuditSessionResultDto>(`${this.baseUrl}/audit`, request)),
+      timeout(12000),
+      tap(res => {
+        if (res.updatedItems?.length) {
+          this.localItems.update(list =>
+            list.map(item => res.updatedItems.find(u => u.productId === item.productId) ?? item),
+          );
+        }
+      }),
     );
   }
 

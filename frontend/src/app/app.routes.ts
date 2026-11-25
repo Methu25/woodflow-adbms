@@ -42,6 +42,18 @@ export const routes: Routes = [
         loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent),
       },
       {
+        path: 'inventory/add',
+        canActivate: [permissionGuard], data: { permission: 'inventory.create' },
+        title: 'Add Furniture Item | WoodFlow',
+        loadComponent: () => import('./features/inventory/furniture-item-editor.component').then(m => m.FurnitureItemEditorComponent),
+      },
+      {
+        path: 'inventory/edit/:id',
+        canActivate: [permissionGuard], data: { permission: 'inventory.edit' },
+        title: 'Edit Furniture Item | WoodFlow',
+        loadComponent: () => import('./features/inventory/furniture-item-editor.component').then(m => m.FurnitureItemEditorComponent),
+      },
+      {
         path: 'inventory',
         canActivate: [permissionGuard], data: { permission: 'inventory.view' },
         title: 'Finished Furniture Inventory | WoodFlow',

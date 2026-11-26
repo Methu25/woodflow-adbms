@@ -1,0 +1,29 @@
+:host { display: block; color: #073763; font-family: 'Inter', sans-serif; }
+* { box-sizing: border-box; }
+.inventory-page { max-width: 1180px; margin: 0 auto; }
+.top-utility-bar, .utility-right, .date-location-chip, .profile-chip, .page-header-row, .catalog-filter-bar, .category-pills { display: flex; align-items: center; gap: 16px; }
+.top-utility-bar, .page-header-row, .catalog-filter-bar { justify-content: space-between; flex-wrap: wrap; }
+.top-utility-bar { margin-bottom: 14px; }
+.global-search-box { display: flex; align-items: center; gap: 10px; width: 440px; max-width: 100%; height: 40px; padding: 0 12px 0 14px; background: #fff; border: 1px solid #cfe2f3; border-radius: 10px; }
+.global-search-box input, .catalog-search-input input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font: inherit; font-size: 13px; color: #073763; }
+.global-search-box input::placeholder, .catalog-search-input input::placeholder { color: #6f88a2; }
+.kbd-shortcut { padding: 3px 8px; border-radius: 6px; background: #eaf3fc; border: 1px solid #cfe2f3; color: #075b91; font-size: 11px; font-weight: 600; }
+.date-location-chip { gap: 10px; }
+.date-label, .profile-name { margin: 0; font-size: 13px; font-weight: 700; color: #073763; }
+.showroom-sub, .profile-role { margin: 2px 0 0; font-size: 11px; color: #5c7690; }
+.notification-bell { position: relative; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; background: #fff; border: 1px solid #cfe2f3; text-decoration: none; }
+.bell-badge { position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: #dc2626; color: #fff; font-size: 10px; font-weight: 700; display: grid; place-items: center; }
+.vertical-divider { width: 1px; height: 34px; background: #cfe2f3; }
+.profile-chip { gap: 12px; }
+.profile-meta { text-align: right; }
+.profile-avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #075b91, #1685c5); color: #fff; font-size: 13px; font-weight: 700; display: grid; place-items: center; border: 2px solid #fff; }
+.module-subnav { display: flex; align-items: center; gap: 6px; padding: 6px; margin-bottom: 18px; background: #fff; border: 1px solid #cfe2f3; border-radius: 12px; overflow-x: auto; }
+.subnav-tab { padding: 7px 13px; border-radius: 8px; font-size: 12px; font-weight: 600; color: #4a6785; text-decoration: none; white-space: nowrap; }
+.subnav-tab:hover { background: #eaf3fc; color: #073763; }
+.subnav-tab.active-tab { background: linear-gradient(90deg, #075b91, #1685c5); color: #fff; }
+.page-header-row { margin-bottom: 16px; }
+.page-header-row h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -.02em; color: #073763; }
+.page-subtitle { margin: 5px 0 0; font-size: 13px; color: #526b85; }
+.btn-add-item { height: 38px; padding: 0 22px; border: 0; border-radius: 10px; background: linear-gradient(95deg, #1685c5, #08a9c9); color: #fff; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.btn-add-item:hover { background: linear-gradient(95deg, #075b91, #1685c5); }
+@media (max-width: 720px) { .global-search-box { width: 100%; } }

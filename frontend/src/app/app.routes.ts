@@ -54,6 +54,36 @@ export const routes: Routes = [
         loadComponent: () => import('./features/inventory/furniture-item-editor.component').then(m => m.FurnitureItemEditorComponent),
       },
       {
+        path: 'inventory/movements',
+        canActivate: [permissionGuard], data: { permission: 'inventory.view' },
+        title: 'Stock Movement Ledger | WoodFlow',
+        loadComponent: () => import('./features/inventory/stock-movement-ledger.component').then(m => m.StockMovementLedgerComponent),
+      },
+      {
+        path: 'inventory/audit',
+        canActivate: [permissionGuard], data: { permission: 'inventory.view' },
+        title: 'Stock Audit & Adjustment | WoodFlow',
+        loadComponent: () => import('./features/inventory/stock-audit-adjustment.component').then(m => m.StockAuditAdjustmentComponent),
+      },
+      {
+        path: 'inventory/categories',
+        canActivate: [permissionGuard], data: { permission: 'inventory.view' },
+        title: 'Category Management | WoodFlow',
+        loadComponent: () => import('./features/inventory/category-management.component').then(m => m.CategoryManagementComponent),
+      },
+      {
+        path: 'inventory/items/:id',
+        canActivate: [permissionGuard], data: { permission: 'inventory.view' },
+        title: 'Showroom Item Details & SKU Tag | WoodFlow',
+        loadComponent: () => import('./features/inventory/item-details-barcode.component').then(m => m.ItemDetailsBarcodeComponent),
+      },
+      {
+        path: 'inventory/alerts',
+        canActivate: [permissionGuard], data: { permission: 'inventory.view' },
+        title: 'Low-Stock Alerts & POS Trigger Monitor | WoodFlow',
+        loadComponent: () => import('./features/inventory/low-stock-alerts.component').then(m => m.LowStockAlertsComponent),
+      },
+      {
         path: 'inventory',
         canActivate: [permissionGuard], data: { permission: 'inventory.view' },
         title: 'Finished Furniture Inventory | WoodFlow',

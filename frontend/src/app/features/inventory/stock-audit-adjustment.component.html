@@ -1,0 +1,198 @@
+<section class="inventory-page" aria-labelledby="audit-heading">
+  <!-- Figma Top Header Bar -->
+  <header class="top-utility-bar">
+    <div class="global-search-box">
+      <svg class="search-icon" width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <circle cx="7" cy="7" r="5.25" stroke="#68839E" stroke-width="1.6" />
+        <path d="M11 11L14.2 14.2" stroke="#68839E" stroke-width="1.6" stroke-linecap="round" />
+      </svg>
+      <input
+        type="search"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+        placeholder="Search furniture SKUs, barcodes, categories..."
+        aria-label="Search audited furniture SKUs"
+      />
+      <span class="kbd-shortcut" aria-hidden="true">Ctrl+K</span>
+    </div>
+
+    <div class="utility-right">
+      <div class="date-location-chip">
+        <svg class="calendar-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <rect x="2" y="3" width="12" height="11" rx="2" stroke="#1685C5" stroke-width="1.4" />
+          <path d="M2 6.5H14M5 1.8V3.8M11 1.8V3.8" stroke="#1685C5" stroke-width="1.4" stroke-linecap="round" />
+        </svg>
+        <div>
+          <p class="date-label">Fri, 13 Nov 2026</p>
+          <p class="showroom-sub">08:45 AM · Main Showroom</p>
+        </div>
+      </div>
+
+      <a class="notification-bell" routerLink="/inventory/alerts" title="View Low-Stock Alerts & POS Trigger Monitor">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M8 2.2C5.9 2.2 4.2 3.9 4.2 6V9.2L2.9 10.8V11.6H13.1V10.8L11.8 9.2V6C11.8 3.9 10.1 2.2 8 2.2Z" stroke="#073763" stroke-width="1.4" />
+          <path d="M6.5 12.6C6.7 13.4 7.3 13.9 8 13.9C8.7 13.9 9.3 13.4 9.5 12.6" stroke="#073763" stroke-width="1.4" stroke-linecap="round" />
+        </svg>
+        <span class="bell-badge">6</span>
+      </a>
+
+      <span class="vertical-divider" aria-hidden="true"></span>
+
+      <div class="profile-chip">
+        <div class="profile-meta">
+          <p class="profile-name">{{ userDisplayName() }}</p>
+          <p class="profile-role">{{ userRoleSubtitle() }}</p>
+        </div>
+        <div class="profile-avatar" aria-hidden="true">{{ userInitials() }}</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Module Sub-Navigation Bar -->
+  <nav class="module-subnav" aria-label="Finished Furniture Inventory navigation">
+    @for (tab of navTabs; track tab.route) {
+      <a
+        [routerLink]="tab.route"
+        routerLinkActive="active-tab"
+        [routerLinkActiveOptions]="{ exact: tab.exact }"
+        class="subnav-tab"
+      >
+        {{ tab.label }}
+      </a>
+    }
+  </nav>
+
+  <!-- Page Header Row (Matches Screen 04: 1:271) -->
+  <div class="page-header-row">
+    <div>
+      <h1 id="audit-heading">Stock Audit &amp; Adjustment</h1>
+      <p class="page-subtitle">
+        Reconcile physical showroom counts against system quantities with mandatory variance notes
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="btn-apply-top"
+      (click)="applyAdjustments()"
+      [disabled]="applying() || !permissions.has('inventory.edit')"
+    >
+      <svg width="13" height="10" viewBox="0 0 13 10" fill="none" aria-hidden="true">
+        <path d="M1.5 5L4.8 8.3L11.5 1.7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      {{ applying() ? 'Applying…' : 'Apply Adjustments' }}
+    </button>
+  </div>
+
+  @if (error()) {
+    <div class="audit-banner error" role="alert">{{ error() }}</div>
+  }
+  @if (success()) {
+    <div class="audit-banner success" role="status">{{ success() }}</div>
+  }
+
+  <!-- Physical Stock Count Session Banner (Matches Screen 04: 1:277) -->
+  <div class="audit-session-bar">
+    <div class="session-info">
+      <h2>Physical Stock Count Session: {{ sessionCode() }}</h2>
+      <p>Edit physical counts below to record discrepancies before applying</p>
+    </div>
+
+    <div class="session-metrics">
+      <span class="metric-pill pos-pill">
+        <span class="dot" aria-hidden="true"></span>
+        {{ positiveStats().count }} Positive (+{{ positiveStats().sum }})
+      </span>
+
+      <span class="metric-pill neg-pill">
+        <span class="dot" aria-hidden="true"></span>
+        {{ negativeStats().count }} Negative ({{ negativeStats().sum }})
+      </span>
+
+      <span class="metric-pill net-pill">
+        Net Variance: {{ netVariance() > 0 ? '+' + netVariance() : netVariance() }} Units
+      </span>
+
+      <button type="button" class="btn-reset-counts" (click)="resetCounts()" [disabled]="applying()">
+        Reset Counts
+      </button>
+    </div>
+  </div>
+
+  <!-- Stock Audit Table Card (Matches Screen 04: 1:290) -->
+  <div class="audit-card">
+    <div class="table-responsive">
+      <table class="audit-table">
+        <thead>
+          <tr>
+            <th scope="col">PRODUCT &amp; SKU</th>
+            <th scope="col" class="col-system">SYSTEM COUNT</th>
+            <th scope="col" class="col-physical">PHYSICAL COUNT (EDITABLE)</th>
+            <th scope="col" class="col-variance">VARIANCE</th>
+            <th scope="col">ITEM ADJUSTMENT REASON (MANDATORY)</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of filteredRows(); track row.productId) {
+            <tr>
+              <td>
+                <div class="audit-product-cell">
+                  <strong>{{ row.itemName }}</strong>
+                  <span class="sku-cat-sub">{{ row.skuCode }} · {{ row.category }}</span>
+                </div>
+              </td>
+              <td class="col-system">
+                <strong class="system-count-text">{{ row.systemCount }} Units</strong>
+              </td>
+              <td class="col-physical">
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  class="physical-input"
+                  [ngModel]="row.physicalCount"
+                  (ngModelChange)="onPhysicalCountChange(row.productId, $event)"
+                  [attr.aria-label]="'Physical count for ' + row.itemName"
+                />
+              </td>
+              <td class="col-variance">
+                <span class="variance-badge" [ngClass]="varianceClass(row)">
+                  {{ formatVariance(row) }}
+                </span>
+              </td>
+              <td>
+                <input
+                  type="text"
+                  class="reason-input"
+                  [ngModel]="row.reason"
+                  (ngModelChange)="onReasonChange(row.productId, $event)"
+                  placeholder="Enter mandatory variance reason..."
+                  [attr.aria-label]="'Adjustment reason for ' + row.itemName"
+                />
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Audit Footer (Matches Screen 04: 1:348) -->
+    <footer class="audit-footer">
+      <p class="summary-text">
+        Adjustment Summary: {{ documentedReasonsCount() }} of {{ rows().length }} audited items have documented variance reasons.
+      </p>
+
+      <button
+        type="button"
+        class="btn-apply-bottom"
+        (click)="applyAdjustments()"
+        [disabled]="applying() || !permissions.has('inventory.edit')"
+      >
+        <svg width="13" height="10" viewBox="0 0 13 10" fill="none" aria-hidden="true">
+          <path d="M1.5 5L4.8 8.3L11.5 1.7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        {{ applying() ? 'Applying…' : 'Apply Adjustments' }}
+      </button>
+    </footer>
+  </div>
+</section>

@@ -18,6 +18,3 @@ services:
 
 volumes:
   postgres_data:
-
-# Ignore the .env file containing sensitive information
-.env

@@ -1,0 +1,148 @@
+<div class="rm-container">
+  <!-- Top Utility Bar & Breadcrumbs -->
+  <div class="top-utility-bar">
+    <div class="breadcrumb-trail">
+      <a routerLink="/inventory">Inventory</a>
+      <span class="breadcrumb-separator">/</span>
+      <span>Workshop Raw Materials & Supplies</span>
+    </div>
+    <div class="status-pill-live">
+      <span class="status-dot-pulse"></span>
+      <span>Yard Stockroom Active · Kottawa</span>
+    </div>
+  </div>
+
+  <!-- Shared Sub-Navigation Bar across all Raw Materials Screens + Link to Finished Goods -->
+  <nav class="subnav-bar" aria-label="Raw Materials Sub-navigation">
+    <a routerLink="/inventory/raw-materials" class="subnav-link active-link">01. Stock Dashboard</a>
+    <a routerLink="/inventory/raw-materials/new" class="subnav-link">02. New Material Master</a>
+    <a routerLink="/inventory/raw-materials/grn" class="subnav-link">03. Restock GRN</a>
+    <a routerLink="/inventory/suppliers" class="subnav-link">04. Suppliers</a>
+    <a routerLink="/inventory/raw-materials/consumption" class="subnav-link">05. Consumption Log</a>
+    <a routerLink="/inventory/raw-materials/reorder" class="subnav-link">06. Low-Stock Reorder</a>
+    <a routerLink="/inventory/raw-materials/allocation" class="subnav-link">07. Job Allocation</a>
+    <a routerLink="/inventory" class="subnav-showroom-link">Showroom Finished Goods &rarr;</a>
+  </nav>
+
+  <!-- Header Row -->
+  <div class="header-row">
+    <div class="header-titles">
+      <h1>Workshop Stockroom & Raw Inventory</h1>
+      <p>Tracking raw timber (cu.ft), foam, fabric meters, varnish gallons, screws & supplies with trigger monitoring</p>
+    </div>
+    <div class="header-actions">
+      <a routerLink="/inventory/raw-materials/grn" class="btn-secondary-rm">+ Post Restock GRN</a>
+      <a routerLink="/inventory/raw-materials/new" class="btn-primary-rm">+ New Material SKU</a>
+    </div>
+  </div>
+
+  @if (service.loading()) {
+    <div class="empty-state">Loading workshop stock ledger...</div>
+  } @else if (service.error()) {
+    <div class="empty-state" style="color: #A44A3F;">{{ service.error() }}</div>
+  } @else {
+    @if (service.dashboard(); as dash) {
+      <!-- 4 KPI Cards -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">Total Raw SKUs</div>
+          <div class="kpi-value">{{ dash.totalSkus }}</div>
+          <div class="kpi-sub">Across 6 Workshop Categories</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Yard Valuation</div>
+          <div class="kpi-value">Rs. {{ dash.totalValuationLkr | number:'1.2-2' }}</div>
+          <div class="kpi-sub">Current On-Hand Value</div>
+        </div>
+        <div class="kpi-card alert-card">
+          <div class="kpi-label">Low Stock Alerts</div>
+          <div class="kpi-value">{{ dash.lowStockCount }}</div>
+          <div class="kpi-sub">{{ dash.criticalStockCount }} critical below 50% buffer</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Approved Suppliers</div>
+          <div class="kpi-value">{{ dash.activeSuppliersCount }}</div>
+          <div class="kpi-sub">Accredited Mills & Importers</div>
+        </div>
+      </div>
+
+      <!-- Filter & Search Bar -->
+      <div class="filter-bar">
+        <div class="category-pills">
+          @for (cat of categories; track cat) {
+            <button
+              type="button"
+              class="category-pill"
+              [class.active]="selectedCategory() === cat"
+              (click)="selectCategory(cat)">
+              {{ cat }}
+            </button>
+          }
+        </div>
+        <div class="search-box">
+          <input
+            type="text"
+            class="search-input"
+            placeholder="Search by code or name..."
+            [value]="searchQuery()"
+            (input)="onSearchInput($event)" />
+        </div>
+      </div>
+
+      <!-- Stock Ledger Table -->
+      <div class="ledger-table-card">
+        <table class="stock-table">
+          <thead>
+            <tr>
+              <th>SKU Code</th>
+              <th>Material Name & Location</th>
+              <th>Category</th>
+              <th>On-Hand</th>
+              <th>Safety Level</th>
+              <th>Unit Cost</th>
+              <th>Valuation</th>
+              <th>Trigger Status</th>
+              <th style="text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of dash.materials; track item.materialId) {
+              <tr>
+                <td><span class="sku-code">{{ item.materialCode }}</span></td>
+                <td>
+                  <div class="mat-name">{{ item.name }}</div>
+                  <div class="mat-loc">{{ item.storageLocation }}</div>
+                </td>
+                <td>{{ item.category }}</td>
+                <td>
+                  <strong>{{ item.quantityOnHand | number:'1.2-2' }}</strong>
+                  <span class="uom-badge">{{ item.unitOfMeasure }}</span>
+                </td>
+                <td>{{ item.reorderLevel | number:'1.2-2' }}</td>
+                <td>Rs. {{ item.unitCost | number:'1.2-2' }}</td>
+                <td>Rs. {{ item.valuationLkr | number:'1.2-2' }}</td>
+                <td>
+                  @if (item.stockStatus === 'CRITICAL') {
+                    <span class="status-pill CRITICAL">&bull; CRITICAL LOW</span>
+                  } @else if (item.stockStatus === 'LOW STOCK') {
+                    <span class="status-pill LOW">&bull; LOW STOCK</span>
+                  } @else {
+                    <span class="status-pill HEALTHY">&check; Adequate</span>
+                  }
+                </td>
+                <td class="actions-cell">
+                  <a [routerLink]="['/inventory/raw-materials/edit', item.materialId]" class="btn-action-sm">Edit</a>
+                  <a [routerLink]="['/inventory/raw-materials/grn']" [queryParams]="{ materialId: item.materialId }" class="btn-action-sm btn-action-grn">+ Restock</a>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="9" class="empty-state">No raw materials found matching the current filter.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+</div>

@@ -1,0 +1,581 @@
+<section class="pos-page" aria-labelledby="pos-counter-heading">
+  <!-- Figma Top Utility Bar -->
+  <header class="top-utility-bar">
+    <div class="global-search-box">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <circle cx="7" cy="7" r="5.25" stroke="#68839E" stroke-width="1.6" />
+        <path d="M11 11L14.2 14.2" stroke="#68839E" stroke-width="1.6" stroke-linecap="round" />
+      </svg>
+      <input
+        type="search"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="onSearchChange($event)"
+        placeholder="Search products, SKU, invoices..."
+        aria-label="Search products, SKU, invoices"
+      />
+      <span class="kbd-shortcut" aria-hidden="true">Ctrl+K</span>
+    </div>
+
+    <div class="utility-right">
+      <div class="date-location-chip">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <rect x="2" y="3" width="12" height="11" rx="2" stroke="#1685C5" stroke-width="1.4" />
+          <path d="M2 6.5H14M5 1.8V3.8M11 1.8V3.8" stroke="#1685C5" stroke-width="1.4" stroke-linecap="round" />
+        </svg>
+        <div>
+          <p class="date-label">Fri, 13 Nov 2026</p>
+          <p class="showroom-sub">14:22 PM · {{ tillNumber() }} {{ tillStatus() === 'CLOSED' ? 'closed' : 'open' }}</p>
+        </div>
+      </div>
+
+      <a class="notification-bell" routerLink="/pos/till-closing" title="Till Closing & Cash Register Status">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M8 2.2C5.9 2.2 4.2 3.9 4.2 6V9.2L2.9 10.8V11.6H13.1V10.8L11.8 9.2V6C11.8 3.9 10.1 2.2 8 2.2Z" stroke="#073763" stroke-width="1.4" />
+          <path d="M6.5 12.6C6.7 13.4 7.3 13.9 8 13.9C8.7 13.9 9.3 13.4 9.5 12.6" stroke="#073763" stroke-width="1.4" stroke-linecap="round" />
+        </svg>
+        <span class="bell-badge">{{ lowStockCount() }}</span>
+      </a>
+
+      <span class="vertical-divider" aria-hidden="true"></span>
+
+      <div class="profile-chip">
+        <div class="profile-meta">
+          <p class="profile-name">{{ cashierName() }}</p>
+          <p class="profile-role">{{ cashierRole() }}</p>
+        </div>
+        <img class="profile-avatar-img" src="/assets/pos/cashier-avatar.png" alt="Cashier profile" />
+      </div>
+    </div>
+  </header>
+
+  <!-- Sub-Navigation across Yohan's 3 Main POS Screens -->
+  <nav class="module-subnav" aria-label="Showroom POS navigation">
+    @for (tab of navTabs; track tab.route) {
+      <a
+        [routerLink]="tab.route"
+        routerLinkActive="active-tab"
+        [routerLinkActiveOptions]="{ exact: tab.exact }"
+        class="subnav-tab"
+      >
+        {{ tab.label }}
+      </a>
+    }
+  </nav>
+
+  <!-- Page Header Row (Matches Screen 01) -->
+  <div class="page-header-row">
+    <div>
+      <h1 id="pos-counter-heading">Counter POS / Billing</h1>
+      <p class="page-subtitle">Counter POS &amp; billing · Kottawa Showroom Register #01</p>
+    </div>
+
+    <a routerLink="/pos/invoices" class="btn-header-outline">
+      <svg width="13" height="14" viewBox="0 0 14 16" fill="none" aria-hidden="true">
+        <path d="M3 1.5H9L12 4.5V14.5H3V1.5Z" stroke="#1685C5" stroke-width="1.4" />
+        <path d="M5 8H10M5 11H8.5" stroke="#1685C5" stroke-width="1.4" stroke-linecap="round" />
+      </svg>
+      Invoice History
+    </a>
+  </div>
+
+  <!-- Success Toast / Checkout Complete State (Figma 196:667) -->
+  @if (lastCompletedInvoice(); as completed) {
+    <div class="dlg-card" style="background: #eaf3fc; margin-bottom: 16px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; background: #dcfce7; border: 1px solid #16a34a; border-radius: 10px; padding: 10px 14px; color: #15803d; font-size: 13px; font-weight: 600;">
+        <span>✓ Invoice #{{ completed.invoiceNumber }} saved &amp; stock updated! ({{ formatCurrency(completed.totalAmount) }} · {{ completed.paymentModeLabel }})</span>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="btn-dlg btn-dlg-primary" style="height: 32px; flex: none;" (click)="showReceiptDialog.set(true)">
+            Open Receipt Preview
+          </button>
+          <button type="button" class="btn-dlg btn-dlg-cancel" style="height: 32px; flex: none;" (click)="lastCompletedInvoice.set(null)">
+            Dismiss
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Checkout Failed / Trigger Rollback State (Figma 196:460) -->
+  @if (checkoutFailedMessage()) {
+    <div class="state-banner state-banner-error" role="alert" style="margin-bottom: 16px;">
+      <span class="pill-tag pill-red">Transaction Rolled Back</span>
+      <p class="dlg-title" style="color: #991b1b;">Checkout Failed — Insufficient Stock</p>
+      <p class="dlg-sub" style="color: #0f172a; font-size: 13px;">{{ checkoutFailedMessage() }}</p>
+      <div style="width: 100%; background: #e0f2fe; border: 1px solid #1685c5; border-radius: 10px; padding: 10px 14px;">
+        <strong style="font-size: 13px; color: #073763;">Your current bill is kept safely</strong>
+        <p style="margin: 3px 0 0; font-size: 12px; color: #075b91;">
+          {{ totalCartUnits() }} item(s) ({{ formatCurrency(totalPayable()) }}) and customer {{ selectedCustomer()?.fullName || 'Walk-in' }} remain in your cart. Adjust quantities and retry.
+        </p>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <button type="button" class="btn-dlg btn-dlg-primary" style="flex: none;" (click)="checkoutAndPrint()">Retry Checkout</button>
+        <button type="button" class="btn-dlg btn-dlg-cancel" style="flex: none;" (click)="checkoutFailedMessage.set('')">Dismiss</button>
+      </div>
+    </div>
+  }
+
+  <div class="pos-workspace">
+    <!-- Left Column: Category Pills & 2-Column Showroom Product Grid -->
+    <div>
+      <div class="category-row" role="tablist" aria-label="Showroom categories">
+        @for (cat of categories; track cat) {
+          <button
+            type="button"
+            class="cat-pill"
+            [class.active]="selectedCategory() === cat"
+            (click)="selectCategory(cat)"
+          >
+            {{ cat }}
+          </button>
+        }
+      </div>
+
+      @if (loading()) {
+        <!-- Figma 196:639 Loading State -->
+        <div class="state-banner" style="align-items: flex-start;">
+          <p class="dlg-section-title" style="color: #64748b;">Loading Showroom POS...</p>
+          <div class="skeleton-bar"></div>
+          <div class="skeleton-grid">
+            <div class="skeleton-card"><div class="skeleton-thumb"></div><div class="skeleton-bar"></div></div>
+            <div class="skeleton-card"><div class="skeleton-thumb"></div><div class="skeleton-bar"></div></div>
+          </div>
+        </div>
+      } @else if (loadError()) {
+        <!-- Figma 196:660 Error State -->
+        <div class="state-banner" style="border-color: #ef4444;">
+          <span class="pill-tag pill-red">Connection Error</span>
+          <p class="dlg-title" style="color: #991b1b;">Failed to load showroom stock</p>
+          <p class="dlg-sub">{{ loadError() }}</p>
+          <button type="button" class="btn-dlg btn-dlg-primary" style="flex: none;" (click)="loadCounter()">Retry</button>
+        </div>
+      } @else {
+        <div class="pos-product-grid">
+          @for (item of products(); track item.productId) {
+            <article class="pos-product-card">
+              <div class="pos-card-media">
+                <img [src]="item.imageUrl" [alt]="item.itemName" />
+                <span class="floor-stock-pill" [ngClass]="stockClass(item)">
+                  <span class="stock-dot" aria-hidden="true"></span>
+                  {{ item.stockBadgeLabel }}
+                </span>
+              </div>
+
+              <p class="pos-sku-line">{{ item.category }} · {{ item.skuCode }}</p>
+              <h2 class="pos-item-title">{{ item.itemName }}</h2>
+              <p class="pos-price-label">Showroom price</p>
+
+              <div class="pos-card-footer">
+                <span class="pos-price-val">{{ formatCurrency(item.retailPrice) }}</span>
+                @if (item.currentStock <= 0 || item.stockStatus === 'OUT_OF_STOCK') {
+                  <button type="button" class="btn-add-bill btn-out-stock" (click)="addToBill(item)">
+                    Out of Stock
+                  </button>
+                } @else {
+                  <button type="button" class="btn-add-bill" (click)="addToBill(item)">
+                    + Add to Bill
+                  </button>
+                }
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Right Column: Current Bill & Active Orders Panel -->
+    <aside class="bill-panel" aria-label="Current POS bill">
+      <div class="bill-tabs">
+        <button
+          type="button"
+          class="bill-tab"
+          [class.active]="rightTab() === 'BILL'"
+          (click)="rightTab.set('BILL')"
+        >
+          Current Bill ({{ totalCartUnits() }})
+        </button>
+        <button
+          type="button"
+          class="bill-tab"
+          [class.active]="rightTab() === 'ORDERS'"
+          (click)="rightTab.set('ORDERS')"
+        >
+          Active Orders ({{ activeOrders().length }})
+        </button>
+      </div>
+
+      @if (rightTab() === 'ORDERS') {
+        <div class="cart-list" style="max-height: 520px;">
+          @for (order of activeOrders(); track order.orderNumber) {
+            <div class="dlg-card" style="padding: 12px;">
+              <div class="dlg-row">
+                <strong style="color: #073763;">{{ order.orderNumber }}</strong>
+                <span class="pill-tag pill-blue">{{ order.status }}</span>
+              </div>
+              <p style="margin: 2px 0; font-size: 12.5px; font-weight: 700; color: #102d50;">{{ order.itemSummary }}</p>
+              <div class="dlg-row" style="font-size: 11.5px;">
+                <span>{{ order.customerName }}</span>
+                <strong>Deposit: {{ formatWhole(order.depositPaid) }} / {{ formatWhole(order.agreedPrice) }}</strong>
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <!-- Customer Selector Row -->
+        <div class="customer-box">
+          <div class="cust-left" (click)="cycleCustomer()" title="Click to switch registered showroom customer">
+            <span class="cust-avatar">{{ selectedCustomer()?.initial || 'N' }}</span>
+            <div>
+              <p class="cust-name">{{ selectedCustomer()?.fullName || 'Nimal Silva' }}</p>
+              <p class="cust-sub">{{ selectedCustomer()?.subtitle || '+94 77 123 4567 · Walk-in' }}</p>
+            </div>
+          </div>
+          <button type="button" class="btn-add-cust" (click)="openAddCustomerDrawer()">
+            Add Customer
+          </button>
+        </div>
+
+        @if (cart().length === 0) {
+          <!-- Figma 196:653 Empty Cart State -->
+          <div class="state-banner" style="padding: 22px 16px;">
+            <span class="pill-tag pill-blue">Empty Cart</span>
+            <p class="dlg-title" style="font-size: 16px;">No items in current bill</p>
+            <p class="dlg-sub">Search by SKU or tap "+ Add to Bill" on any in-stock furniture card to begin billing.</p>
+            <button type="button" class="btn-dlg btn-dlg-primary" style="flex: none;" (click)="focusFirstInStockItem()">
+              + Add Furniture Item
+            </button>
+          </div>
+        } @else {
+          <div class="sec-lbl">
+            <span>Bill Line Items</span>
+            <button
+              type="button"
+              style="border: 0; background: transparent; color: #dc2626; font-size: 11px; font-weight: 700; cursor: pointer;"
+              (click)="showClearBillDialog.set(true)"
+            >
+              Clear Bill
+            </button>
+          </div>
+
+          <div class="cart-list">
+            @for (entry of cart(); track entry.product.productId) {
+              <div class="cart-item">
+                <img class="cart-thumb" [src]="entry.product.imageUrl" [alt]="entry.product.itemName" />
+                <div class="cart-meta">
+                  <p class="cart-title">{{ entry.product.itemName }}</p>
+                  <p class="cart-unit">{{ formatWhole(entry.product.retailPrice) }} × {{ entry.quantity }}</p>
+                </div>
+                <div class="cart-right">
+                  <div class="qty-row">
+                    <button type="button" class="qty-btn" (click)="changeQty(entry.product.productId, -1)" aria-label="Decrease quantity">−</button>
+                    <span class="qty-val">{{ entry.quantity }}</span>
+                    <button type="button" class="qty-btn" (click)="changeQty(entry.product.productId, 1)" aria-label="Increase quantity">+</button>
+                  </div>
+                  <span class="cart-line-total">{{ formatCurrency(entry.product.retailPrice * entry.quantity) }}</span>
+                </div>
+                <button type="button" class="btn-trash" (click)="removeItem(entry.product.productId)" title="Remove item" aria-label="Remove item">
+                  🗑
+                </button>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Custom Order 33.3% Deposit Toggle -->
+        <div class="deposit-toggle-box">
+          <span>Custom Order Mode (33.3% deposit)</span>
+          <button
+            type="button"
+            class="switch-btn"
+            [class.on]="customOrderDepositMode()"
+            (click)="customOrderDepositMode.set(!customOrderDepositMode())"
+            aria-label="Toggle Custom Order 33.3% deposit mode"
+          >
+            <span class="switch-knob"></span>
+          </button>
+        </div>
+
+        <!-- Discount (Owner Only) -->
+        <div>
+          <p class="sec-lbl" style="margin-bottom: 5px;">
+            <span>Discount (LKR / % · Owner Only)</span>
+          </p>
+          <div class="discount-box">
+            @if (isOwner()) {
+              <select [ngModel]="discountPreset()" (ngModelChange)="discountPreset.set(+$event)" aria-label="Owner seasonal discount">
+                <option [ngValue]="10">DISC-10 · 10% Seasonal</option>
+                <option [ngValue]="5">DISC-05 · 5% Loyalty</option>
+                <option [ngValue]="15">DISC-15 · 15% Showroom Suite</option>
+                <option [ngValue]="0">No Discount (0%)</option>
+              </select>
+              <span class="disc-amt">-{{ formatCurrency(discountAmount()) }}</span>
+            } @else {
+              <span style="color: #64748b; font-weight: 600;">Owner PIN required for discounts</span>
+              <span style="color: #64748b;">Rs. 0.00</span>
+            }
+          </div>
+        </div>
+
+        <!-- Payment Method -->
+        <div>
+          <p class="sec-lbl" style="margin-bottom: 5px;">Payment Method</p>
+          <div class="pay-methods">
+            <button type="button" class="pay-card" [class.active]="paymentMode() === 'CASH'" (click)="selectPaymentMode('CASH')">
+              <span>💵</span>
+              <span>Cash</span>
+            </button>
+            <button type="button" class="pay-card" [class.active]="paymentMode() === 'CARD'" (click)="selectPaymentMode('CARD')">
+              <span>💳</span>
+              <span>Card</span>
+            </button>
+            <button type="button" class="pay-card" [class.active]="paymentMode() === 'BANK_TRANSFER'" (click)="selectPaymentMode('BANK_TRANSFER')">
+              <span>🏛</span>
+              <span>Bank Slip</span>
+            </button>
+          </div>
+        </div>
+
+        @if (paymentMode() === 'CASH') {
+          <div class="cash-grid">
+            <div>
+              <p class="sec-lbl" style="margin-bottom: 4px;">Cash Received</p>
+              <input
+                type="number"
+                class="cash-input"
+                min="0"
+                step="500"
+                [ngModel]="cashReceivedInput()"
+                (ngModelChange)="cashReceivedInput.set(+$event)"
+                aria-label="Cash received in LKR"
+              />
+            </div>
+            <div>
+              <p class="sec-lbl" style="margin-bottom: 4px;">Change Due</p>
+              <div class="change-box">{{ formatCurrency(changeDue()) }}</div>
+            </div>
+          </div>
+        } @else {
+          <div class="discount-box" style="background: #f8fbff;">
+            <span style="color: #526b85;">Ref: <strong style="color: #073763;">{{ paymentReference() || 'Pending reference' }}</strong></span>
+            <button
+              type="button"
+              style="border: 0; background: transparent; color: #1685c5; font-weight: 700; cursor: pointer;"
+              (click)="selectPaymentMode(paymentMode())"
+            >
+              Edit
+            </button>
+          </div>
+        }
+
+        <!-- Totals & Checkout CTA -->
+        <div class="totals-area">
+          <div class="tot-line">
+            <span>Subtotal ({{ totalCartUnits() }} items)</span>
+            <strong>{{ formatCurrency(subtotal()) }}</strong>
+          </div>
+          <div class="tot-line">
+            <span>Discount</span>
+            <strong style="color: #16a34a;">-{{ formatCurrency(discountAmount()) }}</strong>
+          </div>
+          <div class="tot-payable">
+            <span>{{ customOrderDepositMode() ? '1/3 Deposit Payable' : 'Total Payable' }}</span>
+            <strong>{{ formatCurrency(totalPayable()) }}</strong>
+          </div>
+        </div>
+
+        @if (permissions.has('sales.create')) {
+          <button
+            type="button"
+            class="btn-checkout"
+            [disabled]="cart().length === 0 || submitting() || tillStatus() === 'CLOSED'"
+            (click)="checkoutAndPrint()"
+          >
+            <span>🖨</span>
+            <span>{{ submitting() ? 'Processing Checkout…' : 'Checkout & Print Receipt' }}</span>
+          </button>
+        }
+      }
+    </aside>
+  </div>
+</section>
+
+<!-- Figma 196:345: Counter POS / Add Customer (Drawer) -->
+@if (showAddCustomerDrawer()) {
+  <div class="pos-overlay pos-drawer-backdrop" role="dialog" aria-modal="true" aria-label="Add New Customer">
+    <div class="pos-drawer">
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        <div class="dlg-header">
+          <div>
+            <h2 class="dlg-title">Add New Customer</h2>
+            <p class="dlg-sub">Counter POS · Register walk-in or delivery buyer</p>
+          </div>
+          <span class="pill-tag pill-blue">Drawer</span>
+        </div>
+
+        @if (customerFormError()) {
+          <div class="pill-tag pill-red" style="width: 100%; justify-content: center; padding: 8px;">{{ customerFormError() }}</div>
+        }
+
+        <div class="dlg-card">
+          <p class="dlg-section-title">Customer Identity</p>
+          <div class="dlg-field">
+            <label>Full Name *</label>
+            <input type="text" [ngModel]="newCustomerName()" (ngModelChange)="newCustomerName.set($event)" placeholder="Kamal Perera" />
+          </div>
+          <div class="dlg-field">
+            <label>Phone Number *</label>
+            <input type="tel" [ngModel]="newCustomerPhone()" (ngModelChange)="newCustomerPhone.set($event)" placeholder="077 458 1290" />
+          </div>
+        </div>
+
+        <div class="dlg-card">
+          <p class="dlg-section-title">WhatsApp &amp; Delivery</p>
+          <div class="dlg-field">
+            <label>WhatsApp Number</label>
+            <input type="tel" [ngModel]="newCustomerWhatsapp()" (ngModelChange)="newCustomerWhatsapp.set($event)" placeholder="077 458 1290" />
+          </div>
+          <div class="dlg-field">
+            <label>Delivery Address (Optional)</label>
+            <textarea rows="2" [ngModel]="newCustomerAddress()" (ngModelChange)="newCustomerAddress.set($event)" placeholder="No. 45, Pannipitiya Road, Kottawa"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="dlg-actions">
+        <button type="button" class="btn-dlg btn-dlg-cancel" (click)="showAddCustomerDrawer.set(false)">Cancel</button>
+        <button type="button" class="btn-dlg btn-dlg-primary" [disabled]="submitting()" (click)="saveNewCustomer()">Save Customer</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Figma 196:437: Counter POS / Payment Reference (Dialog) -->
+@if (showPaymentRefDialog()) {
+  <div class="pos-overlay" role="dialog" aria-modal="true" aria-label="Payment Reference">
+    <div class="pos-dialog pos-dialog-sm">
+      <h2 class="dlg-title">Payment Reference</h2>
+      <p class="dlg-sub" style="font-size: 13px;">Enter Card POS approval code or Bank Slip deposit reference number.</p>
+
+      @if (paymentRefError()) {
+        <div class="pill-tag pill-red">{{ paymentRefError() }}</div>
+      }
+
+      <div class="dlg-field">
+        <label>Payment Method</label>
+        <input type="text" readonly [value]="paymentMode() === 'CARD' ? 'Card Terminal (CARD)' : 'Bank Slip (BANK_TRANSFER)'" />
+      </div>
+
+      <div class="dlg-field">
+        <label>Reference / Slip Number *</label>
+        <input type="text" [ngModel]="tempPaymentRef()" (ngModelChange)="tempPaymentRef.set($event)" placeholder="BOC-SLIP-20261113-884" />
+      </div>
+
+      <div class="dlg-row dlg-row-total">
+        <span>Amount Due</span>
+        <strong>{{ formatCurrency(totalPayable()) }}</strong>
+      </div>
+
+      <div class="dlg-actions">
+        <button type="button" class="btn-dlg btn-dlg-cancel" (click)="showPaymentRefDialog.set(false)">Cancel</button>
+        <button type="button" class="btn-dlg btn-dlg-primary" (click)="confirmPaymentReference()">Confirm</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Figma 196:448: Counter POS / Clear Bill (Dialog) -->
+@if (showClearBillDialog()) {
+  <div class="pos-overlay" role="dialog" aria-modal="true" aria-label="Remove all items">
+    <div class="pos-dialog pos-dialog-sm">
+      <span class="pill-tag pill-red" style="align-self: flex-start;">Confirm Action</span>
+      <h2 class="dlg-title" style="color: #0f172a;">Remove all items?</h2>
+      <p class="dlg-sub" style="font-size: 13px;">
+        This clears {{ totalCartUnits() }} item(s) ({{ formatCurrency(totalPayable()) }}) from the current bill. Stock is unaffected until checkout.
+      </p>
+      <div class="dlg-actions">
+        <button type="button" class="btn-dlg btn-dlg-cancel" (click)="showClearBillDialog.set(false)">Cancel</button>
+        <button type="button" class="btn-dlg btn-dlg-danger" (click)="confirmClearBill()">Confirm</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Figma 196:459: Counter POS / Out of Stock Message (Dialog) -->
+@if (outOfStockProduct(); as oos) {
+  <div class="pos-overlay" role="dialog" aria-modal="true" aria-label="Item has no stock">
+    <div class="pos-dialog pos-dialog-sm">
+      <span class="pill-tag pill-red" style="align-self: flex-start;">0 Units in Showroom</span>
+      <h2 class="dlg-title" style="color: #0f172a;">Item has no stock</h2>
+      <p class="dlg-sub" style="font-size: 13px;">
+        {{ oos.itemName }} ({{ oos.skuCode }}) has 0 stock on the floor and cannot be added to a POS bill.
+      </p>
+      <div class="dlg-actions">
+        <button type="button" class="btn-dlg btn-dlg-cancel" (click)="outOfStockProduct.set(null)">Cancel</button>
+        <button type="button" class="btn-dlg btn-dlg-primary" (click)="outOfStockProduct.set(null)">Confirm</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Figma 196:417: Counter POS / Receipt Preview (Dialog) -->
+@if (showReceiptDialog() && lastCompletedInvoice(); as receipt) {
+  <div class="pos-overlay" role="dialog" aria-modal="true" aria-label="Counter Receipt Preview">
+    <div class="pos-dialog">
+      <div class="dlg-header">
+        <div>
+          <h2 class="dlg-title" style="font-size: 16px;">Wimalasiri Furniture · Kottawa</h2>
+          <p class="dlg-sub">{{ receipt.invoiceNumber }} · {{ receipt.invoiceDate | date:'dd MMM yyyy, HH:mm a' }}</p>
+        </div>
+        <span class="pill-tag pill-green">Paid · {{ receipt.paymentModeLabel }}</span>
+      </div>
+
+      <p class="dlg-sub" style="margin: 0;">
+        Customer: {{ receipt.customerName }} ({{ receipt.customerPhone }}) · Cashier: {{ receipt.billedByName }}
+      </p>
+
+      <hr class="dlg-divider" />
+
+      @for (line of receipt.items; track line.itemId) {
+        <div class="dlg-row">
+          <span>{{ line.quantity }}x {{ line.itemName }}</span>
+          <strong>{{ formatCurrency(line.subtotal) }}</strong>
+        </div>
+      }
+
+      <hr class="dlg-divider" />
+
+      <div class="dlg-row">
+        <span>Subtotal ({{ receipt.items.length }} items)</span>
+        <strong>{{ formatCurrency(receipt.subtotalAmount) }}</strong>
+      </div>
+      @if (receipt.discountAmount > 0) {
+        <div class="dlg-row">
+          <span>{{ receipt.discountCode || 'Seasonal Discount' }}</span>
+          <strong style="color: #15803d;">-{{ formatCurrency(receipt.discountAmount) }}</strong>
+        </div>
+      }
+      <div class="dlg-row dlg-row-total">
+        <span>Total Payable</span>
+        <strong>{{ formatCurrency(receipt.totalAmount) }}</strong>
+      </div>
+      <div class="dlg-row">
+        <span>Cash Received</span>
+        <strong>{{ formatCurrency(receipt.cashReceived) }}</strong>
+      </div>
+      <div class="dlg-row">
+        <span>Change Due</span>
+        <strong style="color: #15803d;">{{ formatCurrency(receipt.changeDue) }}</strong>
+      </div>
+
+      <hr class="dlg-divider" />
+
+      <div class="dlg-actions">
+        <button type="button" class="btn-dlg btn-dlg-cancel" (click)="downloadReceiptJson()">Download</button>
+        <a [href]="receipt.whatsappShareUrl" target="_blank" rel="noopener" class="btn-dlg btn-dlg-whatsapp">Send on WhatsApp</a>
+        <button type="button" class="btn-dlg btn-dlg-primary" (click)="printReceipt()">Print</button>
+      </div>
+      <button type="button" class="btn-dlg btn-dlg-cancel" style="width: 100%;" (click)="showReceiptDialog.set(false)">
+        Close Preview
+      </button>
+    </div>
+  </div>
+}

@@ -1,0 +1,371 @@
+<section class="pos-page" aria-labelledby="till-closing-heading">
+  <!-- Figma Top Utility Bar -->
+  <header class="top-utility-bar">
+    <div class="global-search-box">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <circle cx="7" cy="7" r="5.25" stroke="#68839E" stroke-width="1.6" />
+        <path d="M11 11L14.2 14.2" stroke="#68839E" stroke-width="1.6" stroke-linecap="round" />
+      </svg>
+      <input type="search" placeholder="Search products, SKU, invoices..." aria-label="Search POS" />
+      <span class="kbd-shortcut" aria-hidden="true">Ctrl+K</span>
+    </div>
+
+    <div class="utility-right">
+      <div class="date-location-chip">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <rect x="2" y="3" width="12" height="11" rx="2" stroke="#1685C5" stroke-width="1.4" />
+          <path d="M2 6.5H14M5 1.8V3.8M11 1.8V3.8" stroke="#1685C5" stroke-width="1.4" stroke-linecap="round" />
+        </svg>
+        <div>
+          <p class="date-label">Fri, 13 Nov 2026</p>
+          <p class="showroom-sub">14:22 PM · Till #01 {{ isClosed() ? 'closed' : 'open' }}</p>
+        </div>
+      </div>
+
+      <a class="notification-bell" routerLink="/pos/invoices" title="Invoice History">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M8 2.2C5.9 2.2 4.2 3.9 4.2 6V9.2L2.9 10.8V11.6H13.1V10.8L11.8 9.2V6C11.8 3.9 10.1 2.2 8 2.2Z" stroke="#073763" stroke-width="1.4" />
+          <path d="M6.5 12.6C6.7 13.4 7.3 13.9 8 13.9C8.7 13.9 9.3 13.4 9.5 12.6" stroke="#073763" stroke-width="1.4" stroke-linecap="round" />
+        </svg>
+        <span class="bell-badge">3</span>
+      </a>
+
+      <span class="vertical-divider" aria-hidden="true"></span>
+
+      <div class="profile-chip">
+        <div class="profile-meta">
+          <p class="profile-name">{{ cashierName() }}</p>
+          <p class="profile-role">{{ cashierRole() }}</p>
+        </div>
+        <img class="profile-avatar-img" src="/assets/pos/cashier-avatar.png" alt="Cashier profile" />
+      </div>
+    </div>
+  </header>
+
+  <nav class="module-subnav" aria-label="Showroom POS navigation">
+    @for (tab of navTabs; track tab.route) {
+      <a
+        [routerLink]="tab.route"
+        routerLinkActive="active-tab"
+        [routerLinkActiveOptions]="{ exact: tab.exact }"
+        class="subnav-tab"
+      >
+        {{ tab.label }}
+      </a>
+    }
+  </nav>
+
+  <!-- Page Header Row (Matches Screen 03) -->
+  <div class="page-header-row">
+    <div>
+      <h1 id="till-closing-heading">Till Closing</h1>
+      <p class="page-subtitle">Kottawa Showroom · Register #01 · End-of-day cash count &amp; reconciliation</p>
+    </div>
+
+    <span class="pill-tag" [ngClass]="variance() === 0 ? 'pill-green' : 'pill-amber'">
+      ● Variance: {{ formatCurrency(variance()) }}
+    </span>
+  </div>
+
+  @if (statusNotice()) {
+    <div style="margin-bottom: 14px; padding: 10px 14px; border-radius: 10px; background: #dcfce7; border: 1px solid #16a34a; color: #15803d; font-size: 13px; font-weight: 600;">
+      ✓ {{ statusNotice() }}
+    </div>
+  }
+  @if (errorMessage()) {
+    <div role="alert" style="margin-bottom: 14px; padding: 10px 14px; border-radius: 10px; background: #fee2e2; border: 1px solid #ef4444; color: #991b1b; font-size: 13px; font-weight: 600;">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <!-- 4 Top KPI Summary Cards (Matches Screen 03) -->
+  <div class="till-kpi-grid">
+    <div class="till-kpi-card">
+      <div class="kpi-icon-box" style="background: #eaf3fc; color: #073763;">💵</div>
+      <div>
+        <p class="kpi-lbl">Opening Float</p>
+        <p class="kpi-val">{{ formatCurrency(openingFloat()) }}</p>
+        <p class="kpi-sub">Issued at {{ summary()?.openedAt || '08:30 AM' }}</p>
+      </div>
+    </div>
+
+    <div class="till-kpi-card">
+      <div class="kpi-icon-box" style="background: #e0f2fe; color: #1685c5;">💲</div>
+      <div>
+        <p class="kpi-lbl">Cash Sales</p>
+        <p class="kpi-val" style="color: #1685c5;">{{ formatCurrency(cashSales()) }}</p>
+        <p class="kpi-sub">{{ summary()?.cashInvoiceCount ?? 18 }} cash invoices today</p>
+      </div>
+    </div>
+
+    <div class="till-kpi-card">
+      <div class="kpi-icon-box" style="background: #e0f2fe; color: #0ea5e9;">💳</div>
+      <div>
+        <p class="kpi-lbl">Card Sales</p>
+        <p class="kpi-val" style="color: #0ea5e9;">{{ formatCurrency(cardSales()) }}</p>
+        <p class="kpi-sub">{{ summary()?.cardSlipCount ?? 11 }} POS terminal slips</p>
+      </div>
+    </div>
+
+    <div class="till-kpi-card">
+      <div class="kpi-icon-box" style="background: #dcfce7; color: #16a34a;">🏛</div>
+      <div>
+        <p class="kpi-lbl">Bank Slip</p>
+        <p class="kpi-val" style="color: #16a34a;">{{ formatCurrency(bankSlipSales()) }}</p>
+        <p class="kpi-sub">{{ summary()?.bankSlipCount ?? 3 }} slips verified</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="till-main-grid">
+    <!-- Left Card: Count Cash Denomination Matrix -->
+    <div class="count-cash-card">
+      <div class="dlg-header">
+        <div>
+          <h2 class="dlg-title" style="font-size: 16px;">Count Cash</h2>
+          <p class="dlg-sub">Enter physical notes &amp; coins in register drawer to calculate variance</p>
+        </div>
+        <span class="pill-tag" [ngClass]="isClosed() ? 'pill-slate' : 'pill-blue'">
+          ● {{ isClosed() ? 'Till #01 Closed' : 'Till #01 Active' }}
+        </span>
+      </div>
+
+      <table class="denom-table">
+        <thead>
+          <tr>
+            <th>DENOMINATION</th>
+            <th>COUNT</th>
+            <th>SUBTOTAL</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Rs. 5,000 Notes</td>
+            <td>
+              <input type="number" min="0" class="denom-input" [disabled]="isClosed()" [ngModel]="notes5000()" (ngModelChange)="notes5000.set(+$event); onDenomChange()" aria-label="Rs. 5000 notes count" />
+            </td>
+            <td>{{ formatCurrency(notes5000() * 5000) }}</td>
+          </tr>
+          <tr>
+            <td>Rs. 1,000 Notes</td>
+            <td>
+              <input type="number" min="0" class="denom-input" [disabled]="isClosed()" [ngModel]="notes1000()" (ngModelChange)="notes1000.set(+$event); onDenomChange()" aria-label="Rs. 1000 notes count" />
+            </td>
+            <td>{{ formatCurrency(notes1000() * 1000) }}</td>
+          </tr>
+          <tr>
+            <td>Rs. 500 Notes</td>
+            <td>
+              <input type="number" min="0" class="denom-input" [disabled]="isClosed()" [ngModel]="notes500()" (ngModelChange)="notes500.set(+$event); onDenomChange()" aria-label="Rs. 500 notes count" />
+            </td>
+            <td>{{ formatCurrency(notes500() * 500) }}</td>
+          </tr>
+          <tr>
+            <td>Rs. 100 Notes</td>
+            <td>
+              <input type="number" min="0" class="denom-input" [disabled]="isClosed()" [ngModel]="notes100()" (ngModelChange)="notes100.set(+$event); onDenomChange()" aria-label="Rs. 100 notes count" />
+            </td>
+            <td>{{ formatCurrency(notes100() * 100) }}</td>
+          </tr>
+          <tr>
+            <td>Coins &amp; Rs. 50</td>
+            <td>
+              <input type="number" min="0" class="denom-input" [disabled]="isClosed()" [ngModel]="coins50()" (ngModelChange)="coins50.set(+$event); onDenomChange()" aria-label="Coins and Rs. 50 count" />
+            </td>
+            <td>{{ formatCurrency(coins50() * 50) }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="cash-compare-grid">
+        <div>
+          <p class="kpi-lbl" style="margin-bottom: 5px;">Counted Cash Amount</p>
+          <div class="compare-box">{{ formatCurrency(countedCash()) }}</div>
+        </div>
+        <div>
+          <p class="kpi-lbl" style="margin-bottom: 5px;">Expected Cash Amount</p>
+          <div class="compare-box compare-expected">
+            <span>{{ formatCurrency(expectedCash()) }}</span>
+            <span style="font-size: 10.5px; font-weight: 500; color: #8295a8;">Float + Cash Sales</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="variance-banner" [class.variance-warn]="variance() !== 0">
+        <span class="var-circle">{{ variance() === 0 ? '✓' : '!' }}</span>
+        <div>
+          <strong style="font-size: 14px; color: #14532d;">
+            Variance: {{ formatCurrency(variance()) }} — {{ variance() === 0 ? 'Balanced' : variance() > 0 ? 'Cash Overage' : 'Cash Shortage' }}
+          </strong>
+          <p style="margin: 2px 0 0; font-size: 11.5px; color: #166534;">
+            {{ variance() === 0 ? 'Physical cash count matches system expected cash amount exactly.' : 'Recount physical notes before confirming day lock.' }}
+          </p>
+        </div>
+      </div>
+
+      <div class="till-btn-row">
+        <button type="button" class="btn-header-outline" style="height: 46px; min-width: 200px; justify-content: center;" (click)="showZReportDialog.set(true)">
+          🖨 Print Float Slip
+        </button>
+
+        @if (permissions.has('sales.create')) {
+          <button
+            type="button"
+            class="btn-header-primary"
+            style="height: 46px; min-width: 200px; justify-content: center;"
+            [disabled]="isClosed() || submitting()"
+            (click)="showCloseConfirmDialog.set(true)"
+          >
+            🔒 {{ isClosed() ? 'Day Closed' : 'Close Day' }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Right Column: Close Day Confirmation Card + Locked State Navy Card -->
+    <div class="till-right-stack">
+      <div class="confirm-side-card">
+        <div class="confirm-banner-top">
+          <span>⚠</span>
+          <span>Close Day Confirmation Dialog</span>
+        </div>
+
+        <p style="margin: 0; font-size: 13px; font-weight: 700; color: #102d50;">
+          Lock Till #01 for Friday, 13 Nov 2026?
+        </p>
+        <p style="margin: 0; font-size: 11.5px; color: #526b85; line-height: 1.45;">
+          Once closed, no cash sales or refunds can be processed until the next opening float is verified by an Owner.
+        </p>
+
+        <div class="confirm-summary-box">
+          <div class="dlg-row">
+            <span>Gross Day Revenue (All Methods):</span>
+            <strong style="color: #073763;">{{ formatCurrency(grossRevenue()) }}</strong>
+          </div>
+          <div class="dlg-row">
+            <span>Safe Deposit Cash Amount:</span>
+            <strong style="color: #16a34a;">{{ formatCurrency(safeDepositCash()) }}</strong>
+          </div>
+        </div>
+
+        <div class="dlg-actions">
+          <button type="button" class="btn-dlg btn-dlg-cancel" [disabled]="isClosed()" (click)="loadTill()">Cancel</button>
+          <button
+            type="button"
+            class="btn-dlg btn-dlg-primary"
+            [disabled]="isClosed() || submitting()"
+            (click)="confirmCloseDay()"
+          >
+            ✓ Confirm Close Day
+          </button>
+        </div>
+      </div>
+
+      <!-- Figma 78:2245 & 196:620: Locked State · Till #01 Closed -->
+      <div class="locked-navy-card" [class.dimmed]="!isClosed()">
+        <div class="locked-head">
+          <span class="lock-badge-icon">🔒</span>
+          <div>
+            <h3 class="locked-title">Locked State · Till #01 Closed</h3>
+            <p class="locked-zsub">Z-Report #{{ summary()?.zReportNumber || 'ZR-2026-1113-01' }} generated</p>
+          </div>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid rgba(255,255,255,.16); margin: 0;" />
+
+        <div class="locked-meta-row">
+          <span>Closed By:</span>
+          <strong>{{ summary()?.closedByName || cashierName() }}</strong>
+        </div>
+        <div class="locked-meta-row">
+          <span>Verified By:</span>
+          <strong>{{ summary()?.verifiedByName || 'Wimalasiri (Owner)' }}</strong>
+        </div>
+        <div class="locked-meta-row">
+          <span>Status:</span>
+          <span class="locked-pill">● {{ isClosed() ? 'Locked & Read-only' : 'Preview · Ready to Lock' }}</span>
+        </div>
+
+        <p style="margin: 2px 0; font-size: 11px; color: #9fd8ee;">
+          All POS actions disabled until tomorrow 08:30 AM.
+        </p>
+
+        <button type="button" class="btn-zreport" (click)="showZReportDialog.set(true)">
+          🖨 Print Shift Z-Report (PDF)
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Figma 196:578: Till Closing / Close Day Confirm (Dialog) -->
+@if (showCloseConfirmDialog()) {
+  <div class="pos-overlay" role="dialog" aria-modal="true" aria-label="Close the day">
+    <div class="pos-dialog pos-dialog-sm">
+      <span class="pill-tag pill-blue" style="align-self: flex-start;">Register #01 · 13 Nov 2026</span>
+      <h2 class="dlg-title">Close the day?</h2>
+      <p class="dlg-sub" style="font-size: 13px;">
+        Locking Till #01 prevents further POS bills or refunds until the next opening float is verified.
+      </p>
+
+      <div class="dlg-card" style="background: #eaf3fc; border: 0;">
+        <div class="dlg-row"><span>Opening Float</span><strong>{{ formatCurrency(openingFloat()) }}</strong></div>
+        <div class="dlg-row"><span>Cash Sales ({{ summary()?.cashInvoiceCount ?? 18 }})</span><strong>{{ formatCurrency(cashSales()) }}</strong></div>
+        <div class="dlg-row"><span>Card + Bank Slip</span><strong>{{ formatCurrency(cardSales() + bankSlipSales()) }}</strong></div>
+        <hr class="dlg-divider" />
+        <div class="dlg-row dlg-row-total">
+          <span>Cash Variance</span>
+          <strong style="color: #15803d;">{{ formatCurrency(variance()) }}</strong>
+        </div>
+      </div>
+
+      <div class="dlg-actions">
+        <button type="button" class="btn-dlg btn-dlg-cancel" (click)="showCloseConfirmDialog.set(false)">Cancel</button>
+        <button type="button" class="btn-dlg btn-dlg-primary" [disabled]="submitting()" (click)="confirmCloseDay()">
+          Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Figma 196:619: Till Closing / Closing Report Preview (Dialog) -->
+@if (showZReportDialog()) {
+  <div class="pos-overlay" role="dialog" aria-modal="true" aria-label="Daily Closing Report Z-Report">
+    <div class="pos-dialog">
+      <div class="dlg-header">
+        <div>
+          <h2 class="dlg-title">Daily Closing Report (Z-Report)</h2>
+          <p class="dlg-sub">#{{ summary()?.zReportNumber || 'ZR-2026-1113-01' }} · Fri, 13 Nov 2026</p>
+        </div>
+        <span class="pill-tag" [ngClass]="variance() === 0 ? 'pill-green' : 'pill-amber'">
+          {{ variance() === 0 ? 'Balanced' : 'Variance' }}
+        </span>
+      </div>
+
+      <hr class="dlg-divider" />
+      <div class="dlg-row"><span>Opening Float ({{ summary()?.openedAt || '08:30 AM' }})</span><strong>{{ formatCurrency(openingFloat()) }}</strong></div>
+      <div class="dlg-row"><span>Cash Sales ({{ summary()?.cashInvoiceCount ?? 18 }} invoices)</span><strong>{{ formatCurrency(cashSales()) }}</strong></div>
+      <div class="dlg-row"><span>Card Sales ({{ summary()?.cardSlipCount ?? 11 }} slips)</span><strong>{{ formatCurrency(cardSales()) }}</strong></div>
+      <div class="dlg-row"><span>Bank Slip Transfers ({{ summary()?.bankSlipCount ?? 3 }} slips)</span><strong>{{ formatCurrency(bankSlipSales()) }}</strong></div>
+      <hr class="dlg-divider" />
+      <div class="dlg-row dlg-row-total"><span>Gross Day Revenue</span><strong>{{ formatCurrency(grossRevenue()) }}</strong></div>
+      <div class="dlg-row"><span>Expected Cash in Register</span><strong>{{ formatCurrency(expectedCash()) }}</strong></div>
+      <div class="dlg-row"><span>Physical Counted Cash</span><strong>{{ formatCurrency(countedCash()) }}</strong></div>
+      <div class="dlg-row dlg-row-total">
+        <span>Variance</span>
+        <strong style="color: #15803d;">{{ formatCurrency(variance()) }}</strong>
+      </div>
+      <hr class="dlg-divider" />
+
+      <p class="dlg-sub" style="margin: 0;">
+        Closed by: {{ cashierName() }} (Cashier) · Verified by: {{ summary()?.verifiedByName || 'Wimalasiri (Owner)' }}
+      </p>
+
+      <div class="dlg-actions">
+        <button type="button" class="btn-dlg btn-dlg-cancel" (click)="showZReportDialog.set(false)">Cancel</button>
+        <button type="button" class="btn-dlg btn-dlg-primary" (click)="printReport()">Print Report</button>
+      </div>
+    </div>
+  </div>
+}

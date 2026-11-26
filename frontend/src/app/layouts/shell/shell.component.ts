@@ -25,6 +25,8 @@ import { PermissionsService } from '../../core/auth/permissions.service';
               <a routerLink="/users" routerLinkActive="active" ariaCurrentWhenActive="page"><img src="/assets/navigation/users.svg" alt="" />{{ item.label }}</a>
             } @else if (item.icon === 'inventory' && permissions.has('inventory.view')) {
               <a routerLink="/inventory" routerLinkActive="active" ariaCurrentWhenActive="page"><img src="/assets/navigation/inventory.svg" alt="" />{{ item.label }}</a>
+            } @else if (item.icon === 'finance') {
+              <a routerLink="/finance" routerLinkActive="active" ariaCurrentWhenActive="page"><img src="/assets/navigation/finance.svg" alt="" />{{ item.label }}</a>
             } @else {
             <button class="menu-item" type="button" disabled [title]="item.label + ' is not available yet'"><img [src]="'/assets/navigation/' + item.icon + '.svg'" alt="" />{{ item.label }}</button>
             }

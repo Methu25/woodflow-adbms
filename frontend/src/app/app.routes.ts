@@ -59,6 +59,16 @@ export const routes: Routes = [
         title: 'Finished Furniture Inventory | WoodFlow',
         loadComponent: () => import('./features/inventory/showroom-catalog.component').then(m => m.ShowroomCatalogComponent),
       },
+      {
+        path: 'finance/advances/issue',
+        title: 'Advance Issuance Form | WoodFlow',
+        loadComponent: () => import('./features/finance/advance-issuance.component').then(m => m.AdvanceIssuanceComponent),
+      },
+      {
+        path: 'finance',
+        title: 'Advance Issuance Form | WoodFlow',
+        loadComponent: () => import('./features/finance/advance-issuance.component').then(m => m.AdvanceIssuanceComponent),
+      },
     ],
   },
   { path: '**', redirectTo: 'dashboard' },

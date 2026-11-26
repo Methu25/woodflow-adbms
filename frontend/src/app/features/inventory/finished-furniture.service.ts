@@ -123,6 +123,20 @@ export interface UpdateCategoryRequest {
   displayOrder?: number;
 }
 
+export interface FinishedFurnitureAvailabilityDto {
+  productId: number;
+  skuCode: string;
+  barcode: string;
+  itemName: string;
+  category: string;
+  retailPrice: number;
+  currentStock: number;
+  minReorderLevel: number;
+  isAvailableForPos: boolean;
+  posLocked: boolean;
+  triggerName: string;
+}
+
 const FALLBACK_CATEGORIES: FinishedCategoryDto[] = [
   {
     categoryId: 1,
@@ -452,6 +466,28 @@ export class FinishedFurnitureService {
       catchError(() => {
         const match = this.localItems().find(i => i.productId === productId) ?? this.localItems()[0];
         return of(match);
+      }),
+    );
+  }
+
+  getAvailabilityBySku(skuCode: string): Observable<FinishedFurnitureAvailabilityDto> {
+    return this.http.get<FinishedFurnitureAvailabilityDto>(`${this.baseUrl}/${encodeURIComponent(skuCode)}/availability`).pipe(
+      timeout(12000),
+      catchError(() => {
+        const match = this.localItems().find(i => i.skuCode === skuCode) ?? this.localItems()[0];
+        return of({
+          productId: match.productId,
+          skuCode: match.skuCode,
+          barcode: match.barcode,
+          itemName: match.itemName,
+          category: match.category,
+          retailPrice: match.retailPrice,
+          currentStock: match.currentStock,
+          minReorderLevel: match.minReorderLevel,
+          isAvailableForPos: match.currentStock > 0,
+          posLocked: match.currentStock <= 0,
+          triggerName: 'trg_pos_stock_deduct',
+        });
       }),
     );
   }

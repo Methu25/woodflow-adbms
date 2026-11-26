@@ -72,6 +72,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/inventory/category-management.component').then(m => m.CategoryManagementComponent),
       },
       {
+        path: 'inventory/items/:id',
+        canActivate: [permissionGuard], data: { permission: 'inventory.view' },
+        title: 'Showroom Item Details & SKU Tag | WoodFlow',
+        loadComponent: () => import('./features/inventory/item-details-barcode.component').then(m => m.ItemDetailsBarcodeComponent),
+      },
+      {
         path: 'inventory',
         canActivate: [permissionGuard], data: { permission: 'inventory.view' },
         title: 'Finished Furniture Inventory | WoodFlow',

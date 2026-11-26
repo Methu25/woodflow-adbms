@@ -66,6 +66,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/inventory/stock-audit-adjustment.component').then(m => m.StockAuditAdjustmentComponent),
       },
       {
+        path: 'inventory/categories',
+        canActivate: [permissionGuard], data: { permission: 'inventory.view' },
+        title: 'Category Management | WoodFlow',
+        loadComponent: () => import('./features/inventory/category-management.component').then(m => m.CategoryManagementComponent),
+      },
+      {
         path: 'inventory',
         canActivate: [permissionGuard], data: { permission: 'inventory.view' },
         title: 'Finished Furniture Inventory | WoodFlow',

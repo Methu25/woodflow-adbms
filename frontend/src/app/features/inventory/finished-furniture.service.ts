@@ -100,6 +100,77 @@ export interface StockAuditSessionResultDto {
   updatedItems: FinishedFurnitureItem[];
 }
 
+export interface FinishedCategoryDto {
+  categoryId: number;
+  categoryCode: string;
+  categoryName: string;
+  description: string;
+  isActive: boolean;
+  displayOrder: number;
+  skuCount: number;
+}
+
+export interface CreateCategoryRequest {
+  categoryName: string;
+  description: string;
+  isActive: boolean;
+}
+
+export interface UpdateCategoryRequest {
+  categoryName: string;
+  description: string;
+  isActive: boolean;
+  displayOrder?: number;
+}
+
+const FALLBACK_CATEGORIES: FinishedCategoryDto[] = [
+  {
+    categoryId: 1,
+    categoryCode: 'CAT-01',
+    categoryName: 'Living Room',
+    description: 'Lounge suites, 3-seater sofas, coffee tables & TV consoles',
+    isActive: true,
+    displayOrder: 1,
+    skuCount: 8,
+  },
+  {
+    categoryId: 2,
+    categoryCode: 'CAT-02',
+    categoryName: 'Bedroom',
+    description: 'King/queen teak beds, sliding wardrobes & dressing tables',
+    isActive: true,
+    displayOrder: 2,
+    skuCount: 7,
+  },
+  {
+    categoryId: 3,
+    categoryCode: 'CAT-03',
+    categoryName: 'Dining Room',
+    description: 'Solid teak 4/6/8-chair dining sets, buffets & sideboards',
+    isActive: true,
+    displayOrder: 3,
+    skuCount: 5,
+  },
+  {
+    categoryId: 4,
+    categoryCode: 'CAT-04',
+    categoryName: 'Office & Study',
+    description: 'Executive desks, conference tables & bookcase cabinets',
+    isActive: true,
+    displayOrder: 4,
+    skuCount: 3,
+  },
+  {
+    categoryId: 5,
+    categoryCode: 'CAT-05',
+    categoryName: 'Kids & Nursery',
+    description: 'Compact study desks & bunk beds (Seasonal production)',
+    isActive: false,
+    displayOrder: 5,
+    skuCount: 1,
+  },
+];
+
 const FALLBACK_MOVEMENTS: StockMovementDto[] = [
   {
     movementId: 1,
@@ -357,6 +428,7 @@ export class FinishedFurnitureService {
   private readonly baseUrl = `${inject(API_URL)}/finished-goods`;
 
   private readonly localItems = signal<FinishedFurnitureItem[]>([...FALLBACK_CATALOG_ITEMS]);
+  private readonly localCategories = signal<FinishedCategoryDto[]>([...FALLBACK_CATEGORIES]);
 
   listCatalog(category = 'All', search = ''): Observable<FinishedCatalogResponse> {
     const params: Record<string, string> = {};
@@ -434,6 +506,38 @@ export class FinishedFurnitureService {
             list.map(item => res.updatedItems.find(u => u.productId === item.productId) ?? item),
           );
         }
+      }),
+    );
+  }
+
+  listCategories(): Observable<FinishedCategoryDto[]> {
+    return this.http.get<FinishedCategoryDto[]>(`${this.baseUrl}/categories`).pipe(
+      timeout(12000),
+      tap(cats => {
+        if (cats.length > 0) this.localCategories.set(cats);
+      }),
+      catchError(() => of(this.localCategories())),
+    );
+  }
+
+  createCategory(request: CreateCategoryRequest): Observable<FinishedCategoryDto> {
+    return this.auth.refreshCsrf().pipe(
+      switchMap(() => this.http.post<FinishedCategoryDto>(`${this.baseUrl}/categories`, request)),
+      timeout(12000),
+      tap(created => {
+        this.localCategories.update(list => [...list, created]);
+      }),
+    );
+  }
+
+  updateCategory(categoryId: number, request: UpdateCategoryRequest): Observable<FinishedCategoryDto> {
+    return this.auth.refreshCsrf().pipe(
+      switchMap(() => this.http.put<FinishedCategoryDto>(`${this.baseUrl}/categories/${categoryId}`, request)),
+      timeout(12000),
+      tap(updated => {
+        this.localCategories.update(list =>
+          list.map(c => (c.categoryId === categoryId ? updated : c)),
+        );
       }),
     );
   }

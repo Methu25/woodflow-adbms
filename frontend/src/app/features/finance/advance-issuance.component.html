@@ -1,0 +1,371 @@
+<section class="finance-page" aria-labelledby="advance-issuance-heading">
+  <!-- Figma Top Header Bar (Node 109:1610..109:1634) -->
+  <header class="top-utility-bar">
+    <div class="global-search-box">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <circle cx="7" cy="7" r="5.25" stroke="#1685C5" stroke-width="1.8" />
+        <path d="M11 11L14.2 14.2" stroke="#1685C5" stroke-width="1.8" stroke-linecap="round" />
+      </svg>
+      <input
+        type="search"
+        placeholder="Search employee advances, petty cash, vouchers..."
+        aria-label="Search employee advances, petty cash, vouchers"
+      />
+      <span class="kbd-shortcut" aria-hidden="true">Ctrl+K</span>
+    </div>
+
+    <div class="utility-right">
+      <div class="date-location-chip">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <rect x="1.5" y="2.8" width="13" height="11.5" rx="1.8" stroke="#1685C5" stroke-width="1.6" />
+          <path d="M1.5 6.2H14.5M5 1.4V3.6M11 1.4V3.6" stroke="#1685C5" stroke-width="1.6" stroke-linecap="round" />
+        </svg>
+        <div>
+          <p class="date-label">Fri, 13 Nov 2026</p>
+          <p class="showroom-sub">08:45 AM · Main Cash Till</p>
+        </div>
+      </div>
+
+      <span class="notification-bell" title="5 Active Advance & Cash Vault Alerts">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path
+            d="M8 2.2C5.9 2.2 4.2 3.9 4.2 6V9.2L2.9 10.8V11.6H13.1V10.8L11.8 9.2V6C11.8 3.9 10.1 2.2 8 2.2Z"
+            stroke="#073763"
+            stroke-width="1.5"
+          />
+          <path d="M6.5 12.6C6.7 13.4 7.3 13.9 8 13.9C8.7 13.9 9.3 13.4 9.5 12.6" stroke="#073763" stroke-width="1.5" stroke-linecap="round" />
+        </svg>
+        <span class="bell-badge">5</span>
+      </span>
+
+      <span class="vertical-divider" aria-hidden="true"></span>
+
+      <div class="profile-chip">
+        <div class="profile-meta">
+          <p class="profile-name">{{ userDisplayName() }}</p>
+          <p class="profile-role">{{ userRoleSubtitle() }}</p>
+        </div>
+        <div class="profile-avatar" aria-hidden="true">{{ userInitials() }}</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Page Title & Top-Right Action Button (Node 109:1635..109:1638) -->
+  <div class="page-header-row">
+    <div>
+      <h1 id="advance-issuance-heading">Advance Issuance Form</h1>
+      <p class="page-subtitle">Disburse employee salary advances, validate against earnings &amp; flag deficit risk</p>
+    </div>
+
+    <a routerLink="/finance/advances" class="btn-header-outline">
+      Advance Ledger
+    </a>
+  </div>
+
+  @if (error()) {
+    <div class="feedback-banner error-banner" role="alert">{{ error() }}</div>
+  }
+  @if (success()) {
+    <div class="feedback-banner success-banner" role="status">{{ success() }}</div>
+  }
+
+  <!-- Two-Column Layout matching Figma SCREEN 01 (Left 716px Request Form, Right 418px Earnings & Balance Impact) -->
+  <div class="issuance-grid">
+    <!-- Left Card: New Employee Salary Advance Request (Node 109:1639..109:1687) -->
+    <div class="advance-request-card">
+      <div class="card-header-row">
+        <h2>New Employee Salary Advance Request</h2>
+        <span class="till-out-pill">
+          <span class="pill-dot" aria-hidden="true"></span>
+          Till #1 Cash Out
+        </span>
+      </div>
+
+      <hr class="card-divider" />
+
+      <form [formGroup]="form" (ngSubmit)="submitAdvance()" class="advance-form">
+        <!-- Row 1: Select Employee * (Node 109:1645..109:1648) -->
+        <div class="field-group">
+          <label for="employee-select">Select Employee *</label>
+          <div class="select-wrap primary-focus-border">
+            <select id="employee-select" formControlName="employeeId">
+              @for (emp of employees(); track emp.employeeId) {
+                <option [ngValue]="emp.employeeId">{{ emp.dropdownLabel }}</option>
+              }
+            </select>
+            <svg class="select-chevron" width="11" height="7" viewBox="0 0 11 7" fill="none" aria-hidden="true">
+              <path d="M1 1.25L5.5 5.75L10 1.25" stroke="#1685C5" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </div>
+        </div>
+
+        <!-- Row 2: Advance Amount (LKR) * & Issuance Date * (Node 109:1650..109:1656) -->
+        <div class="form-row-2">
+          <div class="field-group">
+            <label for="advance-amount">Advance Amount (LKR) *</label>
+            <input
+              id="advance-amount"
+              type="text"
+              formControlName="advanceAmountInput"
+              (blur)="onAmountBlur()"
+              [class.deficit-input]="isDeficit()"
+              placeholder="Rs. 25,000.00"
+            />
+          </div>
+
+          <div class="field-group">
+            <label for="issuance-date">Issuance Date *</label>
+            <div class="date-input-wrap">
+              <input
+                id="issuance-date"
+                type="text"
+                formControlName="issuanceDate"
+                placeholder="13 Nov 2026"
+              />
+              <svg class="input-calendar-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <rect x="1.8" y="2.8" width="12.4" height="11.4" rx="1.8" stroke="#8295A8" stroke-width="1.4" />
+                <path d="M1.8 6.2H14.2M5.2 1.5V3.6M10.8 1.5V3.6" stroke="#8295A8" stroke-width="1.4" stroke-linecap="round" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 3: Disbursement Source & Voucher Reference # (Node 109:1659..109:1666) -->
+        <div class="form-row-2">
+          <div class="field-group">
+            <label for="disbursement-source">Disbursement Source</label>
+            <div class="select-wrap">
+              <select id="disbursement-source" formControlName="disbursementSource">
+                @for (src of disbursementSources(); track src) {
+                  <option [value]="src">{{ src }}</option>
+                }
+              </select>
+              <svg class="select-chevron" width="11" height="7" viewBox="0 0 11 7" fill="none" aria-hidden="true">
+                <path d="M1 1.25L5.5 5.75L10 1.25" stroke="#8295A8" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label for="voucher-ref">Voucher Reference #</label>
+            <input
+              id="voucher-ref"
+              type="text"
+              formControlName="voucherReference"
+              class="voucher-readonly-look"
+              placeholder="ADV-2026-1113"
+            />
+          </div>
+        </div>
+
+        <!-- Row 4: Reason for Salary Advance * (Node 109:1667..109:1670) -->
+        <div class="field-group">
+          <label for="advance-reason">Reason for Salary Advance *</label>
+          <textarea
+            id="advance-reason"
+            rows="3"
+            formControlName="reason"
+            placeholder="Urgent family hospitalisation bill settlement — employee requested mid-month draw."
+          ></textarea>
+        </div>
+
+        <!-- Row 5: Warning Box when Advance Exceeds Available Earnings (Node 109:1671..109:1676) -->
+        @if (isDeficit()) {
+          <div class="deficit-warning-box" role="alert">
+            <div class="warning-icon-wrap" aria-hidden="true">
+              <svg width="22" height="19" viewBox="0 0 22 19" fill="none">
+                <path
+                  d="M11 1.5L20.5 17.5H1.5L11 1.5Z"
+                  stroke="#B91C1C"
+                  stroke-width="1.8"
+                  stroke-linejoin="round"
+                />
+                <path d="M11 7.2V11.8" stroke="#B91C1C" stroke-width="1.8" stroke-linecap="round" />
+                <circle cx="11" cy="14.6" r="1" fill="#B91C1C" />
+              </svg>
+            </div>
+            <div class="warning-text-content">
+              <p class="warning-headline">Warning: New Advance Exceeds Employee Available Earnings!</p>
+              <p class="warning-body">
+                Available balance before this draw is {{ formatLkr(netAvailableBefore()) }}. Issuing {{ formatLkr(advanceAmountSignal()) }} creates a
+              </p>
+              <p class="warning-deficit-line">
+                - {{ formatLkr(deficitAbsoluteAmount()) }} payroll deficit that must carry forward to December 2026.
+              </p>
+            </div>
+          </div>
+        } @else {
+          <div class="safe-draw-box" role="status">
+            <div class="warning-icon-wrap" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <circle cx="10" cy="10" r="8.2" stroke="#15803D" stroke-width="1.8" />
+                <path d="M6.5 10.2L8.9 12.6L13.8 7.5" stroke="#15803D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </div>
+            <div class="warning-text-content">
+              <p class="safe-headline">Within Available Employee Earnings</p>
+              <p class="safe-body">
+                Available balance before this draw is {{ formatLkr(netAvailableBefore()) }}. Remaining net balance after draw: {{ formatLkr(balanceAfterNewAdvance()) }}.
+              </p>
+            </div>
+          </div>
+        }
+
+        <!-- Row 6: Supervisor Override Checkbox (Node 109:1677..109:1680) -->
+        <div
+          class="override-checkbox-row"
+          (click)="toggleSupervisorOverride()"
+          (keydown.space)="toggleSupervisorOverride(); $event.preventDefault()"
+          tabindex="0"
+          role="checkbox"
+          [attr.aria-checked]="form.controls.supervisorOverrideApproved.value"
+        >
+          <span
+            class="custom-checkbox"
+            [class.checked]="form.controls.supervisorOverrideApproved.value"
+            aria-hidden="true"
+          >
+            @if (form.controls.supervisorOverrideApproved.value) {
+              <svg width="11" height="9" viewBox="0 0 11 9" fill="none">
+                <path d="M1.5 4.5L4.2 7.2L9.5 1.8" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            }
+          </span>
+          <span class="override-label">
+            Supervisor override approved — employee signed deficit recovery acknowledgement
+          </span>
+        </div>
+
+        <hr class="card-divider footer-divider" />
+
+        <!-- Row 7: Cancel & Issue Advance Action Buttons (Node 109:1682..109:1686) -->
+        <div class="form-actions-row">
+          <button type="button" class="btn-cancel" (click)="resetForm()" [disabled]="submitting()">
+            Cancel
+          </button>
+
+          <button type="submit" class="btn-issue-advance" [disabled]="submitting()">
+            <svg width="12" height="13" viewBox="0 0 12 13" fill="none" aria-hidden="true">
+              <path d="M6 11.5V2M6 2L2 6M6 2L10 6" stroke="#FFFFFF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            {{ submitting() ? 'Issuing Advance…' : 'Issue Advance' }}
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Right Card: Earnings & Balance Impact (Node 109:1688..109:1726) -->
+    <aside class="impact-panel" aria-labelledby="impact-heading">
+      <div class="impact-banner-header">
+        <h2 id="impact-heading">Earnings &amp; Balance Impact</h2>
+      </div>
+
+      <div class="impact-body">
+        <!-- Selected Employee Summary Row (Node 109:1692..109:1695) -->
+        <div class="employee-identity-row">
+          <div class="emp-initials-circle" aria-hidden="true">
+            {{ selectedEmployee().initials }}
+          </div>
+          <div>
+            <p class="emp-name">{{ selectedEmployee().fullName }}</p>
+            <p class="emp-role-code">{{ selectedEmployee().roleTitle }} · {{ selectedEmployee().employeeCode }}</p>
+          </div>
+        </div>
+
+        <hr class="impact-divider" />
+
+        <!-- Employee Earnings Summary (NOV 2026) (Node 109:1697..109:1703) -->
+        <p class="impact-section-caption">EMPLOYEE EARNINGS SUMMARY (NOV 2026)</p>
+
+        <div class="metric-list">
+          <div class="metric-row">
+            <span class="metric-label">Base Monthly Salary</span>
+            <span class="metric-value val-green">{{ formatLkr(selectedEmployee().baseMonthlySalary) }}</span>
+          </div>
+
+          <div class="metric-row">
+            <span class="metric-label">Approved Piecework Credits</span>
+            <span class="metric-value val-green">+ {{ formatLkr(selectedEmployee().approvedPieceworkCredits) }}</span>
+          </div>
+
+          <div class="metric-row metric-total-row">
+            <span class="metric-label-bold">Total MTD Gross Earnings</span>
+            <span class="metric-value val-navy">{{ formatLkr(selectedEmployee().totalMtdGrossEarnings) }}</span>
+          </div>
+        </div>
+
+        <hr class="impact-divider" />
+
+        <!-- Outstanding Advances This Month (Node 109:1705..109:1711) -->
+        <p class="impact-section-caption">OUTSTANDING ADVANCES THIS MONTH</p>
+
+        <div class="metric-list">
+          @if (selectedEmployee().outstandingAdvances.length === 0) {
+            <div class="metric-row">
+              <span class="metric-label-muted">No open advances this month</span>
+              <span class="metric-value val-muted">Rs. 0.00</span>
+            </div>
+          } @else {
+            @for (adv of selectedEmployee().outstandingAdvances; track adv.advanceId) {
+              <div class="metric-row">
+                <span class="metric-label-muted">{{ adv.displayLine }}</span>
+                <span class="metric-value val-red">- {{ formatLkr(adv.amount) }}</span>
+              </div>
+            }
+          }
+
+          <div class="metric-row metric-total-row">
+            <span class="metric-label-darkred">Total Outstanding Advances</span>
+            <span class="metric-value val-red">- {{ formatLkr(selectedEmployee().totalOutstandingAdvances) }}</span>
+          </div>
+        </div>
+
+        <!-- Balance After New Advance Box (Node 109:1712..109:1722) -->
+        <div class="balance-impact-box" [class.safe-impact-box]="!isDeficit()">
+          <div class="impact-box-row">
+            <span class="box-caption-muted">NET AVAILABLE BEFORE ADVANCE</span>
+            <span class="box-val-green">{{ formatLkr(netAvailableBefore()) }}</span>
+          </div>
+
+          <div class="impact-box-row">
+            <span class="box-caption-red">NEW ADVANCE REQUESTED</span>
+            <span class="box-val-red">- {{ formatLkr(advanceAmountSignal()) }}</span>
+          </div>
+
+          <hr class="box-inner-divider" />
+
+          <p class="balance-after-caption" [class.safe-after-caption]="!isDeficit()">
+            BALANCE AFTER NEW ADVANCE
+          </p>
+
+          <div class="balance-final-row">
+            <span class="balance-big-amount" [class.safe-big-amount]="!isDeficit()">
+              {{ formatSignedBalanceAfter() }}
+            </span>
+
+            @if (isDeficit()) {
+              <span class="deficit-flagged-pill">
+                <span class="pill-dot" aria-hidden="true"></span>
+                Deficit Flagged
+              </span>
+            } @else {
+              <span class="safe-flagged-pill">
+                <span class="pill-dot-green" aria-hidden="true"></span>
+                Covered
+              </span>
+            }
+          </div>
+        </div>
+
+        <!-- Ledger Posting Note (Node 109:1723..109:1726) -->
+        <div class="ledger-posting-note">
+          <p class="note-caption">LEDGER POSTING NOTE</p>
+          <p class="note-primary">Funds will be deducted immediately from Till #1</p>
+          <p class="note-secondary">
+            and linked to {{ selectedEmployee().employeeCode }} payroll recovery queue.
+          </p>
+        </div>
+      </div>
+    </aside>
+  </div>
+</section>

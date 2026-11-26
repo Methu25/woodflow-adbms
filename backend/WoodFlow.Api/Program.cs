@@ -35,6 +35,12 @@ builder.Services.AddSingleton<AccountLoginThrottle>();
 builder.Services.AddSingleton<ISetupService, SetupService>();
 builder.Services.AddSingleton<IRecoveryRepository, RecoveryRepository>();
 builder.Services.AddSingleton<RecoveryService>();
+builder.Services.AddSingleton<IFinishedFurnitureRepository, FinishedFurnitureRepository>();
+builder.Services.AddSingleton<FinishedFurnitureService>();
+builder.Services.AddSingleton<IEmployeeAdvanceRepository, EmployeeAdvanceRepository>();
+builder.Services.AddSingleton<EmployeeAdvanceService>();
+builder.Services.AddSingleton<IPosCounterRepository, PosCounterRepository>();
+builder.Services.AddSingleton<CounterReceiptService>();
 builder.Services.AddScoped<AccountCookieEvents>();
 builder.Services.AddAntiforgery(options =>
 {

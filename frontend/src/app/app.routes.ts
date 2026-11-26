@@ -78,6 +78,24 @@ export const routes: Routes = [
         loadComponent: () => import('./features/inventory/item-details-barcode.component').then(m => m.ItemDetailsBarcodeComponent),
       },
       {
+        path: 'inventory/raw-materials',
+        canActivate: [permissionGuard], data: { permission: 'inventory.view' },
+        title: 'Raw Stock Dashboard | WoodFlow',
+        loadComponent: () => import('./features/raw-materials/raw-stock-dashboard/raw-stock-dashboard.component').then(m => m.RawStockDashboardComponent),
+      },
+      {
+        path: 'inventory/raw-materials/new',
+        canActivate: [permissionGuard], data: { permission: 'inventory.create' },
+        title: 'New Material Master | WoodFlow',
+        loadComponent: () => import('./features/raw-materials/material-master-editor/material-master-editor.component').then(m => m.MaterialMasterEditorComponent),
+      },
+      {
+        path: 'inventory/raw-materials/edit/:id',
+        canActivate: [permissionGuard], data: { permission: 'inventory.edit' },
+        title: 'Edit Material Master | WoodFlow',
+        loadComponent: () => import('./features/raw-materials/material-master-editor/material-master-editor.component').then(m => m.MaterialMasterEditorComponent),
+      },
+      {
         path: 'inventory/alerts',
         canActivate: [permissionGuard], data: { permission: 'inventory.view' },
         title: 'Low-Stock Alerts & POS Trigger Monitor | WoodFlow',

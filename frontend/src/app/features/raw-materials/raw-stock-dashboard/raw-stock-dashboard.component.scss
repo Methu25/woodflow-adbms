@@ -1,0 +1,38 @@
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.kpi-card { background: #FFFFFF; border: 1px solid #E8E2D9; border-radius: 12px; padding: 18px 20px; box-shadow: 0 1px 3px rgba(42,36,31,.04); }
+.kpi-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #7A6F64; margin-bottom: 6px; }
+.kpi-value { font-family: 'Newsreader', Georgia, serif; font-size: 30px; font-weight: 700; color: #2A241F; line-height: 1.1; }
+.kpi-sub { font-size: 12px; color: #7A6F64; margin-top: 4px; }
+.kpi-card.alert-card { border-color: #F1D2CE; background: #FDF7F6; }
+.kpi-card.alert-card .kpi-value { color: #A44A3F; }
+
+.filter-bar { margin-bottom: 18px; }
+.category-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+.category-pill { padding: 6px 14px; border-radius: 999px; border: 1px solid #D5CABE; background: #FFFFFF; font-size: 12px; font-weight: 600; color: #5A5046; cursor: pointer; transition: all .15s ease; }
+.category-pill:hover { background: #F3EFEA; }
+.category-pill.active { background: #2A241F; color: #FFFFFF; border-color: #2A241F; }
+
+.search-box { position: relative; width: 280px; max-width: 100%; }
+.search-input { width: 100%; height: 36px; padding: 0 12px 0 34px; border: 1px solid #D5CABE; border-radius: 8px; background: #FFFFFF; font-size: 13px; color: #2A241F; outline: none; }
+.search-input:focus { border-color: #A44A3F; }
+.search-icon { position: absolute; left: 10px; top: 10px; width: 15px; height: 15px; fill: #7A6F64; }
+
+.ledger-table-card { background: #FFFFFF; border: 1px solid #E8E2D9; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(42,36,31,.04); }
+.stock-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+.stock-table th { background: #F8F5F0; padding: 12px 16px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #7A6F64; border-bottom: 1px solid #E8E2D9; }
+.stock-table td { padding: 14px 16px; border-bottom: 1px solid #F0ECE6; vertical-align: middle; }
+.stock-table tr:hover { background: #FDFAF7; }
+.sku-code { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: #A44A3F; }
+.mat-name { font-weight: 600; color: #2A241F; }
+.mat-loc { font-size: 11px; color: #8F8377; margin-top: 2px; }
+.uom-badge { display: inline-block; padding: 2px 6px; border-radius: 4px; background: #F3EFEA; font-size: 11px; font-weight: 600; color: #5A5046; }
+.status-pill { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+.status-pill.HEALTHY { background: #EBF5EE; color: #2D6A4F; border: 1px solid #C8E6D3; }
+.status-pill.LOW { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
+.status-pill.CRITICAL { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
+.actions-cell { display: flex; gap: 8px; justify-content: flex-end; }
+.btn-action-sm { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; text-decoration: none; border: 1px solid #D5CABE; background: #FFFFFF; color: #2A241F; cursor: pointer; }
+.btn-action-sm:hover { background: #F3EFEA; }
+.btn-action-grn { background: #A44A3F; color: #FFFFFF; border-color: #A44A3F; }
+.btn-action-grn:hover { background: #8E3D33; }
+.empty-state { text-align: center; padding: 48px 24px; color: #7A6F64; }

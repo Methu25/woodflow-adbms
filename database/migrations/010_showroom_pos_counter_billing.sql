@@ -1,5 +1,5 @@
 -- ============================================================================
--- Migration 009: Member 1 (Yohan Methusael E J - 36999)
+-- Migration 010: Member 1 (Yohan Methusael E J - 36999)
 -- Module: Showroom POS & Counter Billing
 -- Extends showroom_invoices & showroom_invoice_items, adds cash_counter_transactions,
 -- pos_till_sessions, and vw_daily_counter_sales without breaking existing triggers

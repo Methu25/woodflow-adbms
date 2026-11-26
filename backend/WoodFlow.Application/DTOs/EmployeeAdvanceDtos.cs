@@ -60,3 +60,57 @@ public sealed record IssueEmployeeAdvanceResponseDto(
     string Message,
     EmployeeAdvanceProfileDto UpdatedEmployeeProfile
 );
+
+public sealed record AdvanceDrawerTransactionDto(
+    string TransactionId,
+    string Title,
+    string DateLabel,
+    string FlowType, // "IN" | "OUT"
+    decimal Amount
+);
+
+public sealed record EmployeeAdvanceLedgerRowDto(
+    int EmployeeId,
+    string EmployeeCode,
+    string FullName,
+    string RoleTitle,
+    string Department,
+    decimal TotalAdvancesAmount,
+    decimal SettledRecoveriesAmount,
+    decimal OutstandingBalance,
+    string LastTransactionDateLabel,
+    string Status, // "DEFICIT" | "OPEN" | "SETTLED"
+    string StatusLabel, // "Deficit" | "Open" | "Settled"
+    int RecoveryProgressPercent,
+    IReadOnlyList<AdvanceDrawerTransactionDto> Transactions
+);
+
+public sealed record EmployeeAdvanceLedgerResponseDto(
+    decimal TotalAdvancesIssuedMonth,
+    decimal SettledViaPayrollOrCash,
+    decimal ActiveOutstandingBalance,
+    int ActiveOutstandingStaffCount,
+    string AvgRecoveryPeriodLabel,
+    int AllStaffCount,
+    int OutstandingStaffCount,
+    int SettledStaffCount,
+    IReadOnlyList<EmployeeAdvanceLedgerRowDto> StaffRows
+);
+
+public sealed record SettleEmployeeAdvanceRequest(
+    int EmployeeId,
+    decimal? SettlementAmount = null,
+    string? SettlementMethod = "PAYROLL_DEDUCT",
+    string? SettlementPeriod = "2026-11"
+);
+
+public sealed record SettleEmployeeAdvanceResponseDto(
+    int EmployeeId,
+    string EmployeeCode,
+    string FullName,
+    decimal SettledAmount,
+    decimal RemainingOutstandingBalance,
+    string Status,
+    string Message,
+    EmployeeAdvanceLedgerRowDto UpdatedLedgerRow
+);

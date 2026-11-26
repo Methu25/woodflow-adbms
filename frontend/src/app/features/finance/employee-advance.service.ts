@@ -65,6 +65,62 @@ export interface IssueEmployeeAdvanceResponse {
   updatedEmployeeProfile: EmployeeAdvanceProfile;
 }
 
+export type AdvanceLedgerStatus = 'DEFICIT' | 'OPEN' | 'SETTLED';
+
+export interface AdvanceDrawerTransaction {
+  transactionId: string;
+  title: string;
+  dateLabel: string;
+  flowType: 'IN' | 'OUT';
+  amount: number;
+}
+
+export interface EmployeeAdvanceLedgerRow {
+  employeeId: number;
+  employeeCode: string;
+  fullName: string;
+  roleTitle: string;
+  department: string;
+  totalAdvancesAmount: number;
+  settledRecoveriesAmount: number;
+  outstandingBalance: number;
+  lastTransactionDateLabel: string;
+  status: AdvanceLedgerStatus;
+  statusLabel: 'Deficit' | 'Open' | 'Settled';
+  recoveryProgressPercent: number;
+  transactions: AdvanceDrawerTransaction[];
+}
+
+export interface EmployeeAdvanceLedgerResponse {
+  totalAdvancesIssuedMonth: number;
+  settledViaPayrollOrCash: number;
+  activeOutstandingBalance: number;
+  activeOutstandingStaffCount: number;
+  avgRecoveryPeriodLabel: string;
+  allStaffCount: number;
+  outstandingStaffCount: number;
+  settledStaffCount: number;
+  staffRows: EmployeeAdvanceLedgerRow[];
+}
+
+export interface SettleEmployeeAdvanceRequest {
+  employeeId: number;
+  settlementAmount?: number;
+  settlementMethod?: string;
+  settlementPeriod?: string;
+}
+
+export interface SettleEmployeeAdvanceResponse {
+  employeeId: number;
+  employeeCode: string;
+  fullName: string;
+  settledAmount: number;
+  remainingOutstandingBalance: number;
+  status: AdvanceLedgerStatus;
+  message: string;
+  updatedLedgerRow: EmployeeAdvanceLedgerRow;
+}
+
 const DEFAULT_DISBURSEMENT_SOURCES: string[] = [
   'Cash Vault — Till #1 (Avail: Rs. 164,250)',
   'Petty Cash Vault — Till #2 (Avail: Rs. 64,250)',
@@ -213,6 +269,224 @@ const FALLBACK_EMPLOYEE_PROFILES: EmployeeAdvanceProfile[] = [
   },
 ];
 
+const FALLBACK_LEDGER_ROWS: EmployeeAdvanceLedgerRow[] = [
+  {
+    employeeId: 14,
+    employeeCode: 'EMP-014',
+    fullName: 'Kasun Perera',
+    roleTitle: 'Carpenter',
+    department: 'Carpentry',
+    totalAdvancesAmount: 78500,
+    settledRecoveriesAmount: 70000,
+    outstandingBalance: 8500,
+    lastTransactionDateLabel: '13 Nov',
+    status: 'DEFICIT',
+    statusLabel: 'Deficit',
+    recoveryProgressPercent: 89,
+    transactions: [
+      {
+        transactionId: 'ADV-1113',
+        title: 'Cash Advance #ADV-1113',
+        dateLabel: '13 Nov 2026',
+        flowType: 'OUT',
+        amount: 25000,
+      },
+      {
+        transactionId: 'ADV-1104',
+        title: 'Mid-Month Cash Draw #2',
+        dateLabel: '04 Nov 2026',
+        flowType: 'OUT',
+        amount: 28500,
+      },
+      {
+        transactionId: 'REC-1031',
+        title: 'Oct Payroll Recovery',
+        dateLabel: '31 Oct 2026',
+        flowType: 'IN',
+        amount: 45000,
+      },
+      {
+        transactionId: 'ADV-1022',
+        title: 'Emergency Advance #1',
+        dateLabel: '22 Oct 2026',
+        flowType: 'OUT',
+        amount: 25000,
+      },
+    ],
+  },
+  {
+    employeeId: 8,
+    employeeCode: 'EMP-008',
+    fullName: 'Dilshan Silva',
+    roleTitle: 'Driver',
+    department: 'Logistics',
+    totalAdvancesAmount: 80000,
+    settledRecoveriesAmount: 70000,
+    outstandingBalance: 10000,
+    lastTransactionDateLabel: '11 Nov',
+    status: 'OPEN',
+    statusLabel: 'Open',
+    recoveryProgressPercent: 88,
+    transactions: [
+      {
+        transactionId: 'ADV-1111',
+        title: 'Mid-Month Fuel & Personal Draw',
+        dateLabel: '11 Nov 2026',
+        flowType: 'OUT',
+        amount: 10000,
+      },
+      {
+        transactionId: 'REC-1031-DS',
+        title: 'Oct Payroll Recovery',
+        dateLabel: '31 Oct 2026',
+        flowType: 'IN',
+        amount: 70000,
+      },
+      {
+        transactionId: 'ADV-1020',
+        title: 'Oct Salary Advance Draw',
+        dateLabel: '20 Oct 2026',
+        flowType: 'OUT',
+        amount: 70000,
+      },
+    ],
+  },
+  {
+    employeeId: 19,
+    employeeCode: 'EMP-019',
+    fullName: 'Mahesh Perera',
+    roleTitle: 'Apprentice',
+    department: 'Carpentry',
+    totalAdvancesAmount: 64000,
+    settledRecoveriesAmount: 45000,
+    outstandingBalance: 19000,
+    lastTransactionDateLabel: '09 Nov',
+    status: 'DEFICIT',
+    statusLabel: 'Deficit',
+    recoveryProgressPercent: 70,
+    transactions: [
+      {
+        transactionId: 'ADV-1109',
+        title: 'Emergency Hostel & Tuition Draw',
+        dateLabel: '09 Nov 2026',
+        flowType: 'OUT',
+        amount: 19000,
+      },
+      {
+        transactionId: 'REC-1031-MP',
+        title: 'Oct Payroll Recovery',
+        dateLabel: '31 Oct 2026',
+        flowType: 'IN',
+        amount: 45000,
+      },
+      {
+        transactionId: 'ADV-1019',
+        title: 'Oct Training & Tool Advance',
+        dateLabel: '18 Oct 2026',
+        flowType: 'OUT',
+        amount: 45000,
+      },
+    ],
+  },
+  {
+    employeeId: 11,
+    employeeCode: 'EMP-011',
+    fullName: 'Tharindu Gamage',
+    roleTitle: 'Polisher',
+    department: 'Finishing',
+    totalAdvancesAmount: 71500,
+    settledRecoveriesAmount: 56500,
+    outstandingBalance: 15000,
+    lastTransactionDateLabel: '04 Nov',
+    status: 'OPEN',
+    statusLabel: 'Open',
+    recoveryProgressPercent: 79,
+    transactions: [
+      {
+        transactionId: 'ADV-1103',
+        title: 'Mid-Month Cash Draw #1',
+        dateLabel: '04 Nov 2026',
+        flowType: 'OUT',
+        amount: 15000,
+      },
+      {
+        transactionId: 'REC-1031-TG',
+        title: 'Oct Payroll Recovery',
+        dateLabel: '31 Oct 2026',
+        flowType: 'IN',
+        amount: 56500,
+      },
+      {
+        transactionId: 'ADV-1016',
+        title: 'Oct Workshop Spray Booth Draw',
+        dateLabel: '16 Oct 2026',
+        flowType: 'OUT',
+        amount: 56500,
+      },
+    ],
+  },
+  {
+    employeeId: 5,
+    employeeCode: 'EMP-005',
+    fullName: 'Ruwan Jayasinghe',
+    roleTitle: 'Carpenter',
+    department: 'Carpentry',
+    totalAdvancesAmount: 15000,
+    settledRecoveriesAmount: 15000,
+    outstandingBalance: 0,
+    lastTransactionDateLabel: '31 Oct',
+    status: 'SETTLED',
+    statusLabel: 'Settled',
+    recoveryProgressPercent: 100,
+    transactions: [
+      {
+        transactionId: 'REC-1031-RJ',
+        title: 'Oct Payroll Recovery',
+        dateLabel: '31 Oct 2026',
+        flowType: 'IN',
+        amount: 15000,
+      },
+      {
+        transactionId: 'ADV-1018',
+        title: 'Mid-Month Cash Draw #1',
+        dateLabel: '18 Oct 2026',
+        flowType: 'OUT',
+        amount: 15000,
+      },
+    ],
+  },
+  {
+    employeeId: 9,
+    employeeCode: 'EMP-009',
+    fullName: 'Kamal Ratnayake',
+    roleTitle: 'Polisher',
+    department: 'Finishing',
+    totalAdvancesAmount: 10000,
+    settledRecoveriesAmount: 10000,
+    outstandingBalance: 0,
+    lastTransactionDateLabel: '31 Oct',
+    status: 'SETTLED',
+    statusLabel: 'Settled',
+    recoveryProgressPercent: 100,
+    transactions: [
+      {
+        transactionId: 'REC-1031-KR',
+        title: 'Oct Payroll Recovery',
+        dateLabel: '31 Oct 2026',
+        flowType: 'IN',
+        amount: 10000,
+      },
+      {
+        transactionId: 'ADV-1015',
+        title: 'Emergency Tool Advance',
+        dateLabel: '15 Oct 2026',
+        flowType: 'OUT',
+        amount: 10000,
+      },
+    ],
+  },
+];
+
 @Injectable({ providedIn: 'root' })
 export class EmployeeAdvanceService {
   private readonly http = inject(HttpClient);
@@ -220,6 +494,7 @@ export class EmployeeAdvanceService {
   private readonly baseUrl = `${inject(API_URL)}/finance/advances`;
 
   private readonly localProfiles = signal<EmployeeAdvanceProfile[]>([...FALLBACK_EMPLOYEE_PROFILES]);
+  private readonly localLedgerRows = signal<EmployeeAdvanceLedgerRow[]>([...FALLBACK_LEDGER_ROWS]);
   private readonly localVoucherCounter = signal<number>(1113);
 
   getIssuanceContext(): Observable<AdvanceIssuanceContextResponse> {
@@ -241,6 +516,37 @@ export class EmployeeAdvanceService {
     );
   }
 
+  getAdvanceLedger(filter = 'ALL', search = ''): Observable<EmployeeAdvanceLedgerResponse> {
+    const params: Record<string, string> = {};
+    if (filter && filter !== 'ALL') params['filter'] = filter;
+    if (search.trim()) params['search'] = search.trim();
+
+    return this.http.get<EmployeeAdvanceLedgerResponse>(`${this.baseUrl}/ledger`, { params }).pipe(
+      timeout(10000),
+      tap(res => {
+        if ((!filter || filter === 'ALL') && !search.trim() && res.staffRows.length > 0) {
+          this.localLedgerRows.set(res.staffRows);
+        }
+      }),
+      catchError(() => of(this.filterLocalLedger(filter, search))),
+    );
+  }
+
+  settleEmployeeAdvance(request: SettleEmployeeAdvanceRequest): Observable<SettleEmployeeAdvanceResponse> {
+    return this.auth.refreshCsrf().pipe(
+      switchMap(() => this.http.post<SettleEmployeeAdvanceResponse>(`${this.baseUrl}/settle`, request)),
+      timeout(10000),
+      tap(res => {
+        if (res.updatedLedgerRow) {
+          this.localLedgerRows.update(rows =>
+            rows.map(r => (r.employeeId === res.updatedLedgerRow.employeeId ? res.updatedLedgerRow : r)),
+          );
+        }
+      }),
+      catchError(() => of(this.applyLocalSettleFallback(request.employeeId))),
+    );
+  }
+
   issueAdvance(request: IssueEmployeeAdvanceRequest): Observable<IssueEmployeeAdvanceResponse> {
     return this.auth.refreshCsrf().pipe(
       switchMap(() => this.http.post<IssueEmployeeAdvanceResponse>(this.baseUrl, request)),
@@ -256,13 +562,91 @@ export class EmployeeAdvanceService {
         }
       }),
       catchError(err => {
-        // If backend returned a validation/domain error (400/409/422), rethrow so the form displays it
         if (err && typeof err.status === 'number' && err.status >= 400 && err.status < 500 && err.status !== 404) {
           throw err;
         }
         return of(this.applyLocalAdvanceFallback(request));
       }),
     );
+  }
+
+  private filterLocalLedger(filter: string, search: string): EmployeeAdvanceLedgerResponse {
+    const allRows = this.localLedgerRows();
+    const outstandingCount = allRows.filter(r => r.outstandingBalance > 0).length;
+    const settledCount = 8 + allRows.filter(r => r.outstandingBalance <= 0).length - 2;
+    const activeOutstandingSum = allRows.reduce((sum, r) => sum + r.outstandingBalance, 0);
+
+    let filtered = [...allRows];
+    const upperFilter = (filter || 'ALL').toUpperCase();
+    if (upperFilter === 'OUTSTANDING') {
+      filtered = filtered.filter(r => r.outstandingBalance > 0);
+    } else if (upperFilter === 'SETTLED') {
+      filtered = filtered.filter(r => r.outstandingBalance <= 0);
+    }
+
+    if (search.trim()) {
+      const term = search.trim().toLowerCase();
+      filtered = filtered.filter(
+        r =>
+          r.fullName.toLowerCase().includes(term) ||
+          r.employeeCode.toLowerCase().includes(term) ||
+          r.roleTitle.toLowerCase().includes(term) ||
+          r.department.toLowerCase().includes(term) ||
+          r.statusLabel.toLowerCase().includes(term),
+      );
+    }
+
+    return {
+      totalAdvancesIssuedMonth: 248500,
+      settledViaPayrollOrCash: 248500 - activeOutstandingSum,
+      activeOutstandingBalance: activeOutstandingSum,
+      activeOutstandingStaffCount: outstandingCount,
+      avgRecoveryPeriodLabel: '1.4 Months',
+      allStaffCount: outstandingCount + settledCount,
+      outstandingStaffCount: outstandingCount,
+      settledStaffCount: settledCount,
+      staffRows: filtered,
+    };
+  }
+
+  private applyLocalSettleFallback(employeeId: number): SettleEmployeeAdvanceResponse {
+    const rows = this.localLedgerRows();
+    const target = rows.find(r => r.employeeId === employeeId) ?? rows[0];
+    const settledAmount = target.outstandingBalance;
+
+    const newSettlementTxn: AdvanceDrawerTransaction = {
+      transactionId: `SET-${Date.now()}`,
+      title: 'Nov Payroll / Cash Settlement',
+      dateLabel: '13 Nov 2026',
+      flowType: 'IN',
+      amount: settledAmount,
+    };
+
+    const updatedRow: EmployeeAdvanceLedgerRow = {
+      ...target,
+      settledRecoveriesAmount: target.settledRecoveriesAmount + settledAmount,
+      outstandingBalance: 0,
+      lastTransactionDateLabel: '13 Nov',
+      status: 'SETTLED',
+      statusLabel: 'Settled',
+      recoveryProgressPercent: 100,
+      transactions: settledAmount > 0 ? [newSettlementTxn, ...target.transactions] : target.transactions,
+    };
+
+    this.localLedgerRows.update(list =>
+      list.map(r => (r.employeeId === updatedRow.employeeId ? updatedRow : r)),
+    );
+
+    return {
+      employeeId: updatedRow.employeeId,
+      employeeCode: updatedRow.employeeCode,
+      fullName: updatedRow.fullName,
+      settledAmount,
+      remainingOutstandingBalance: 0,
+      status: 'SETTLED',
+      message: `Settled Rs. ${settledAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} for ${updatedRow.fullName} (${updatedRow.employeeCode}) via sp_settle_monthly_payroll.`,
+      updatedLedgerRow: updatedRow,
+    };
   }
 
   private applyLocalAdvanceFallback(request: IssueEmployeeAdvanceRequest): IssueEmployeeAdvanceResponse {

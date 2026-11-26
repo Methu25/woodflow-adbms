@@ -28,3 +28,25 @@ public sealed record EmployeeEarningsAndAdvanceProfile(
     decimal TotalOutstandingAdvances,
     decimal NetAvailableBeforeAdvance
 );
+
+public sealed record AdvanceTransactionHistoryRecord(
+    string TransactionId,
+    string Title,
+    string DateLabel,
+    string FlowType, // "IN" | "OUT"
+    decimal Amount
+);
+
+public sealed record EmployeeAdvanceLedgerRecord(
+    int EmployeeId,
+    string EmployeeCode,
+    string FullName,
+    string RoleTitle,
+    string Department,
+    decimal TotalAdvancesAmount,
+    decimal SettledRecoveriesAmount,
+    decimal OutstandingBalance,
+    string LastTransactionDateLabel,
+    string LedgerStatus, // "DEFICIT" | "OPEN" | "SETTLED"
+    IReadOnlyList<AdvanceTransactionHistoryRecord> Transactions
+);

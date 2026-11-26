@@ -95,9 +95,14 @@ export const routes: Routes = [
         loadComponent: () => import('./features/finance/advance-issuance.component').then(m => m.AdvanceIssuanceComponent),
       },
       {
+        path: 'finance/advances',
+        title: 'Employee Advance Ledger | WoodFlow',
+        loadComponent: () => import('./features/finance/advance-ledger.component').then(m => m.AdvanceLedgerComponent),
+      },
+      {
         path: 'finance',
-        title: 'Advance Issuance Form | WoodFlow',
-        loadComponent: () => import('./features/finance/advance-issuance.component').then(m => m.AdvanceIssuanceComponent),
+        title: 'Employee Advance Ledger | WoodFlow',
+        loadComponent: () => import('./features/finance/advance-ledger.component').then(m => m.AdvanceLedgerComponent),
       },
     ],
   },

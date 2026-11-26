@@ -19,6 +19,14 @@ public sealed class EmployeeAdvancesController(EmployeeAdvanceService service) :
         Ok(await service.GetIssuanceContextAsync(ct));
 
     [Authorize]
+    [HttpGet("ledger")]
+    public async Task<ActionResult<EmployeeAdvanceLedgerResponseDto>> GetLedger(
+        CancellationToken ct,
+        string? filter = null,
+        string? search = null) =>
+        Ok(await service.GetAdvanceLedgerAsync(filter, search, ct));
+
+    [Authorize]
     [HttpGet("employees/{employeeId:int:min(1)}")]
     public async Task<IActionResult> GetEmployeeProfile(int employeeId, CancellationToken ct) =>
         await service.GetEmployeeProfileAsync(employeeId, ct) is { } profile
@@ -38,6 +46,20 @@ public sealed class EmployeeAdvancesController(EmployeeAdvanceService service) :
             EmployeeAdvanceWriteError.DuplicateVoucher => Conflict(new { message = result.Message ?? "Duplicate voucher reference." }),
             EmployeeAdvanceWriteError.SupervisorOverrideRequired => UnprocessableEntity(new { message = result.Message ?? "Supervisor override approval is required for deficit advances." }),
             _ => BadRequest(new { message = result.Message ?? "Invalid salary advance request." })
+        };
+    }
+
+    [Authorize]
+    [HttpPost("settle")]
+    [RequestSizeLimit(8192)]
+    public async Task<IActionResult> SettleAdvance(SettleEmployeeAdvanceRequest request, CancellationToken ct)
+    {
+        var result = await service.SettleAdvanceAsync(ActorId, ActorName, request, ct);
+        return result.Error switch
+        {
+            EmployeeAdvanceWriteError.None => Ok(result.Data),
+            EmployeeAdvanceWriteError.NotFound => NotFound(new { message = result.Message ?? "Employee not found." }),
+            _ => BadRequest(new { message = result.Message ?? "Unable to settle employee advance." })
         };
     }
 

@@ -28,4 +28,11 @@ public interface IEmployeeAdvanceRepository
         string actorName,
         IssueEmployeeAdvanceRequest request,
         CancellationToken ct);
+
+    Task<IReadOnlyList<EmployeeAdvanceLedgerRecord>> ListEmployeeAdvanceLedgerAsync(CancellationToken ct);
+    Task<EmployeeAdvanceWriteResult<EmployeeAdvanceLedgerRecord>> SettleEmployeeAdvanceAsync(
+        int actorId,
+        string actorName,
+        SettleEmployeeAdvanceRequest request,
+        CancellationToken ct);
 }

@@ -1,9 +1,11 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { Observable, switchMap, tap } from 'rxjs';
+import { API_URL } from '../../../core/api-url.token';
+import { AuthService } from '../../../core/auth/auth.service';
 
 export interface RawMaterialItem {
-  materialId: string;
+  materialId: number;
   materialCode: string;
   name: string;
   category: string;
@@ -40,13 +42,13 @@ export interface CreateRawMaterialPayload {
   unitCost: number;
   storageLocation: string;
   notes?: string;
-  preferredSupplierId?: string;
+  preferredSupplierId?: number;
   leadTimeDays?: number;
 }
 
 export interface GoodsReceiptPayload {
-  materialId: string;
-  supplierId?: string;
+  materialId: number;
+  supplierId?: number;
   quantityReceived: number;
   unitCost: number;
   moisturePct: number;
@@ -55,12 +57,12 @@ export interface GoodsReceiptPayload {
 }
 
 export interface GoodsReceiptRecord {
-  receiptId: string;
+  receiptId: number;
   grnNumber: string;
-  materialId: string;
+  materialId: number;
   materialCode: string;
   materialName: string;
-  supplierId?: string;
+  supplierId?: number;
   supplierName?: string;
   quantityReceived: number;
   unitOfMeasure: string;
@@ -73,16 +75,16 @@ export interface GoodsReceiptRecord {
 
 export interface ConsumptionPayload {
   jobId: string;
-  materialId: string;
+  materialId: number;
   quantityIssued: number;
   artisanName: string;
   notes?: string;
 }
 
 export interface ConsumptionRecord {
-  jobMaterialId: string;
+  jobMaterialId: number;
   jobId: string;
-  materialId: string;
+  materialId: number;
   materialCode: string;
   materialName: string;
   unitOfMeasure: string;
@@ -94,7 +96,7 @@ export interface ConsumptionRecord {
 }
 
 export interface LowStockQueueItem {
-  materialId: string;
+  materialId: number;
   materialCode: string;
   name: string;
   category: string;
@@ -111,7 +113,7 @@ export interface LowStockQueueItem {
 }
 
 export interface SupplierItem {
-  supplierId: string;
+  supplierId: number;
   supplierCode: string;
   companyName: string;
   contactPerson: string;
@@ -124,7 +126,7 @@ export interface SupplierItem {
   materialsSuppliedCount: number;
   avgLeadTimeDays: number;
   contractedMaterials: {
-    materialId: string;
+    materialId: number;
     materialCode: string;
     materialName: string;
     unitPrice: number;
@@ -138,6 +140,10 @@ export interface SupplierItem {
 })
 export class RawMaterialsService {
   private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
+  private readonly apiBase = inject(API_URL);
+  private readonly rawMaterialsUrl = `${this.apiBase}/raw-materials`;
+  private readonly suppliersUrl = `${this.apiBase}/suppliers`;
 
   readonly dashboard = signal<RawStockDashboardData | null>(null);
   readonly loading = signal<boolean>(false);
@@ -151,7 +157,7 @@ export class RawMaterialsService {
     if (category && category !== 'All') params = params.set('category', category);
     if (search && search.trim()) params = params.set('search', search.trim());
 
-    return this.http.get<RawStockDashboardData>('/api/raw-materials', { params }).pipe(
+    return this.http.get<RawStockDashboardData>(this.rawMaterialsUrl, { params }).pipe(
       tap({
         next: (data) => {
           this.dashboard.set(data);
@@ -165,43 +171,51 @@ export class RawMaterialsService {
     );
   }
 
-  getMaterialById(id: string): Observable<RawMaterialItem> {
-    return this.http.get<RawMaterialItem>(`/api/raw-materials/${id}`);
+  getMaterialById(id: number): Observable<RawMaterialItem> {
+    return this.http.get<RawMaterialItem>(`${this.rawMaterialsUrl}/${id}`);
   }
 
   createMaterial(payload: CreateRawMaterialPayload): Observable<RawMaterialItem> {
-    return this.http.post<RawMaterialItem>('/api/raw-materials', payload);
+    return this.auth.refreshCsrf().pipe(
+      switchMap(() => this.http.post<RawMaterialItem>(this.rawMaterialsUrl, payload))
+    );
   }
 
-  updateMaterial(id: string, payload: Partial<CreateRawMaterialPayload> & { isActive?: boolean }): Observable<RawMaterialItem> {
-    return this.http.put<RawMaterialItem>(`/api/raw-materials/${id}`, payload);
+  updateMaterial(id: number, payload: Partial<CreateRawMaterialPayload> & { isActive?: boolean }): Observable<RawMaterialItem> {
+    return this.auth.refreshCsrf().pipe(
+      switchMap(() => this.http.put<RawMaterialItem>(`${this.rawMaterialsUrl}/${id}`, payload))
+    );
   }
 
   postGoodsReceipt(payload: GoodsReceiptPayload): Observable<GoodsReceiptRecord> {
-    return this.http.post<GoodsReceiptRecord>('/api/raw-materials/grn', payload);
+    return this.auth.refreshCsrf().pipe(
+      switchMap(() => this.http.post<GoodsReceiptRecord>(`${this.rawMaterialsUrl}/grn`, payload))
+    );
   }
 
   listGoodsReceipts(limit = 50): Observable<GoodsReceiptRecord[]> {
-    return this.http.get<GoodsReceiptRecord[]>('/api/raw-materials/grn', { params: { limit: limit.toString() } });
+    return this.http.get<GoodsReceiptRecord[]>(`${this.rawMaterialsUrl}/grn`, { params: { limit: limit.toString() } });
   }
 
   issueMaterial(payload: ConsumptionPayload): Observable<ConsumptionRecord> {
-    return this.http.post<ConsumptionRecord>('/api/raw-materials/consumption', payload);
+    return this.auth.refreshCsrf().pipe(
+      switchMap(() => this.http.post<ConsumptionRecord>(`${this.rawMaterialsUrl}/consumption`, payload))
+    );
   }
 
   listConsumptions(limit = 50): Observable<ConsumptionRecord[]> {
-    return this.http.get<ConsumptionRecord[]>('/api/raw-materials/consumption', { params: { limit: limit.toString() } });
+    return this.http.get<ConsumptionRecord[]>(`${this.rawMaterialsUrl}/consumption`, { params: { limit: limit.toString() } });
   }
 
   getLowStockQueue(): Observable<LowStockQueueItem[]> {
-    return this.http.get<LowStockQueueItem[]>('/api/raw-materials/low-stock');
+    return this.http.get<LowStockQueueItem[]>(`${this.rawMaterialsUrl}/low-stock`);
   }
 
   listSuppliers(category?: string, search?: string): Observable<SupplierItem[]> {
     let params = new HttpParams();
     if (category && category !== 'All') params = params.set('category', category);
     if (search && search.trim()) params = params.set('search', search.trim());
-    return this.http.get<SupplierItem[]>('/api/suppliers', { params });
+    return this.http.get<SupplierItem[]>(this.suppliersUrl, { params });
   }
 
   createSupplier(payload: {
@@ -212,14 +226,16 @@ export class RawMaterialsService {
     email: string;
     address: string;
     primaryCategory: string;
-    initialMaterialId?: string;
+    initialMaterialId?: number;
     initialUnitPrice?: number;
     initialLeadTimeDays?: number;
   }): Observable<SupplierItem> {
-    return this.http.post<SupplierItem>('/api/suppliers', payload);
+    return this.auth.refreshCsrf().pipe(
+      switchMap(() => this.http.post<SupplierItem>(this.suppliersUrl, payload))
+    );
   }
 
-  updateSupplier(id: string, payload: {
+  updateSupplier(id: number, payload: {
     companyName: string;
     contactPerson: string;
     phone: string;
@@ -228,6 +244,8 @@ export class RawMaterialsService {
     primaryCategory: string;
     isActive: boolean;
   }): Observable<SupplierItem> {
-    return this.http.put<SupplierItem>(`/api/suppliers/${id}`, payload);
+    return this.auth.refreshCsrf().pipe(
+      switchMap(() => this.http.put<SupplierItem>(`${this.suppliersUrl}/${id}`, payload))
+    );
   }
 }

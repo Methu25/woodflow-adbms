@@ -8,6 +8,8 @@ namespace WoodFlow.Api.Controllers;
 
 [ApiController]
 [Route("api/raw-materials")]
+[Route("api/inventory/raw-materials")]
+[ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public sealed class RawMaterialsController(RawMaterialService service) : ControllerBase
 {
     [HttpGet]
@@ -33,9 +35,9 @@ public sealed class RawMaterialsController(RawMaterialService service) : Control
         return Ok(items);
     }
 
-    [HttpGet("{id:guid}")]
+    [HttpGet("{id:int:min(1)}")]
     [Authorize(Policy = "inventory.view")]
-    public async Task<ActionResult<RawMaterialDto>> GetById(Guid id, CancellationToken ct)
+    public async Task<ActionResult<RawMaterialDto>> GetById(int id, CancellationToken ct)
     {
         var material = await service.GetByIdAsync(id, ct);
         return material is null ? NotFound(new { message = "Raw material not found." }) : Ok(material);
@@ -43,6 +45,7 @@ public sealed class RawMaterialsController(RawMaterialService service) : Control
 
     [HttpPost]
     [Authorize(Policy = "inventory.create")]
+    [RequestSizeLimit(16384)]
     public async Task<ActionResult<RawMaterialDto>> Create(
         [FromBody] CreateRawMaterialRequest request,
         CancellationToken ct)
@@ -62,10 +65,11 @@ public sealed class RawMaterialsController(RawMaterialService service) : Control
         }
     }
 
-    [HttpPut("{id:guid}")]
+    [HttpPut("{id:int:min(1)}")]
     [Authorize(Policy = "inventory.edit")]
+    [RequestSizeLimit(16384)]
     public async Task<ActionResult<RawMaterialDto>> Update(
-        Guid id,
+        int id,
         [FromBody] UpdateRawMaterialRequest request,
         CancellationToken ct)
     {
@@ -82,6 +86,7 @@ public sealed class RawMaterialsController(RawMaterialService service) : Control
 
     [HttpPost("grn")]
     [Authorize(Policy = "inventory.create")]
+    [RequestSizeLimit(16384)]
     public async Task<ActionResult<GoodsReceiptDto>> PostGoodsReceipt(
         [FromBody] PostGoodsReceiptRequest request,
         CancellationToken ct)
@@ -113,6 +118,7 @@ public sealed class RawMaterialsController(RawMaterialService service) : Control
 
     [HttpPost("consumption")]
     [Authorize(Policy = "inventory.edit")]
+    [RequestSizeLimit(16384)]
     public async Task<ActionResult<JobMaterialDto>> IssueMaterial(
         [FromBody] IssueMaterialRequest request,
         CancellationToken ct)
@@ -143,6 +149,7 @@ public sealed class RawMaterialsController(RawMaterialService service) : Control
     }
 
     [HttpGet("low-stock")]
+    [HttpGet("reorder-alerts")]
     [Authorize(Policy = "inventory.view")]
     public async Task<ActionResult<IReadOnlyList<LowStockReorderItem>>> GetLowStockQueue(CancellationToken ct)
     {

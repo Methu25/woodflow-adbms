@@ -44,7 +44,7 @@ public sealed class SupplierService(ISupplierRepository repository)
         return dtos;
     }
 
-    public async Task<SupplierDto?> GetByIdAsync(Guid supplierId, CancellationToken ct = default)
+    public async Task<SupplierDto?> GetByIdAsync(int supplierId, CancellationToken ct = default)
     {
         var s = await repository.FindByIdAsync(supplierId, ct);
         return s is null ? null : await ToDtoAsync(s, repository, ct);
@@ -58,7 +58,7 @@ public sealed class SupplierService(ISupplierRepository repository)
             throw new ArgumentException("Company name is required.");
 
         var supplier = new Supplier(
-            Guid.NewGuid(),
+            0,
             req.SupplierCode.Trim().ToUpperInvariant(),
             req.CompanyName.Trim(),
             req.ContactPerson.Trim(),
@@ -77,7 +77,7 @@ public sealed class SupplierService(ISupplierRepository repository)
         return await ToDtoAsync(created, repository, ct);
     }
 
-    public async Task<SupplierDto?> UpdateSupplierAsync(Guid id, UpdateSupplierRequest req, CancellationToken ct = default)
+    public async Task<SupplierDto?> UpdateSupplierAsync(int id, UpdateSupplierRequest req, CancellationToken ct = default)
     {
         var existing = await repository.FindByIdAsync(id, ct);
         if (existing is null) return null;

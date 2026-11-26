@@ -1,7 +1,7 @@
 namespace WoodFlow.Application.DTOs;
 
 public sealed record RawMaterialDto(
-    Guid MaterialId,
+    int MaterialId,
     string MaterialCode,
     string Name,
     string Category,
@@ -29,7 +29,7 @@ public sealed record CreateRawMaterialRequest(
     decimal UnitCost,
     string StorageLocation,
     string? Notes,
-    Guid? PreferredSupplierId,
+    int? PreferredSupplierId,
     int? LeadTimeDays
 );
 
@@ -45,8 +45,8 @@ public sealed record UpdateRawMaterialRequest(
 );
 
 public sealed record PostGoodsReceiptRequest(
-    Guid MaterialId,
-    Guid? SupplierId,
+    int MaterialId,
+    int? SupplierId,
     decimal QuantityReceived,
     decimal UnitCost,
     decimal MoisturePct,
@@ -55,12 +55,12 @@ public sealed record PostGoodsReceiptRequest(
 );
 
 public sealed record GoodsReceiptDto(
-    Guid ReceiptId,
+    int ReceiptId,
     string GrnNumber,
-    Guid MaterialId,
+    int MaterialId,
     string MaterialCode,
     string MaterialName,
-    Guid? SupplierId,
+    int? SupplierId,
     string? SupplierName,
     decimal QuantityReceived,
     string UnitOfMeasure,
@@ -73,16 +73,16 @@ public sealed record GoodsReceiptDto(
 
 public sealed record IssueMaterialRequest(
     string JobId,
-    Guid MaterialId,
+    int MaterialId,
     decimal QuantityIssued,
     string ArtisanName,
     string? Notes
 );
 
 public sealed record JobMaterialDto(
-    Guid JobMaterialId,
+    int JobMaterialId,
     string JobId,
-    Guid MaterialId,
+    int MaterialId,
     string MaterialCode,
     string MaterialName,
     string UnitOfMeasure,

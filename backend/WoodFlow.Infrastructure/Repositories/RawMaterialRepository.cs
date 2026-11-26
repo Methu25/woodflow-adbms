@@ -1,4 +1,3 @@
-using System.Data;
 using Npgsql;
 using WoodFlow.Application.Interfaces;
 using WoodFlow.Domain;
@@ -7,38 +6,30 @@ namespace WoodFlow.Infrastructure.Repositories;
 
 public sealed class RawMaterialRepository(Database database) : IRawMaterialRepository
 {
-    private readonly SemaphoreSlim _schemaInitLock = new(1, 1);
-    private bool _schemaInitialized;
+    private static readonly SemaphoreSlim SchemaInitLock = new(1, 1);
+    private static volatile bool _schemaInitialized;
 
-    private async Task EnsureSchemaAsync(NpgsqlConnection connection, CancellationToken ct)
+    internal static async Task EnsureExtendedSchemaAsync(NpgsqlConnection connection, CancellationToken ct)
     {
         if (_schemaInitialized) return;
-        await _schemaInitLock.WaitAsync(ct);
+        await SchemaInitLock.WaitAsync(ct);
         try
         {
             if (_schemaInitialized) return;
 
             const string sql = """
-                CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+                ALTER TABLE public.raw_materials
+                    ALTER COLUMN material_name TYPE VARCHAR(120);
 
-                CREATE TABLE IF NOT EXISTS public.raw_materials (
-                    material_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                    material_code VARCHAR(30) UNIQUE NOT NULL,
-                    name VARCHAR(120) NOT NULL,
-                    category VARCHAR(50) NOT NULL,
-                    unit_of_measure VARCHAR(20) NOT NULL,
-                    quantity_on_hand NUMERIC(12,2) NOT NULL DEFAULT 0.00,
-                    reorder_level NUMERIC(12,2) NOT NULL DEFAULT 10.00,
-                    unit_cost NUMERIC(12,2) NOT NULL DEFAULT 0.00,
-                    storage_location VARCHAR(80) NOT NULL DEFAULT 'Main Yard · Bay A',
-                    notes TEXT DEFAULT '',
-                    is_active BOOLEAN NOT NULL DEFAULT TRUE,
-                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-                );
+                ALTER TABLE public.raw_materials
+                    ADD COLUMN IF NOT EXISTS category VARCHAR(50) NOT NULL DEFAULT 'Timber',
+                    ADD COLUMN IF NOT EXISTS storage_location VARCHAR(80) NOT NULL DEFAULT 'Main Yard · Bay A',
+                    ADD COLUMN IF NOT EXISTS notes TEXT DEFAULT '',
+                    ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE,
+                    ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
                 CREATE TABLE IF NOT EXISTS public.suppliers (
-                    supplier_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    supplier_id SERIAL PRIMARY KEY,
                     supplier_code VARCHAR(20) UNIQUE NOT NULL,
                     company_name VARCHAR(120) NOT NULL,
                     contact_person VARCHAR(100) NOT NULL DEFAULT '',
@@ -47,13 +38,13 @@ public sealed class RawMaterialRepository(Database database) : IRawMaterialRepos
                     address VARCHAR(200) NOT NULL DEFAULT '',
                     primary_category VARCHAR(50) NOT NULL DEFAULT 'Timber',
                     is_active BOOLEAN NOT NULL DEFAULT TRUE,
-                    rating NUMERIC(3,2) DEFAULT 4.50,
-                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                    rating NUMERIC(3,2) NOT NULL DEFAULT 4.50,
+                    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
                 );
 
                 CREATE TABLE IF NOT EXISTS public.material_suppliers (
-                    material_id UUID NOT NULL REFERENCES public.raw_materials(material_id) ON DELETE CASCADE,
-                    supplier_id UUID NOT NULL REFERENCES public.suppliers(supplier_id) ON DELETE CASCADE,
+                    material_id INT NOT NULL REFERENCES public.raw_materials(material_id) ON DELETE CASCADE,
+                    supplier_id INT NOT NULL REFERENCES public.suppliers(supplier_id) ON DELETE CASCADE,
                     unit_price NUMERIC(12,2) NOT NULL DEFAULT 0.00,
                     lead_time_days INT NOT NULL DEFAULT 3,
                     is_preferred BOOLEAN NOT NULL DEFAULT FALSE,
@@ -61,54 +52,57 @@ public sealed class RawMaterialRepository(Database database) : IRawMaterialRepos
                 );
 
                 CREATE TABLE IF NOT EXISTS public.raw_material_receipts (
-                    receipt_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    receipt_id SERIAL PRIMARY KEY,
                     grn_number VARCHAR(30) UNIQUE NOT NULL,
-                    material_id UUID NOT NULL REFERENCES public.raw_materials(material_id) ON DELETE RESTRICT,
-                    supplier_id UUID REFERENCES public.suppliers(supplier_id) ON DELETE SET NULL,
+                    material_id INT NOT NULL REFERENCES public.raw_materials(material_id) ON DELETE RESTRICT,
+                    supplier_id INT REFERENCES public.suppliers(supplier_id) ON DELETE SET NULL,
                     quantity_received NUMERIC(12,2) NOT NULL,
                     unit_cost NUMERIC(12,2) NOT NULL,
-                    moisture_pct NUMERIC(5,2) DEFAULT 12.00,
+                    moisture_pct NUMERIC(5,2) NOT NULL DEFAULT 12.00,
                     received_by VARCHAR(100) NOT NULL DEFAULT 'Workshop Foreman',
                     notes TEXT DEFAULT '',
-                    received_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                    received_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
                 );
 
-                CREATE TABLE IF NOT EXISTS public.job_materials (
-                    job_material_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                    job_id VARCHAR(50) NOT NULL DEFAULT 'JOB-WORKSHOP-GEN',
-                    material_id UUID NOT NULL REFERENCES public.raw_materials(material_id) ON DELETE RESTRICT,
+                CREATE TABLE IF NOT EXISTS public.raw_material_consumptions (
+                    consumption_id SERIAL PRIMARY KEY,
+                    job_reference VARCHAR(50) NOT NULL DEFAULT 'JOB-WORKSHOP-GEN',
+                    production_job_id INT REFERENCES public.production_jobs(job_id) ON DELETE SET NULL,
+                    material_id INT NOT NULL REFERENCES public.raw_materials(material_id) ON DELETE RESTRICT,
                     quantity_issued NUMERIC(12,2) NOT NULL,
+                    unit_cost_at_time NUMERIC(12,2) NOT NULL DEFAULT 0.00,
                     artisan_name VARCHAR(100) NOT NULL DEFAULT 'Senior Artisan',
                     notes TEXT DEFAULT '',
-                    issued_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                    issued_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
                 );
 
-                CREATE TABLE IF NOT EXISTS public.audit_logs (
-                    log_id SERIAL PRIMARY KEY,
-                    event_type VARCHAR(60) NOT NULL,
-                    entity_name VARCHAR(60) NOT NULL,
-                    entity_id VARCHAR(60),
-                    details JSONB,
-                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                CREATE TABLE IF NOT EXISTS public.raw_material_stock_alerts (
+                    alert_id BIGSERIAL PRIMARY KEY,
+                    material_id INT NOT NULL REFERENCES public.raw_materials(material_id) ON DELETE CASCADE,
+                    alert_type VARCHAR(30) NOT NULL,
+                    material_code VARCHAR(30) NOT NULL,
+                    material_name VARCHAR(120) NOT NULL,
+                    current_stock NUMERIC(12,2) NOT NULL,
+                    reorder_level NUMERIC(12,2) NOT NULL,
+                    unit_of_measure VARCHAR(20) NOT NULL,
+                    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
                 );
 
                 CREATE OR REPLACE FUNCTION public.fn_check_low_raw_stock()
                 RETURNS TRIGGER AS $$
                 BEGIN
-                    IF NEW.quantity_on_hand <= NEW.reorder_level THEN
-                        INSERT INTO public.audit_logs (event_type, entity_name, entity_id, details, created_at)
-                        VALUES (
-                            'LOW_STOCK_ALERT',
-                            'raw_materials',
-                            NEW.material_id::text,
-                            jsonb_build_object(
-                                'material_code', NEW.material_code,
-                                'name', NEW.name,
-                                'quantity_on_hand', NEW.quantity_on_hand,
-                                'reorder_level', NEW.reorder_level,
-                                'unit_of_measure', NEW.unit_of_measure,
-                                'timestamp', CURRENT_TIMESTAMP
-                            ),
+                    IF NEW.current_stock <= NEW.reorder_level THEN
+                        INSERT INTO public.raw_material_stock_alerts (
+                            material_id, alert_type, material_code, material_name,
+                            current_stock, reorder_level, unit_of_measure, created_at
+                        ) VALUES (
+                            NEW.material_id,
+                            CASE WHEN NEW.current_stock <= (NEW.reorder_level * 0.50) THEN 'CRITICAL_LOW_STOCK' ELSE 'LOW_STOCK_ALERT' END,
+                            NEW.material_code,
+                            NEW.material_name,
+                            NEW.current_stock,
+                            NEW.reorder_level,
+                            NEW.unit_of_measure,
                             CURRENT_TIMESTAMP
                         );
                     END IF;
@@ -118,7 +112,7 @@ public sealed class RawMaterialRepository(Database database) : IRawMaterialRepos
 
                 DROP TRIGGER IF EXISTS trg_check_low_raw_stock ON public.raw_materials;
                 CREATE TRIGGER trg_check_low_raw_stock
-                    AFTER INSERT OR UPDATE OF quantity_on_hand, reorder_level
+                    AFTER INSERT OR UPDATE OF current_stock, reorder_level
                     ON public.raw_materials
                     FOR EACH ROW
                     EXECUTE FUNCTION public.fn_check_low_raw_stock();
@@ -134,44 +128,65 @@ public sealed class RawMaterialRepository(Database database) : IRawMaterialRepos
         }
         finally
         {
-            _schemaInitLock.Release();
+            SchemaInitLock.Release();
         }
     }
 
     private static async Task SeedReferenceMaterialsIfMissingAsync(NpgsqlConnection connection, CancellationToken ct)
     {
-        await using var checkCmd = new NpgsqlCommand("SELECT EXISTS(SELECT 1 FROM public.raw_materials WHERE material_code = 'RAW-TIM-01')", connection);
+        await using var checkCmd = new NpgsqlCommand("SELECT EXISTS(SELECT 1 FROM public.suppliers WHERE supplier_code = 'SUP-MOR-01')", connection);
         var exists = (bool)(await checkCmd.ExecuteScalarAsync(ct))!;
         if (exists) return;
 
         const string seedSql = """
-            INSERT INTO public.suppliers (supplier_id, supplier_code, company_name, contact_person, phone, email, address, primary_category, is_active, rating) VALUES
-            ('a0000001-0000-0000-0000-000000000001', 'SUP-MOR-01', 'Moratuwa Timber Mills Ltd', 'Nimal Jayawardena', '+94 77 123 4567', 'sales@moratuwatimber.lk', 'No. 45 Old Galle Road, Moratuwa', 'Timber', TRUE, 4.90),
-            ('a0000001-0000-0000-0000-000000000002', 'SUP-COL-02', 'Colombo Brass & Hardware Imports', 'Farhan Rameez', '+94 71 889 2341', 'farhan@colombobrass.lk', 'No. 112 Armour Street, Colombo 12', 'Hardware', TRUE, 4.75),
-            ('a0000001-0000-0000-0000-000000000003', 'SUP-LAN-03', 'Lanka Wood Coatings & Chemicals', 'Sunil Mendis', '+94 76 543 9876', 'orders@lankacoatings.lk', 'Industrial Zone, Ekala, Ja-Ela', 'Finishing', TRUE, 4.80),
-            ('a0000001-0000-0000-0000-000000000004', 'SUP-KOT-04', 'Kottawa Ply & Board Center', 'Dhammika Bandara', '+94 70 332 1144', 'dhammika@kottawaply.lk', 'No. 88 High Level Road, Kottawa', 'Boards', TRUE, 4.60),
-            ('a0000001-0000-0000-0000-000000000005', 'SUP-RAT-05', 'Ratnapura Hardwood Suppliers', 'Upali Silva', '+94 72 901 2345', 'upali@ratnapurahardwoods.lk', 'No. 12 Kuruwita Road, Ratnapura', 'Timber', TRUE, 4.85)
+            UPDATE public.raw_materials
+            SET category = CASE
+                    WHEN material_code LIKE 'RAW-TIM-%' THEN 'Timber'
+                    WHEN material_code LIKE 'RAW-POL-%' OR material_code LIKE 'RAW-FIN-%' THEN 'Finishing'
+                    WHEN material_code LIKE 'RAW-FAB-%' THEN 'Fabric'
+                    ELSE category
+                END,
+                storage_location = CASE
+                    WHEN material_code = 'RAW-TIM-01' THEN 'Main Shed · Bay 1'
+                    WHEN material_code = 'RAW-TIM-02' THEN 'Main Shed · Bay 2'
+                    WHEN material_code = 'RAW-POL-01' THEN 'Chemical Cabinet C-1'
+                    WHEN material_code = 'RAW-FAB-01' THEN 'Upholstery Loft'
+                    ELSE storage_location
+                END
+            WHERE material_code IN ('RAW-TIM-01', 'RAW-TIM-02', 'RAW-POL-01', 'RAW-FAB-01');
+
+            INSERT INTO public.suppliers (supplier_code, company_name, contact_person, phone, email, address, primary_category, is_active, rating) VALUES
+            ('SUP-MOR-01', 'Moratuwa Timber Mills Ltd', 'Nimal Jayawardena', '+94 77 123 4567', 'sales@moratuwatimber.lk', 'No. 45 Old Galle Road, Moratuwa', 'Timber', TRUE, 4.90),
+            ('SUP-COL-02', 'Colombo Brass & Hardware Imports', 'Farhan Rameez', '+94 71 889 2341', 'farhan@colombobrass.lk', 'No. 112 Armour Street, Colombo 12', 'Hardware', TRUE, 4.75),
+            ('SUP-LAN-03', 'Lanka Wood Coatings & Chemicals', 'Sunil Mendis', '+94 76 543 9876', 'orders@lankacoatings.lk', 'Industrial Zone, Ekala, Ja-Ela', 'Finishing', TRUE, 4.80),
+            ('SUP-KOT-04', 'Kottawa Ply & Board Center', 'Dhammika Bandara', '+94 70 332 1144', 'dhammika@kottawaply.lk', 'No. 88 High Level Road, Kottawa', 'Boards', TRUE, 4.60),
+            ('SUP-RAT-05', 'Ratnapura Hardwood Suppliers', 'Upali Silva', '+94 72 901 2345', 'upali@ratnapurahardwoods.lk', 'No. 12 Kuruwita Road, Ratnapura', 'Timber', TRUE, 4.85)
             ON CONFLICT (supplier_code) DO NOTHING;
 
-            INSERT INTO public.raw_materials (material_id, material_code, name, category, unit_of_measure, quantity_on_hand, reorder_level, unit_cost, storage_location, notes, is_active) VALUES
-            ('b0000001-0000-0000-0000-000000000001', 'RAW-TIM-01', 'Burma Teak Plank (2"×4"×8'')', 'Timber', 'cu.ft', 14.50, 25.00, 14500.00, 'Main Shed · Bay 1', 'Grade A Kiln-Dried Teak for premium sofas and dining tables', TRUE),
-            ('b0000001-0000-0000-0000-000000000002', 'RAW-TIM-02', 'Kiln-Dried Mahogany Block (3"×6"×10'')', 'Timber', 'cu.ft', 18.00, 20.00, 9200.00, 'Main Shed · Bay 2', 'Treated mahogany for bed frames and wardrobes', TRUE),
-            ('b0000001-0000-0000-0000-000000000003', 'RAW-TIM-03', 'Ceylon Jackwood Beam (4"×4"×12'')', 'Timber', 'cu.ft', 32.00, 15.00, 11500.00, 'Yard Rack C', 'Naturally pest-resistant structural timber', TRUE),
-            ('b0000001-0000-0000-0000-000000000004', 'RAW-BRD-01', 'Marine Plywood 18mm (8''×4'' Sheet)', 'Boards', 'sheets', 28.00, 15.00, 8400.00, 'Panel Staging Area', 'BWP Grade waterproof plywood for internal cabinetry', TRUE),
-            ('b0000001-0000-0000-0000-000000000005', 'RAW-HRD-01', 'Soft-Close Brass Hinge 4" (Pair)', 'Hardware', 'pcs', 12.00, 30.00, 1250.00, 'Hardware Bin H-04', 'Heavy-duty brass hinges for wardrobe doors', TRUE),
-            ('b0000001-0000-0000-0000-000000000006', 'RAW-FIN-01', 'Jchem Matte Polyurethane Wood Sealer', 'Finishing', 'liters', 4.00, 10.00, 6800.00, 'Chemical Cabinet C-1', 'Two-pack polyurethane spray coating', TRUE),
-            ('b0000001-0000-0000-0000-000000000007', 'RAW-FAB-01', 'Belgian Natural Linen Upholstery Fabric', 'Fabric', 'meters', 45.00, 20.00, 3200.00, 'Upholstery Loft', 'High GSM textured linen fabric in Oatmeal', TRUE),
-            ('b0000001-0000-0000-0000-000000000008', 'RAW-ADH-01', 'D3 Industrial Waterproof Carpenter Glue', 'Adhesives', 'kg', 8.50, 15.00, 2100.00, 'Chemical Cabinet C-2', 'Cross-linking PVA wood glue for joinery', TRUE)
+            INSERT INTO public.raw_materials (material_code, material_name, category, unit_of_measure, current_stock, reorder_level, unit_cost, storage_location, notes, is_active) VALUES
+            ('RAW-TIM-01', 'Burma Teak Plank (2"×4"×8'')', 'Timber', 'cu.ft', 14.50, 25.00, 14500.00, 'Main Shed · Bay 1', 'Grade A Kiln-Dried Teak for premium sofas and dining tables', TRUE),
+            ('RAW-TIM-02', 'Kiln-Dried Mahogany Block (3"×6"×10'')', 'Timber', 'cu.ft', 18.00, 20.00, 9200.00, 'Main Shed · Bay 2', 'Treated mahogany for bed frames and wardrobes', TRUE),
+            ('RAW-TIM-03', 'Ceylon Jackwood Beam (4"×4"×12'')', 'Timber', 'cu.ft', 32.00, 15.00, 11500.00, 'Yard Rack C', 'Naturally pest-resistant structural timber', TRUE),
+            ('RAW-BRD-01', 'Marine Plywood 18mm (8''×4'' Sheet)', 'Boards', 'sheets', 28.00, 15.00, 8400.00, 'Panel Staging Area', 'BWP Grade waterproof plywood for internal cabinetry', TRUE),
+            ('RAW-HRD-01', 'Soft-Close Brass Hinge 4" (Pair)', 'Hardware', 'pcs', 12.00, 30.00, 1250.00, 'Hardware Bin H-04', 'Heavy-duty brass hinges for wardrobe doors', TRUE),
+            ('RAW-FIN-01', 'Jchem Matte Polyurethane Wood Sealer', 'Finishing', 'liters', 4.00, 10.00, 6800.00, 'Chemical Cabinet C-1', 'Two-pack polyurethane spray coating', TRUE),
+            ('RAW-FAB-01', 'Belgian Natural Linen Upholstery Fabric', 'Fabric', 'meters', 45.00, 20.00, 3200.00, 'Upholstery Loft', 'High GSM textured linen fabric in Oatmeal', TRUE),
+            ('RAW-ADH-01', 'D3 Industrial Waterproof Carpenter Glue', 'Adhesives', 'kg', 8.50, 15.00, 2100.00, 'Chemical Cabinet C-2', 'Cross-linking PVA wood glue for joinery', TRUE)
             ON CONFLICT (material_code) DO NOTHING;
 
-            INSERT INTO public.material_suppliers (material_id, supplier_id, unit_price, lead_time_days, is_preferred) VALUES
-            ('b0000001-0000-0000-0000-000000000001', 'a0000001-0000-0000-0000-000000000001', 14500.00, 3, TRUE),
-            ('b0000001-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000001', 9200.00, 3, TRUE),
-            ('b0000001-0000-0000-0000-000000000003', 'a0000001-0000-0000-0000-000000000005', 11500.00, 4, TRUE),
-            ('b0000001-0000-0000-0000-000000000004', 'a0000001-0000-0000-0000-000000000004', 8400.00, 2, TRUE),
-            ('b0000001-0000-0000-0000-000000000005', 'a0000001-0000-0000-0000-000000000002', 1250.00, 2, TRUE),
-            ('b0000001-0000-0000-0000-000000000006', 'a0000001-0000-0000-0000-000000000003', 6800.00, 3, TRUE),
-            ('b0000001-0000-0000-0000-000000000008', 'a0000001-0000-0000-0000-000000000003', 2100.00, 2, TRUE)
+            INSERT INTO public.material_suppliers (material_id, supplier_id, unit_price, lead_time_days, is_preferred)
+            SELECT m.material_id, s.supplier_id, m.unit_cost, v.lead_days, TRUE
+            FROM (VALUES
+                ('RAW-TIM-01', 'SUP-MOR-01', 3),
+                ('RAW-TIM-02', 'SUP-MOR-01', 3),
+                ('RAW-TIM-03', 'SUP-RAT-05', 4),
+                ('RAW-BRD-01', 'SUP-KOT-04', 2),
+                ('RAW-HRD-01', 'SUP-COL-02', 2),
+                ('RAW-FIN-01', 'SUP-LAN-03', 3),
+                ('RAW-ADH-01', 'SUP-LAN-03', 2)
+            ) AS v(mat_code, sup_code, lead_days)
+            JOIN public.raw_materials m ON m.material_code = v.mat_code
+            JOIN public.suppliers s ON s.supplier_code = v.sup_code
             ON CONFLICT (material_id, supplier_id) DO NOTHING;
             """;
 
@@ -180,7 +195,7 @@ public sealed class RawMaterialRepository(Database database) : IRawMaterialRepos
     }
 
     private static RawMaterial ReadMaterial(NpgsqlDataReader r) => new(
-        r.GetGuid(0),
+        r.GetInt32(0),
         r.GetString(1),
         r.GetString(2),
         r.GetString(3),
@@ -196,22 +211,22 @@ public sealed class RawMaterialRepository(Database database) : IRawMaterialRepos
     );
 
     private const string MaterialSelect = """
-        material_id, material_code, name, category, unit_of_measure,
-        quantity_on_hand, reorder_level, unit_cost, storage_location,
+        material_id, material_code, material_name, category, unit_of_measure,
+        current_stock, reorder_level, unit_cost, storage_location,
         notes, is_active, updated_at, created_at
         """;
 
     public async Task<IReadOnlyList<RawMaterial>> ListMaterialsAsync(string? category, string? search, bool includeInactive, CancellationToken ct)
     {
         await using var connection = await database.OpenAsync(ct);
-        await EnsureSchemaAsync(connection, ct);
+        await EnsureExtendedSchemaAsync(connection, ct);
 
         var sql = $"""
             SELECT {MaterialSelect}
             FROM public.raw_materials
             WHERE (@includeInactive OR is_active IS TRUE)
               AND (@category IS NULL OR @category = '' OR category ILIKE @category)
-              AND (@search IS NULL OR @search = '' OR (material_code ILIKE @searchPattern OR name ILIKE @searchPattern))
+              AND (@search IS NULL OR @search = '' OR (material_code ILIKE @searchPattern OR material_name ILIKE @searchPattern))
             ORDER BY material_code ASC
             """;
 
@@ -230,10 +245,10 @@ public sealed class RawMaterialRepository(Database database) : IRawMaterialRepos
         return list;
     }
 
-    public async Task<RawMaterial?> FindByIdAsync(Guid materialId, CancellationToken ct)
+    public async Task<RawMaterial?> FindByIdAsync(int materialId, CancellationToken ct)
     {
         await using var connection = await database.OpenAsync(ct);
-        await EnsureSchemaAsync(connection, ct);
+        await EnsureExtendedSchemaAsync(connection, ct);
 
         var sql = $"SELECT {MaterialSelect} FROM public.raw_materials WHERE material_id = @id";
         await using var cmd = new NpgsqlCommand(sql, connection);
@@ -246,7 +261,7 @@ public sealed class RawMaterialRepository(Database database) : IRawMaterialRepos
     public async Task<RawMaterial?> FindByCodeAsync(string materialCode, CancellationToken ct)
     {
         await using var connection = await database.OpenAsync(ct);
-        await EnsureSchemaAsync(connection, ct);
+        await EnsureExtendedSchemaAsync(connection, ct);
 
         var sql = $"SELECT {MaterialSelect} FROM public.raw_materials WHERE material_code = @code";
         await using var cmd = new NpgsqlCommand(sql, connection);
@@ -256,27 +271,28 @@ public sealed class RawMaterialRepository(Database database) : IRawMaterialRepos
         return await r.ReadAsync(ct) ? ReadMaterial(r) : null;
     }
 
-    public async Task<RawMaterial> CreateAsync(RawMaterial material, Guid? preferredSupplierId, int? leadTimeDays, CancellationToken ct)
+    public async Task<RawMaterial> CreateAsync(RawMaterial material, int? preferredSupplierId, int? leadTimeDays, CancellationToken ct)
     {
         await using var connection = await database.OpenAsync(ct);
-        await EnsureSchemaAsync(connection, ct);
+        await EnsureExtendedSchemaAsync(connection, ct);
 
         await using var tx = await connection.BeginTransactionAsync(ct);
         try
         {
             const string insertSql = """
                 INSERT INTO public.raw_materials (
-                    material_id, material_code, name, category, unit_of_measure,
-                    quantity_on_hand, reorder_level, unit_cost, storage_location, notes, is_active, updated_at, created_at
+                    material_code, material_name, category, unit_of_measure,
+                    current_stock, reorder_level, unit_cost, storage_location, notes, is_active, updated_at, created_at
                 ) VALUES (
-                    @id, @code, @name, @cat, @uom,
+                    @code, @name, @cat, @uom,
                     @qty, @reorder, @cost, @loc, @notes, @active, @updated, @created
-                );
+                )
+                RETURNING material_id;
                 """;
 
+            int newId;
             await using (var cmd = new NpgsqlCommand(insertSql, connection, tx))
             {
-                cmd.Parameters.AddWithValue("id", material.MaterialId);
                 cmd.Parameters.AddWithValue("code", material.MaterialCode);
                 cmd.Parameters.AddWithValue("name", material.Name);
                 cmd.Parameters.AddWithValue("cat", material.Category);
@@ -289,7 +305,7 @@ public sealed class RawMaterialRepository(Database database) : IRawMaterialRepos
                 cmd.Parameters.AddWithValue("active", material.IsActive);
                 cmd.Parameters.AddWithValue("updated", material.UpdatedAt);
                 cmd.Parameters.AddWithValue("created", material.CreatedAt);
-                await cmd.ExecuteNonQueryAsync(ct);
+                newId = Convert.ToInt32(await cmd.ExecuteScalarAsync(ct));
             }
 
             if (preferredSupplierId.HasValue)
@@ -300,7 +316,7 @@ public sealed class RawMaterialRepository(Database database) : IRawMaterialRepos
                     ON CONFLICT (material_id, supplier_id) DO UPDATE SET is_preferred = TRUE;
                     """;
                 await using var mapCmd = new NpgsqlCommand(mapSql, connection, tx);
-                mapCmd.Parameters.AddWithValue("mId", material.MaterialId);
+                mapCmd.Parameters.AddWithValue("mId", newId);
                 mapCmd.Parameters.AddWithValue("sId", preferredSupplierId.Value);
                 mapCmd.Parameters.AddWithValue("cost", material.UnitCost);
                 mapCmd.Parameters.AddWithValue("lead", leadTimeDays ?? 3);
@@ -308,7 +324,7 @@ public sealed class RawMaterialRepository(Database database) : IRawMaterialRepos
             }
 
             await tx.CommitAsync(ct);
-            return material;
+            return material with { MaterialId = newId };
         }
         catch
         {
@@ -320,11 +336,11 @@ public sealed class RawMaterialRepository(Database database) : IRawMaterialRepos
     public async Task<RawMaterial?> UpdateAsync(RawMaterial material, CancellationToken ct)
     {
         await using var connection = await database.OpenAsync(ct);
-        await EnsureSchemaAsync(connection, ct);
+        await EnsureExtendedSchemaAsync(connection, ct);
 
         const string updateSql = """
             UPDATE public.raw_materials
-            SET name = @name,
+            SET material_name = @name,
                 category = @cat,
                 unit_of_measure = @uom,
                 reorder_level = @reorder,
@@ -353,26 +369,36 @@ public sealed class RawMaterialRepository(Database database) : IRawMaterialRepos
     }
 
     public async Task<GoodsReceiptNote> RecordGoodsReceiptAsync(
-        Guid materialId, Guid? supplierId, decimal quantityReceived, decimal unitCost, decimal moisturePct, string receivedBy, string? notes, CancellationToken ct)
+        int materialId, int? supplierId, decimal quantityReceived, decimal unitCost, decimal moisturePct, string receivedBy, string? notes, CancellationToken ct)
     {
         await using var connection = await database.OpenAsync(ct);
-        await EnsureSchemaAsync(connection, ct);
+        await EnsureExtendedSchemaAsync(connection, ct);
 
         await using var tx = await connection.BeginTransactionAsync(ct);
         try
         {
-            // 1. Fetch current material
-            var mat = await FindByIdAsync(materialId, ct)
-                ?? throw new InvalidOperationException("Raw material not found.");
+            string materialCode;
+            string materialName;
+            string uom;
 
-            // 2. Increment stock atomically
+            const string lockSql = "SELECT material_code, material_name, unit_of_measure FROM public.raw_materials WHERE material_id = @id FOR UPDATE";
+            await using (var lockCmd = new NpgsqlCommand(lockSql, connection, tx))
+            {
+                lockCmd.Parameters.AddWithValue("id", materialId);
+                await using var r = await lockCmd.ExecuteReaderAsync(ct);
+                if (!await r.ReadAsync(ct))
+                    throw new InvalidOperationException("Raw material not found.");
+                materialCode = r.GetString(0);
+                materialName = r.GetString(1);
+                uom = r.GetString(2);
+            }
+
             const string incSql = """
                 UPDATE public.raw_materials
-                SET quantity_on_hand = quantity_on_hand + @qty,
+                SET current_stock = current_stock + @qty,
                     unit_cost = @cost,
                     updated_at = CURRENT_TIMESTAMP
-                WHERE material_id = @id
-                RETURNING quantity_on_hand;
+                WHERE material_id = @id;
                 """;
 
             await using (var incCmd = new NpgsqlCommand(incSql, connection, tx))
@@ -380,32 +406,29 @@ public sealed class RawMaterialRepository(Database database) : IRawMaterialRepos
                 incCmd.Parameters.AddWithValue("qty", quantityReceived);
                 incCmd.Parameters.AddWithValue("cost", unitCost);
                 incCmd.Parameters.AddWithValue("id", materialId);
-                await incCmd.ExecuteScalarAsync(ct);
+                await incCmd.ExecuteNonQueryAsync(ct);
             }
 
-            // 3. Generate sequential GRN number
-            const string countSql = "SELECT count(*) FROM public.raw_material_receipts";
+            const string countSql = "SELECT COALESCE(MAX(receipt_id), 0) + 1 FROM public.raw_material_receipts";
             await using var countCmd = new NpgsqlCommand(countSql, connection, tx);
-            var nextNum = Convert.ToInt32(await countCmd.ExecuteScalarAsync(ct)) + 1;
+            var nextNum = Convert.ToInt32(await countCmd.ExecuteScalarAsync(ct));
             var grnNumber = $"GRN-2026-{nextNum:D4}";
-
-            // 4. Insert receipt
-            var receiptId = Guid.NewGuid();
             var receivedAt = DateTimeOffset.UtcNow;
 
             const string insReceipt = """
                 INSERT INTO public.raw_material_receipts (
-                    receipt_id, grn_number, material_id, supplier_id,
+                    grn_number, material_id, supplier_id,
                     quantity_received, unit_cost, moisture_pct, received_by, notes, received_at
                 ) VALUES (
-                    @rId, @grn, @mId, @sId,
+                    @grn, @mId, @sId,
                     @qty, @cost, @moist, @recBy, @notes, @recAt
-                );
+                )
+                RETURNING receipt_id;
                 """;
 
+            int receiptId;
             await using (var insCmd = new NpgsqlCommand(insReceipt, connection, tx))
             {
-                insCmd.Parameters.AddWithValue("rId", receiptId);
                 insCmd.Parameters.AddWithValue("grn", grnNumber);
                 insCmd.Parameters.AddWithValue("mId", materialId);
                 insCmd.Parameters.AddWithValue("sId", (object?)supplierId ?? DBNull.Value);
@@ -415,10 +438,9 @@ public sealed class RawMaterialRepository(Database database) : IRawMaterialRepos
                 insCmd.Parameters.AddWithValue("recBy", receivedBy);
                 insCmd.Parameters.AddWithValue("notes", (object?)notes ?? DBNull.Value);
                 insCmd.Parameters.AddWithValue("recAt", receivedAt);
-                await insCmd.ExecuteNonQueryAsync(ct);
+                receiptId = Convert.ToInt32(await insCmd.ExecuteScalarAsync(ct));
             }
 
-            // Fetch supplier name if present
             string? supplierName = null;
             if (supplierId.HasValue)
             {
@@ -433,12 +455,12 @@ public sealed class RawMaterialRepository(Database database) : IRawMaterialRepos
                 receiptId,
                 grnNumber,
                 materialId,
-                mat.MaterialCode,
-                mat.Name,
+                materialCode,
+                materialName,
                 supplierId,
                 supplierName,
                 quantityReceived,
-                mat.UnitOfMeasure,
+                uom,
                 unitCost,
                 moisturePct,
                 receivedBy,
@@ -456,11 +478,11 @@ public sealed class RawMaterialRepository(Database database) : IRawMaterialRepos
     public async Task<IReadOnlyList<GoodsReceiptNote>> ListGoodsReceiptsAsync(int limit, CancellationToken ct)
     {
         await using var connection = await database.OpenAsync(ct);
-        await EnsureSchemaAsync(connection, ct);
+        await EnsureExtendedSchemaAsync(connection, ct);
 
         const string sql = """
             SELECT
-                r.receipt_id, r.grn_number, r.material_id, m.material_code, m.name,
+                r.receipt_id, r.grn_number, r.material_id, m.material_code, m.material_name,
                 r.supplier_id, s.company_name, r.quantity_received, m.unit_of_measure,
                 r.unit_cost, r.moisture_pct, r.received_by, r.notes, r.received_at
             FROM public.raw_material_receipts r
@@ -478,12 +500,12 @@ public sealed class RawMaterialRepository(Database database) : IRawMaterialRepos
         while (await reader.ReadAsync(ct))
         {
             list.Add(new GoodsReceiptNote(
-                reader.GetGuid(0),
+                reader.GetInt32(0),
                 reader.GetString(1),
-                reader.GetGuid(2),
+                reader.GetInt32(2),
                 reader.GetString(3),
                 reader.GetString(4),
-                reader.IsDBNull(5) ? null : reader.GetGuid(5),
+                reader.IsDBNull(5) ? null : reader.GetInt32(5),
                 reader.IsDBNull(6) ? null : reader.GetString(6),
                 reader.GetDecimal(7),
                 reader.GetString(8),
@@ -498,16 +520,15 @@ public sealed class RawMaterialRepository(Database database) : IRawMaterialRepos
     }
 
     public async Task<JobMaterialConsumption> RecordConsumptionAsync(
-        string jobId, Guid materialId, decimal quantityIssued, string artisanName, string? notes, CancellationToken ct)
+        string jobId, int materialId, decimal quantityIssued, string artisanName, string? notes, CancellationToken ct)
     {
         await using var connection = await database.OpenAsync(ct);
-        await EnsureSchemaAsync(connection, ct);
+        await EnsureExtendedSchemaAsync(connection, ct);
 
         await using var tx = await connection.BeginTransactionAsync(ct);
         try
         {
-            // 1. Fetch current material and lock row
-            const string lockSql = "SELECT quantity_on_hand, reorder_level, unit_of_measure, material_code, name FROM public.raw_materials WHERE material_id = @id FOR UPDATE";
+            const string lockSql = "SELECT current_stock, reorder_level, unit_of_measure, material_code, material_name, unit_cost FROM public.raw_materials WHERE material_id = @id FOR UPDATE";
             await using var lockCmd = new NpgsqlCommand(lockSql, connection, tx);
             lockCmd.Parameters.AddWithValue("id", materialId);
 
@@ -516,6 +537,7 @@ public sealed class RawMaterialRepository(Database database) : IRawMaterialRepos
             string uom;
             string code;
             string name;
+            decimal unitCost;
 
             await using (var r = await lockCmd.ExecuteReaderAsync(ct))
             {
@@ -526,6 +548,7 @@ public sealed class RawMaterialRepository(Database database) : IRawMaterialRepos
                 uom = r.GetString(2);
                 code = r.GetString(3);
                 name = r.GetString(4);
+                unitCost = r.GetDecimal(5);
             }
 
             if (currentOnHand < quantityIssued)
@@ -536,10 +559,9 @@ public sealed class RawMaterialRepository(Database database) : IRawMaterialRepos
 
             var newOnHand = currentOnHand - quantityIssued;
 
-            // 2. Decrement stock
             const string decSql = """
                 UPDATE public.raw_materials
-                SET quantity_on_hand = @newQty,
+                SET current_stock = @newQty,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE material_id = @id;
                 """;
@@ -551,34 +573,35 @@ public sealed class RawMaterialRepository(Database database) : IRawMaterialRepos
                 await decCmd.ExecuteNonQueryAsync(ct);
             }
 
-            // 3. Insert consumption
-            var consId = Guid.NewGuid();
             var issuedAt = DateTimeOffset.UtcNow;
 
             const string insSql = """
-                INSERT INTO public.job_materials (job_material_id, job_id, material_id, quantity_issued, artisan_name, notes, issued_at)
-                VALUES (@id, @job, @mId, @qty, @artisan, @notes, @issued);
+                INSERT INTO public.raw_material_consumptions (
+                    job_reference, material_id, quantity_issued, unit_cost_at_time, artisan_name, notes, issued_at
+                ) VALUES (
+                    @job, @mId, @qty, @cost, @artisan, @notes, @issued
+                )
+                RETURNING consumption_id;
                 """;
 
+            int consId;
             await using (var insCmd = new NpgsqlCommand(insSql, connection, tx))
             {
-                insCmd.Parameters.AddWithValue("id", consId);
                 insCmd.Parameters.AddWithValue("job", jobId);
                 insCmd.Parameters.AddWithValue("mId", materialId);
                 insCmd.Parameters.AddWithValue("qty", quantityIssued);
+                insCmd.Parameters.AddWithValue("cost", unitCost);
                 insCmd.Parameters.AddWithValue("artisan", artisanName);
                 insCmd.Parameters.AddWithValue("notes", (object?)notes ?? DBNull.Value);
                 insCmd.Parameters.AddWithValue("issued", issuedAt);
-                await insCmd.ExecuteNonQueryAsync(ct);
+                consId = Convert.ToInt32(await insCmd.ExecuteScalarAsync(ct));
             }
 
-            string triggerImpact;
-            if (newOnHand <= (reorderLevel * 0.50m))
-                triggerImpact = "CRITICAL ALERT";
-            else if (newOnHand <= reorderLevel)
-                triggerImpact = "LOW TRIGGERED";
-            else
-                triggerImpact = "DEDUCTED";
+            var triggerImpact = newOnHand <= (reorderLevel * 0.50m)
+                ? "CRITICAL ALERT"
+                : newOnHand <= reorderLevel
+                    ? "LOW TRIGGERED"
+                    : "DEDUCTED";
 
             await tx.CommitAsync(ct);
 
@@ -606,20 +629,20 @@ public sealed class RawMaterialRepository(Database database) : IRawMaterialRepos
     public async Task<IReadOnlyList<JobMaterialConsumption>> ListConsumptionsAsync(int limit, CancellationToken ct)
     {
         await using var connection = await database.OpenAsync(ct);
-        await EnsureSchemaAsync(connection, ct);
+        await EnsureExtendedSchemaAsync(connection, ct);
 
         const string sql = """
             SELECT
-                j.job_material_id, j.job_id, j.material_id, m.material_code, m.name,
-                m.unit_of_measure, j.quantity_issued, j.artisan_name, j.notes, j.issued_at,
+                c.consumption_id, c.job_reference, c.material_id, m.material_code, m.material_name,
+                m.unit_of_measure, c.quantity_issued, c.artisan_name, c.notes, c.issued_at,
                 CASE
-                    WHEN m.quantity_on_hand <= (m.reorder_level * 0.50) THEN 'CRITICAL ALERT'
-                    WHEN m.quantity_on_hand <= m.reorder_level THEN 'LOW TRIGGERED'
+                    WHEN m.current_stock <= (m.reorder_level * 0.50) THEN 'CRITICAL ALERT'
+                    WHEN m.current_stock <= m.reorder_level THEN 'LOW TRIGGERED'
                     ELSE 'DEDUCTED'
                 END AS trigger_impact
-            FROM public.job_materials j
-            JOIN public.raw_materials m ON j.material_id = m.material_id
-            ORDER BY j.issued_at DESC
+            FROM public.raw_material_consumptions c
+            JOIN public.raw_materials m ON c.material_id = m.material_id
+            ORDER BY c.issued_at DESC
             LIMIT @limit;
             """;
 
@@ -631,9 +654,9 @@ public sealed class RawMaterialRepository(Database database) : IRawMaterialRepos
         while (await r.ReadAsync(ct))
         {
             list.Add(new JobMaterialConsumption(
-                r.GetGuid(0),
+                r.GetInt32(0),
                 r.GetString(1),
-                r.GetGuid(2),
+                r.GetInt32(2),
                 r.GetString(3),
                 r.GetString(4),
                 r.GetString(5),
@@ -650,25 +673,25 @@ public sealed class RawMaterialRepository(Database database) : IRawMaterialRepos
     public async Task<IReadOnlyList<LowStockReorderItem>> ListLowStockReorderQueueAsync(CancellationToken ct)
     {
         await using var connection = await database.OpenAsync(ct);
-        await EnsureSchemaAsync(connection, ct);
+        await EnsureExtendedSchemaAsync(connection, ct);
 
         const string sql = """
             SELECT
-                m.material_id, m.material_code, m.name, m.category, m.unit_of_measure,
-                m.quantity_on_hand, m.reorder_level,
-                GREATEST(0, m.reorder_level - m.quantity_on_hand) AS deficit_quantity,
-                ROUND(GREATEST(0, (m.reorder_level * 1.50) - m.quantity_on_hand), 2) AS suggested_order_qty,
+                m.material_id, m.material_code, m.material_name, m.category, m.unit_of_measure,
+                m.current_stock, m.reorder_level,
+                GREATEST(0, m.reorder_level - m.current_stock) AS deficit_quantity,
+                ROUND(GREATEST(0, (m.reorder_level * 1.50) - m.current_stock), 2) AS suggested_order_qty,
                 m.unit_cost,
                 s.company_name, s.phone, ms.lead_time_days,
                 CASE
-                    WHEN m.quantity_on_hand <= (m.reorder_level * 0.50) THEN 'CRITICAL'
+                    WHEN m.current_stock <= (m.reorder_level * 0.50) THEN 'CRITICAL'
                     ELSE 'LOW'
                 END AS severity
             FROM public.raw_materials m
             LEFT JOIN public.material_suppliers ms ON m.material_id = ms.material_id AND ms.is_preferred IS TRUE
             LEFT JOIN public.suppliers s ON ms.supplier_id = s.supplier_id
-            WHERE m.quantity_on_hand <= m.reorder_level AND m.is_active IS TRUE
-            ORDER BY (m.quantity_on_hand / NULLIF(m.reorder_level, 0)) ASC;
+            WHERE m.current_stock <= m.reorder_level AND m.is_active IS TRUE
+            ORDER BY (m.current_stock / NULLIF(m.reorder_level, 0)) ASC;
             """;
 
         await using var cmd = new NpgsqlCommand(sql, connection);
@@ -677,7 +700,7 @@ public sealed class RawMaterialRepository(Database database) : IRawMaterialRepos
         while (await r.ReadAsync(ct))
         {
             list.Add(new LowStockReorderItem(
-                r.GetGuid(0),
+                r.GetInt32(0),
                 r.GetString(1),
                 r.GetString(2),
                 r.GetString(3),
@@ -699,14 +722,14 @@ public sealed class RawMaterialRepository(Database database) : IRawMaterialRepos
     public async Task<RawMaterialStockSummary> GetStockSummaryAsync(CancellationToken ct)
     {
         await using var connection = await database.OpenAsync(ct);
-        await EnsureSchemaAsync(connection, ct);
+        await EnsureExtendedSchemaAsync(connection, ct);
 
         const string sql = """
             SELECT
                 COUNT(*)::int AS total_skus,
-                COALESCE(SUM(quantity_on_hand * unit_cost), 0)::numeric(14,2) AS total_val,
-                COALESCE(SUM(CASE WHEN quantity_on_hand <= reorder_level THEN 1 ELSE 0 END), 0)::int AS low_stock,
-                COALESCE(SUM(CASE WHEN quantity_on_hand <= (reorder_level * 0.50) THEN 1 ELSE 0 END), 0)::int AS critical_stock,
+                COALESCE(SUM(current_stock * unit_cost), 0)::numeric(14,2) AS total_val,
+                COALESCE(SUM(CASE WHEN current_stock <= reorder_level THEN 1 ELSE 0 END), 0)::int AS low_stock,
+                COALESCE(SUM(CASE WHEN current_stock <= (reorder_level * 0.50) THEN 1 ELSE 0 END), 0)::int AS critical_stock,
                 (SELECT COUNT(*)::int FROM public.suppliers WHERE is_active IS TRUE) AS active_suppliers
             FROM public.raw_materials
             WHERE is_active IS TRUE;

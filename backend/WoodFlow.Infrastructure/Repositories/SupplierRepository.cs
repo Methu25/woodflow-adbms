@@ -1,4 +1,3 @@
-using System.Data;
 using Npgsql;
 using WoodFlow.Application.Interfaces;
 using WoodFlow.Domain;
@@ -8,7 +7,7 @@ namespace WoodFlow.Infrastructure.Repositories;
 public sealed class SupplierRepository(Database database) : ISupplierRepository
 {
     private static Supplier ReadSupplier(NpgsqlDataReader r) => new(
-        r.GetGuid(0),
+        r.GetInt32(0),
         r.GetString(1),
         r.GetString(2),
         r.GetString(3),
@@ -34,6 +33,7 @@ public sealed class SupplierRepository(Database database) : ISupplierRepository
     public async Task<IReadOnlyList<Supplier>> ListSuppliersAsync(string? category, string? search, bool includeInactive, CancellationToken ct)
     {
         await using var connection = await database.OpenAsync(ct);
+        await RawMaterialRepository.EnsureExtendedSchemaAsync(connection, ct);
 
         var sql = $"""
             SELECT {SupplierSelect}
@@ -61,9 +61,10 @@ public sealed class SupplierRepository(Database database) : ISupplierRepository
         return list;
     }
 
-    public async Task<Supplier?> FindByIdAsync(Guid supplierId, CancellationToken ct)
+    public async Task<Supplier?> FindByIdAsync(int supplierId, CancellationToken ct)
     {
         await using var connection = await database.OpenAsync(ct);
+        await RawMaterialRepository.EnsureExtendedSchemaAsync(connection, ct);
 
         var sql = $"""
             SELECT {SupplierSelect}
@@ -80,18 +81,19 @@ public sealed class SupplierRepository(Database database) : ISupplierRepository
         return await r.ReadAsync(ct) ? ReadSupplier(r) : null;
     }
 
-    public async Task<IReadOnlyList<MaterialSupplierMapping>> GetSupplierMaterialsAsync(Guid supplierId, CancellationToken ct)
+    public async Task<IReadOnlyList<MaterialSupplierMapping>> GetSupplierMaterialsAsync(int supplierId, CancellationToken ct)
     {
         await using var connection = await database.OpenAsync(ct);
+        await RawMaterialRepository.EnsureExtendedSchemaAsync(connection, ct);
 
         const string sql = """
             SELECT
-                ms.material_id, ms.supplier_id, m.name, m.material_code,
+                ms.material_id, ms.supplier_id, m.material_name, m.material_code,
                 ms.unit_price, ms.lead_time_days, ms.is_preferred
             FROM public.material_suppliers ms
             JOIN public.raw_materials m ON ms.material_id = m.material_id
             WHERE ms.supplier_id = @sId
-            ORDER BY m.name ASC;
+            ORDER BY m.material_name ASC;
             """;
 
         await using var cmd = new NpgsqlCommand(sql, connection);
@@ -102,8 +104,8 @@ public sealed class SupplierRepository(Database database) : ISupplierRepository
         while (await r.ReadAsync(ct))
         {
             list.Add(new MaterialSupplierMapping(
-                r.GetGuid(0),
-                r.GetGuid(1),
+                r.GetInt32(0),
+                r.GetInt32(1),
                 r.GetString(2),
                 r.GetString(3),
                 r.GetDecimal(4),
@@ -114,25 +116,28 @@ public sealed class SupplierRepository(Database database) : ISupplierRepository
         return list;
     }
 
-    public async Task<Supplier> CreateAsync(Supplier supplier, Guid? initialMaterialId, decimal? initialUnitPrice, int? initialLeadTimeDays, CancellationToken ct)
+    public async Task<Supplier> CreateAsync(Supplier supplier, int? initialMaterialId, decimal? initialUnitPrice, int? initialLeadTimeDays, CancellationToken ct)
     {
         await using var connection = await database.OpenAsync(ct);
+        await RawMaterialRepository.EnsureExtendedSchemaAsync(connection, ct);
+
         await using var tx = await connection.BeginTransactionAsync(ct);
         try
         {
             const string sql = """
                 INSERT INTO public.suppliers (
-                    supplier_id, supplier_code, company_name, contact_person,
+                    supplier_code, company_name, contact_person,
                     phone, email, address, primary_category, is_active, rating, created_at
                 ) VALUES (
-                    @id, @code, @name, @contact,
+                    @code, @name, @contact,
                     @phone, @email, @addr, @cat, @active, @rating, @created
-                );
+                )
+                RETURNING supplier_id;
                 """;
 
+            int newSupplierId;
             await using (var cmd = new NpgsqlCommand(sql, connection, tx))
             {
-                cmd.Parameters.AddWithValue("id", supplier.SupplierId);
                 cmd.Parameters.AddWithValue("code", supplier.SupplierCode);
                 cmd.Parameters.AddWithValue("name", supplier.CompanyName);
                 cmd.Parameters.AddWithValue("contact", supplier.ContactPerson);
@@ -143,7 +148,7 @@ public sealed class SupplierRepository(Database database) : ISupplierRepository
                 cmd.Parameters.AddWithValue("active", supplier.IsActive);
                 cmd.Parameters.AddWithValue("rating", supplier.Rating);
                 cmd.Parameters.AddWithValue("created", supplier.CreatedAt);
-                await cmd.ExecuteNonQueryAsync(ct);
+                newSupplierId = Convert.ToInt32(await cmd.ExecuteScalarAsync(ct));
             }
 
             if (initialMaterialId.HasValue)
@@ -155,14 +160,14 @@ public sealed class SupplierRepository(Database database) : ISupplierRepository
                     """;
                 await using var mapCmd = new NpgsqlCommand(mapSql, connection, tx);
                 mapCmd.Parameters.AddWithValue("mId", initialMaterialId.Value);
-                mapCmd.Parameters.AddWithValue("sId", supplier.SupplierId);
+                mapCmd.Parameters.AddWithValue("sId", newSupplierId);
                 mapCmd.Parameters.AddWithValue("price", initialUnitPrice ?? 0.00m);
                 mapCmd.Parameters.AddWithValue("lead", initialLeadTimeDays ?? 3);
                 await mapCmd.ExecuteNonQueryAsync(ct);
             }
 
             await tx.CommitAsync(ct);
-            return supplier;
+            return supplier with { SupplierId = newSupplierId };
         }
         catch
         {
@@ -174,6 +179,7 @@ public sealed class SupplierRepository(Database database) : ISupplierRepository
     public async Task<Supplier?> UpdateAsync(Supplier supplier, CancellationToken ct)
     {
         await using var connection = await database.OpenAsync(ct);
+        await RawMaterialRepository.EnsureExtendedSchemaAsync(connection, ct);
 
         const string sql = """
             UPDATE public.suppliers

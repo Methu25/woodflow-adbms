@@ -7,6 +7,7 @@ namespace WoodFlow.Api.Controllers;
 
 [ApiController]
 [Route("api/suppliers")]
+[ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public sealed class SuppliersController(SupplierService service) : ControllerBase
 {
     [HttpGet]
@@ -21,9 +22,9 @@ public sealed class SuppliersController(SupplierService service) : ControllerBas
         return Ok(suppliers);
     }
 
-    [HttpGet("{id:guid}")]
+    [HttpGet("{id:int:min(1)}")]
     [Authorize(Policy = "inventory.view")]
-    public async Task<ActionResult<SupplierDto>> GetById(Guid id, CancellationToken ct)
+    public async Task<ActionResult<SupplierDto>> GetById(int id, CancellationToken ct)
     {
         var supplier = await service.GetByIdAsync(id, ct);
         return supplier is null ? NotFound(new { message = "Supplier not found." }) : Ok(supplier);
@@ -31,6 +32,7 @@ public sealed class SuppliersController(SupplierService service) : ControllerBas
 
     [HttpPost]
     [Authorize(Policy = "inventory.create")]
+    [RequestSizeLimit(16384)]
     public async Task<ActionResult<SupplierDto>> Create(
         [FromBody] CreateSupplierRequest request,
         CancellationToken ct)
@@ -46,10 +48,11 @@ public sealed class SuppliersController(SupplierService service) : ControllerBas
         }
     }
 
-    [HttpPut("{id:guid}")]
+    [HttpPut("{id:int:min(1)}")]
     [Authorize(Policy = "inventory.edit")]
+    [RequestSizeLimit(16384)]
     public async Task<ActionResult<SupplierDto>> Update(
-        Guid id,
+        int id,
         [FromBody] UpdateSupplierRequest request,
         CancellationToken ct)
     {

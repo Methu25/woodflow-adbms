@@ -52,7 +52,7 @@ public sealed class RawMaterialService(IRawMaterialRepository repository)
         return materials.Select(ToDto).ToList();
     }
 
-    public async Task<RawMaterialDto?> GetByIdAsync(Guid materialId, CancellationToken ct = default)
+    public async Task<RawMaterialDto?> GetByIdAsync(int materialId, CancellationToken ct = default)
     {
         var m = await repository.FindByIdAsync(materialId, ct);
         return m is null ? null : ToDto(m);
@@ -76,7 +76,7 @@ public sealed class RawMaterialService(IRawMaterialRepository repository)
             throw new InvalidOperationException($"Material code '{req.MaterialCode}' already exists.");
 
         var material = new RawMaterial(
-            Guid.NewGuid(),
+            0,
             req.MaterialCode.Trim().ToUpperInvariant(),
             req.Name.Trim(),
             req.Category,
@@ -95,7 +95,7 @@ public sealed class RawMaterialService(IRawMaterialRepository repository)
         return ToDto(created);
     }
 
-    public async Task<RawMaterialDto?> UpdateMaterialAsync(Guid id, UpdateRawMaterialRequest req, CancellationToken ct = default)
+    public async Task<RawMaterialDto?> UpdateMaterialAsync(int id, UpdateRawMaterialRequest req, CancellationToken ct = default)
     {
         var existing = await repository.FindByIdAsync(id, ct);
         if (existing is null) return null;
@@ -127,9 +127,11 @@ public sealed class RawMaterialService(IRawMaterialRepository repository)
     public async Task<GoodsReceiptDto> PostGoodsReceiptAsync(PostGoodsReceiptRequest req, CancellationToken ct = default)
     {
         if (req.QuantityReceived <= 0)
-            throw new ArgumentException("Received quantity must be greater than zero.");
+            throw new ArgumentException("Quantity received must be greater than zero.");
         if (req.UnitCost < 0)
             throw new ArgumentException("Unit cost cannot be negative.");
+        if (req.MoisturePct < 0 || req.MoisturePct > 100)
+            throw new ArgumentException("Moisture percentage must be between 0 and 100.");
 
         var grn = await repository.RecordGoodsReceiptAsync(
             req.MaterialId,
@@ -162,34 +164,32 @@ public sealed class RawMaterialService(IRawMaterialRepository repository)
 
     public async Task<IReadOnlyList<GoodsReceiptDto>> ListGoodsReceiptsAsync(int limit = 50, CancellationToken ct = default)
     {
-        var grns = await repository.ListGoodsReceiptsAsync(limit, ct);
-        return grns.Select(g => new GoodsReceiptDto(
-            g.ReceiptId,
-            g.GrnNumber,
-            g.MaterialId,
-            g.MaterialCode,
-            g.MaterialName,
-            g.SupplierId,
-            g.SupplierName,
-            g.QuantityReceived,
-            g.UnitOfMeasure,
-            g.UnitCost,
-            g.MoisturePct,
-            g.ReceivedBy,
-            g.Notes,
-            g.ReceivedAt
+        var list = await repository.ListGoodsReceiptsAsync(limit, ct);
+        return list.Select(grn => new GoodsReceiptDto(
+            grn.ReceiptId,
+            grn.GrnNumber,
+            grn.MaterialId,
+            grn.MaterialCode,
+            grn.MaterialName,
+            grn.SupplierId,
+            grn.SupplierName,
+            grn.QuantityReceived,
+            grn.UnitOfMeasure,
+            grn.UnitCost,
+            grn.MoisturePct,
+            grn.ReceivedBy,
+            grn.Notes,
+            grn.ReceivedAt
         )).ToList();
     }
 
     public async Task<JobMaterialDto> IssueMaterialToJobAsync(IssueMaterialRequest req, CancellationToken ct = default)
     {
         if (req.QuantityIssued <= 0)
-            throw new ArgumentException("Issued quantity must be greater than zero.");
-        if (string.IsNullOrWhiteSpace(req.JobId))
-            throw new ArgumentException("Workshop Job ID is required.");
+            throw new ArgumentException("Quantity issued must be greater than zero.");
 
         var record = await repository.RecordConsumptionAsync(
-            req.JobId.Trim(),
+            string.IsNullOrWhiteSpace(req.JobId) ? "JOB-WORKSHOP-GEN" : req.JobId.Trim(),
             req.MaterialId,
             req.QuantityIssued,
             string.IsNullOrWhiteSpace(req.ArtisanName) ? "Senior Artisan" : req.ArtisanName.Trim(),

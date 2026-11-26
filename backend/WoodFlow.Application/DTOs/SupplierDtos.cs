@@ -1,7 +1,7 @@
 namespace WoodFlow.Application.DTOs;
 
 public sealed record SupplierDto(
-    Guid SupplierId,
+    int SupplierId,
     string SupplierCode,
     string CompanyName,
     string ContactPerson,
@@ -17,7 +17,7 @@ public sealed record SupplierDto(
 );
 
 public sealed record SupplierMaterialMappingDto(
-    Guid MaterialId,
+    int MaterialId,
     string MaterialCode,
     string MaterialName,
     decimal UnitPrice,
@@ -33,7 +33,7 @@ public sealed record CreateSupplierRequest(
     string Email,
     string Address,
     string PrimaryCategory,
-    Guid? InitialMaterialId,
+    int? InitialMaterialId,
     decimal? InitialUnitPrice,
     int? InitialLeadTimeDays
 );

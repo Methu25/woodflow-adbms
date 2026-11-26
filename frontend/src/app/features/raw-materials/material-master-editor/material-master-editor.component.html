@@ -182,7 +182,7 @@
               <select
                 id="preferredSupplier"
                 class="form-control"
-                [value]="preferredSupplierId()"
+                [value]="preferredSupplierId() ?? ''"
                 (change)="onSupplierChange($event)">
                 <option value="">-- None / Direct Sourcing --</option>
                 @for (sup of suppliers(); track sup.supplierId) {
@@ -258,7 +258,7 @@
           }
         </div>
         <p style="font-size: 11px; color: #7A6F64; margin: 4px 0 14px;">
-          Trigger <code style="color: #A44A3F;">trg_check_low_raw_stock</code> writes an audit record to <code style="color: #A44A3F;">audit_logs</code> whenever on-hand drops to &le; {{ reorderLevel() }} {{ unitOfMeasure() }}.
+          Trigger <code style="color: #A44A3F;">trg_check_low_raw_stock</code> writes an alert record to <code style="color: #A44A3F;">raw_material_stock_alerts</code> whenever on-hand drops to &le; {{ reorderLevel() }} {{ unitOfMeasure() }}.
         </p>
       </div>
 

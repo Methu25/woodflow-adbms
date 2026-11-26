@@ -8,7 +8,7 @@ import { RawMaterialsService } from '../services/raw-materials.service';
   standalone: true,
   imports: [CommonModule, RouterLink],
   templateUrl: './raw-stock-dashboard.component.html',
-  styleUrl: './raw-stock-dashboard.component.scss'
+  styleUrls: ['../raw-materials-header.scss', './raw-stock-dashboard.component.scss']
 })
 export class RawStockDashboardComponent implements OnInit {
   readonly service = inject(RawMaterialsService);

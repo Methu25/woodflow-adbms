@@ -1,7 +1,7 @@
 namespace WoodFlow.Domain;
 
 public sealed record RawMaterial(
-    Guid MaterialId,
+    int MaterialId,
     string MaterialCode,
     string Name,
     string Category,
@@ -22,7 +22,7 @@ public sealed record RawMaterial(
 }
 
 public sealed record Supplier(
-    Guid SupplierId,
+    int SupplierId,
     string SupplierCode,
     string CompanyName,
     string ContactPerson,
@@ -38,8 +38,8 @@ public sealed record Supplier(
 );
 
 public sealed record MaterialSupplierMapping(
-    Guid MaterialId,
-    Guid SupplierId,
+    int MaterialId,
+    int SupplierId,
     string MaterialName,
     string MaterialCode,
     decimal UnitPrice,
@@ -48,12 +48,12 @@ public sealed record MaterialSupplierMapping(
 );
 
 public sealed record GoodsReceiptNote(
-    Guid ReceiptId,
+    int ReceiptId,
     string GrnNumber,
-    Guid MaterialId,
+    int MaterialId,
     string MaterialCode,
     string MaterialName,
-    Guid? SupplierId,
+    int? SupplierId,
     string? SupplierName,
     decimal QuantityReceived,
     string UnitOfMeasure,
@@ -65,9 +65,9 @@ public sealed record GoodsReceiptNote(
 );
 
 public sealed record JobMaterialConsumption(
-    Guid JobMaterialId,
+    int JobMaterialId,
     string JobId,
-    Guid MaterialId,
+    int MaterialId,
     string MaterialCode,
     string MaterialName,
     string UnitOfMeasure,
@@ -79,7 +79,7 @@ public sealed record JobMaterialConsumption(
 );
 
 public sealed record LowStockReorderItem(
-    Guid MaterialId,
+    int MaterialId,
     string MaterialCode,
     string Name,
     string Category,

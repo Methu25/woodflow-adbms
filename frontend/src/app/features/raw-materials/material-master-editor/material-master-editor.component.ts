@@ -8,7 +8,7 @@ import { RawMaterialsService, SupplierItem } from '../services/raw-materials.ser
   standalone: true,
   imports: [CommonModule, RouterLink],
   templateUrl: './material-master-editor.component.html',
-  styleUrl: './material-master-editor.component.scss'
+  styleUrls: ['../raw-materials-header.scss', './material-master-editor.component.scss']
 })
 export class MaterialMasterEditorComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
@@ -16,13 +16,12 @@ export class MaterialMasterEditorComponent implements OnInit {
   private readonly service = inject(RawMaterialsService);
 
   readonly categories = ['Timber', 'Boards', 'Hardware', 'Finishing', 'Fabric', 'Adhesives'];
-  readonly units = ['cu.ft', 'sheets', 'pcs', 'liters', 'meters', 'kg'];
+  readonly units = ['cu.ft', 'BOARD_FEET', 'sheets', 'pcs', 'liters', 'GALLONS', 'meters', 'METERS', 'kg', 'BOXES'];
 
   readonly isEditMode = signal<boolean>(false);
-  readonly materialId = signal<string | null>(null);
+  readonly materialId = signal<number | null>(null);
   readonly suppliers = signal<SupplierItem[]>([]);
 
-  // Form Field Signals
   readonly materialCode = signal<string>('');
   readonly name = signal<string>('');
   readonly category = signal<string>('Timber');
@@ -32,14 +31,13 @@ export class MaterialMasterEditorComponent implements OnInit {
   readonly unitCost = signal<number>(0);
   readonly storageLocation = signal<string>('Main Yard · Bay A');
   readonly notes = signal<string>('');
-  readonly preferredSupplierId = signal<string>('');
+  readonly preferredSupplierId = signal<number | null>(null);
   readonly leadTimeDays = signal<number>(3);
   readonly isActive = signal<boolean>(true);
 
   readonly submitting = signal<boolean>(false);
   readonly errorMessage = signal<string | null>(null);
 
-  // Live trigger simulator signal
   readonly simulatedStatus = computed(() => {
     const onHand = this.quantityOnHand();
     const reorder = this.reorderLevel();
@@ -54,15 +52,16 @@ export class MaterialMasterEditorComponent implements OnInit {
       error: () => {}
     });
 
-    const id = this.route.snapshot.paramMap.get('id');
-    if (id) {
+    const idParam = this.route.snapshot.paramMap.get('id');
+    const parsedId = idParam ? Number(idParam) : NaN;
+    if (Number.isInteger(parsedId) && parsedId > 0) {
       this.isEditMode.set(true);
-      this.materialId.set(id);
-      this.loadMaterial(id);
+      this.materialId.set(parsedId);
+      this.loadMaterial(parsedId);
     }
   }
 
-  private loadMaterial(id: string): void {
+  private loadMaterial(id: number): void {
     this.service.getMaterialById(id).subscribe({
       next: (item) => {
         this.materialCode.set(item.materialCode);
@@ -122,7 +121,9 @@ export class MaterialMasterEditorComponent implements OnInit {
   }
 
   onSupplierChange(e: Event): void {
-    this.preferredSupplierId.set((e.target as HTMLSelectElement).value);
+    const raw = (e.target as HTMLSelectElement).value;
+    const parsed = raw ? Number(raw) : NaN;
+    this.preferredSupplierId.set(Number.isInteger(parsed) && parsed > 0 ? parsed : null);
   }
 
   onLeadTimeChange(e: Event): void {
@@ -184,7 +185,7 @@ export class MaterialMasterEditorComponent implements OnInit {
         unitCost: this.unitCost(),
         storageLocation: this.storageLocation().trim(),
         notes: this.notes().trim(),
-        preferredSupplierId: this.preferredSupplierId() || undefined,
+        preferredSupplierId: this.preferredSupplierId() ?? undefined,
         leadTimeDays: this.leadTimeDays()
       }).subscribe({
         next: () => {

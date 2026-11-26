@@ -137,6 +137,144 @@ export interface FinishedFurnitureAvailabilityDto {
   triggerName: string;
 }
 
+export interface LowStockAlertItemDto {
+  productId: number;
+  skuCode: string;
+  itemName: string;
+  category: string;
+  primaryWoodType: string;
+  retailPrice: number;
+  currentStock: number;
+  minReorderLevel: number;
+  alertStatus: string; // 'OUT_OF_STOCK' | 'LOW_STOCK' | 'IN_WORKSHOP'
+  alertLabel: string;
+  lastTriggerReference: string;
+  lastTriggerSummary: string;
+  suggestedRestockQty: number;
+  restockRequested: boolean;
+  workshopActionLabel: string;
+}
+
+export interface LowStockAlertsResponseDto {
+  outOfStockCount: number;
+  belowMinReorderCount: number;
+  pendingWorkshopUnits: number;
+  activeRestockTickets: number;
+  autoDeductionsToday: number;
+  alerts: LowStockAlertItemDto[];
+}
+
+export interface RequestWorkshopRestockRequest {
+  productId: number;
+  restockQty: number;
+  isUrgent?: boolean;
+}
+
+const FALLBACK_LOW_STOCK_ALERTS: LowStockAlertItemDto[] = [
+  {
+    productId: 1005,
+    skuCode: 'FF-LIV-007',
+    itemName: 'Ceylon Heritage Sofa Bed',
+    category: 'Living Room',
+    primaryWoodType: 'Cushioned Teak',
+    retailPrice: 94500,
+    currentStock: 0,
+    minReorderLevel: 3,
+    alertStatus: 'OUT_OF_STOCK',
+    alertLabel: '● Out of Stock (POS Locked)',
+    lastTriggerReference: 'INV-2026-0874 (-2)',
+    lastTriggerSummary: '10 Nov · trg_pos_stock_deduct',
+    suggestedRestockQty: 4,
+    restockRequested: false,
+    workshopActionLabel: 'Urgent Restock',
+  },
+  {
+    productId: 1007,
+    skuCode: 'FF-LIV-011',
+    itemName: 'Kottawa Carved Nadun Coffee Table',
+    category: 'Living Room',
+    primaryWoodType: 'Solid Nadun',
+    retailPrice: 48000,
+    currentStock: 0,
+    minReorderLevel: 4,
+    alertStatus: 'OUT_OF_STOCK',
+    alertLabel: '● Out of Stock (POS Locked)',
+    lastTriggerReference: 'INV-2026-0889 (-1)',
+    lastTriggerSummary: '12 Nov · trg_pos_stock_deduct',
+    suggestedRestockQty: 4,
+    restockRequested: false,
+    workshopActionLabel: 'Urgent Restock',
+  },
+  {
+    productId: 1006,
+    skuCode: 'FF-BED-012',
+    itemName: 'Royal Arch 3-Door Wardrobe',
+    category: 'Bedroom',
+    primaryWoodType: 'Nadun & Teak',
+    retailPrice: 210000,
+    currentStock: 1,
+    minReorderLevel: 3,
+    alertStatus: 'LOW_STOCK',
+    alertLabel: '● Low Stock (1 Left)',
+    lastTriggerReference: 'AUD-NOV-04 (-1)',
+    lastTriggerSummary: '12 Nov · Audit Adjustment',
+    suggestedRestockQty: 3,
+    restockRequested: false,
+    workshopActionLabel: 'Send to Workshop',
+  },
+  {
+    productId: 1003,
+    skuCode: 'FF-DIN-002',
+    itemName: 'Riviera 6-Chair Dining Set',
+    category: 'Dining Room',
+    primaryWoodType: 'Burma Teak',
+    retailPrice: 192000,
+    currentStock: 2,
+    minReorderLevel: 4,
+    alertStatus: 'LOW_STOCK',
+    alertLabel: '● Low Stock (2 Left)',
+    lastTriggerReference: 'DEL-2026-108 (-1)',
+    lastTriggerSummary: '12 Nov · Custom Delivery',
+    suggestedRestockQty: 3,
+    restockRequested: false,
+    workshopActionLabel: 'Send to Workshop',
+  },
+  {
+    productId: 1008,
+    skuCode: 'FF-BED-008',
+    itemName: 'Mahogany Queen Storage Bed',
+    category: 'Bedroom',
+    primaryWoodType: 'Red Mahogany',
+    retailPrice: 134000,
+    currentStock: 2,
+    minReorderLevel: 3,
+    alertStatus: 'IN_WORKSHOP',
+    alertLabel: '● In Workshop (Stage 4)',
+    lastTriggerReference: 'INV-2026-0861 (-1)',
+    lastTriggerSummary: '09 Nov · trg_pos_stock_deduct',
+    suggestedRestockQty: 2,
+    restockRequested: true,
+    workshopActionLabel: '✓ Job #148 Active',
+  },
+  {
+    productId: 1009,
+    skuCode: 'FF-DIN-009',
+    itemName: 'Colonial Teak Glass Display Almirah',
+    category: 'Dining Room',
+    primaryWoodType: 'Ceylon Teak',
+    retailPrice: 156000,
+    currentStock: 1,
+    minReorderLevel: 2,
+    alertStatus: 'LOW_STOCK',
+    alertLabel: '● Low Stock (1 Left)',
+    lastTriggerReference: 'INV-2026-0852 (-1)',
+    lastTriggerSummary: '08 Nov · trg_pos_stock_deduct',
+    suggestedRestockQty: 2,
+    restockRequested: false,
+    workshopActionLabel: 'Send to Workshop',
+  },
+];
+
 const FALLBACK_CATEGORIES: FinishedCategoryDto[] = [
   {
     categoryId: 1,
@@ -443,6 +581,7 @@ export class FinishedFurnitureService {
 
   private readonly localItems = signal<FinishedFurnitureItem[]>([...FALLBACK_CATALOG_ITEMS]);
   private readonly localCategories = signal<FinishedCategoryDto[]>([...FALLBACK_CATEGORIES]);
+  private readonly localAlerts = signal<LowStockAlertItemDto[]>([...FALLBACK_LOW_STOCK_ALERTS]);
 
   listCatalog(category = 'All', search = ''): Observable<FinishedCatalogResponse> {
     const params: Record<string, string> = {};
@@ -576,6 +715,56 @@ export class FinishedFurnitureService {
         );
       }),
     );
+  }
+
+  listLowStockAlerts(filter = 'ALL'): Observable<LowStockAlertsResponseDto> {
+    const params: Record<string, string> = {};
+    if (filter && filter !== 'ALL') params['filter'] = filter;
+
+    return this.http.get<LowStockAlertsResponseDto>(`${this.baseUrl}/alerts`, { params }).pipe(
+      timeout(12000),
+      catchError(() => of(this.filterLocalAlerts(filter))),
+    );
+  }
+
+  requestWorkshopRestock(request: RequestWorkshopRestockRequest): Observable<FinishedFurnitureItem> {
+    return this.auth.refreshCsrf().pipe(
+      switchMap(() => this.http.post<FinishedFurnitureItem>(`${this.baseUrl}/alerts/restock`, request)),
+      timeout(12000),
+    );
+  }
+
+  requestBatchRestock(): Observable<{ updatedCount: number; message: string }> {
+    return this.auth.refreshCsrf().pipe(
+      switchMap(() =>
+        this.http.post<{ updatedCount: number; message: string }>(`${this.baseUrl}/alerts/batch-restock`, {}),
+      ),
+      timeout(12000),
+    );
+  }
+
+  private filterLocalAlerts(filter: string): LowStockAlertsResponseDto {
+    const all = this.localAlerts();
+    const outOfStockCount = all.filter(a => a.currentStock <= 0).length;
+    const belowMinReorderCount = all.filter(a => a.currentStock > 0 && a.currentStock <= a.minReorderLevel).length;
+
+    let filtered = all;
+    if (filter === 'OUT_OF_STOCK') {
+      filtered = all.filter(a => a.currentStock <= 0);
+    } else if (filter === 'LOW_STOCK') {
+      filtered = all.filter(a => a.currentStock > 0 && a.currentStock <= a.minReorderLevel);
+    } else if (filter === 'RESTOCK_REQUESTED') {
+      filtered = all.filter(a => a.restockRequested || a.alertStatus === 'IN_WORKSHOP');
+    }
+
+    return {
+      outOfStockCount,
+      belowMinReorderCount,
+      pendingWorkshopUnits: 11,
+      activeRestockTickets: 3,
+      autoDeductionsToday: 14,
+      alerts: filtered,
+    };
   }
 
   private filterLocalMovements(productId: number | null, filterType: string): StockMovementLedgerResponse {

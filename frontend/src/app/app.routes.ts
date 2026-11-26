@@ -78,6 +78,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/inventory/item-details-barcode.component').then(m => m.ItemDetailsBarcodeComponent),
       },
       {
+        path: 'inventory/alerts',
+        canActivate: [permissionGuard], data: { permission: 'inventory.view' },
+        title: 'Low-Stock Alerts & POS Trigger Monitor | WoodFlow',
+        loadComponent: () => import('./features/inventory/low-stock-alerts.component').then(m => m.LowStockAlertsComponent),
+      },
+      {
         path: 'inventory',
         canActivate: [permissionGuard], data: { permission: 'inventory.view' },
         title: 'Finished Furniture Inventory | WoodFlow',

@@ -39,6 +39,10 @@ builder.Services.AddSingleton<IFinishedFurnitureRepository, FinishedFurnitureRep
 builder.Services.AddSingleton<FinishedFurnitureService>();
 builder.Services.AddSingleton<IEmployeeAdvanceRepository, EmployeeAdvanceRepository>();
 builder.Services.AddSingleton<EmployeeAdvanceService>();
+builder.Services.AddSingleton<IRawMaterialRepository, RawMaterialRepository>();
+builder.Services.AddSingleton<ISupplierRepository, SupplierRepository>();
+builder.Services.AddSingleton<RawMaterialService>();
+builder.Services.AddSingleton<SupplierService>();
 builder.Services.AddScoped<AccountCookieEvents>();
 builder.Services.AddAntiforgery(options =>
 {

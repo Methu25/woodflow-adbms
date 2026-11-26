@@ -45,6 +45,7 @@ export class ShowroomCatalogComponent {
     { label: '05 Categories', route: '/inventory/categories', exact: false },
     { label: '06 Item Details & Tag', route: '/inventory/items/1001', exact: false },
     { label: '07 Low-Stock Alerts', route: '/inventory/alerts', exact: false },
+    { label: '📦 Raw Materials (Member 6) →', route: '/inventory/raw-materials', exact: false },
   ];
 
   readonly userDisplayName = computed(() => this.auth.user()?.fullName || 'P Rejishanth');

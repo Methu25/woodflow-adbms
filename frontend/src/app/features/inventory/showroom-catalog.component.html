@@ -1,0 +1,331 @@
+<section class="inventory-page" aria-labelledby="catalog-heading">
+  <!-- Figma Top Header Bar -->
+  <header class="top-utility-bar">
+    <div class="global-search-box">
+      <svg class="search-icon" width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <circle cx="7" cy="7" r="5.25" stroke="#68839E" stroke-width="1.6" />
+        <path d="M11 11L14.2 14.2" stroke="#68839E" stroke-width="1.6" stroke-linecap="round" />
+      </svg>
+      <input
+        type="search"
+        [ngModel]="globalSearchQuery()"
+        (ngModelChange)="onGlobalSearch($event)"
+        placeholder="Search furniture SKUs, barcodes, categories..."
+        aria-label="Search furniture SKUs, barcodes, categories"
+      />
+      <span class="kbd-shortcut" aria-hidden="true">Ctrl+K</span>
+    </div>
+
+    <div class="utility-right">
+      <div class="date-location-chip">
+        <svg class="calendar-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <rect x="2" y="3" width="12" height="11" rx="2" stroke="#1685C5" stroke-width="1.4" />
+          <path d="M2 6.5H14M5 1.8V3.8M11 1.8V3.8" stroke="#1685C5" stroke-width="1.4" stroke-linecap="round" />
+        </svg>
+        <div>
+          <p class="date-label">Fri, 13 Nov 2026</p>
+          <p class="showroom-sub">08:45 AM · Main Showroom</p>
+        </div>
+      </div>
+
+      <a class="notification-bell" routerLink="/inventory/alerts" title="View Low-Stock Alerts & POS Trigger Monitor">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M8 2.2C5.9 2.2 4.2 3.9 4.2 6V9.2L2.9 10.8V11.6H13.1V10.8L11.8 9.2V6C11.8 3.9 10.1 2.2 8 2.2Z" stroke="#073763" stroke-width="1.4" />
+          <path d="M6.5 12.6C6.7 13.4 7.3 13.9 8 13.9C8.7 13.9 9.3 13.4 9.5 12.6" stroke="#073763" stroke-width="1.4" stroke-linecap="round" />
+        </svg>
+        <span class="bell-badge">{{ lowStockAlertCount() }}</span>
+      </a>
+
+      <span class="vertical-divider" aria-hidden="true"></span>
+
+      <div class="profile-chip">
+        <div class="profile-meta">
+          <p class="profile-name">{{ userDisplayName() }}</p>
+          <p class="profile-role">{{ userRoleSubtitle() }}</p>
+        </div>
+        <div class="profile-avatar" aria-hidden="true">{{ userInitials() }}</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Module Sub-Navigation Bar for the 7 Finished Furniture Screens -->
+  <nav class="module-subnav" aria-label="Finished Furniture Inventory navigation">
+    @for (tab of navTabs; track tab.route) {
+      <a
+        [routerLink]="tab.route"
+        routerLinkActive="active-tab"
+        [routerLinkActiveOptions]="{ exact: tab.exact }"
+        class="subnav-tab"
+      >
+        {{ tab.label }}
+      </a>
+    }
+  </nav>
+
+  <!-- Page Title & Action Row (Matches Screen 01) -->
+  <div class="page-header-row">
+    <div>
+      <h1 id="catalog-heading">Finished Furniture Inventory</h1>
+      <p class="page-subtitle">Showroom finished furniture catalog, stock levels, SKUs &amp; showroom pricing</p>
+    </div>
+
+    @if (permissions.has('inventory.create')) {
+      <button type="button" class="btn-add-item" (click)="addItem()">
+        + Add Item
+      </button>
+    }
+  </div>
+
+  <!-- Filter & Category Pills Bar (Matches Screen 01) -->
+  <div class="catalog-filter-bar">
+    <div class="catalog-search-input">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <circle cx="7" cy="7" r="5.2" stroke="#68839E" stroke-width="1.5" />
+        <path d="M11 11L14.2 14.2" stroke="#68839E" stroke-width="1.5" stroke-linecap="round" />
+      </svg>
+      <input
+        type="search"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="onFilterInput($event)"
+        placeholder="Filter catalog by name or SKU..."
+        aria-label="Filter catalog by name or SKU"
+      />
+    </div>
+
+    <div class="category-pills" role="tablist" aria-label="Furniture categories">
+      @for (category of categories; track category) {
+        <button
+          type="button"
+          class="category-pill"
+          [class.active]="selectedCategory() === category"
+          (click)="selectCategory(category)"
+        >
+          @if (category === 'All') {
+            All ({{ totalSkus() }})
+          } @else {
+            {{ category }}
+          }
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="alert-banner" role="alert">
+      <span>{{ error() }}</span>
+      <button type="button" (click)="loadCatalog()">Retry</button>
+    </div>
+  }
+
+  <!-- 3-Column Showroom Furniture Card Grid (Matches Screen 01) -->
+  <div class="catalog-grid">
+    @for (item of items(); track item.productId) {
+      <article class="furniture-card">
+        <!-- Card Visual Hero Illustration matching Figma Frame -->
+        <div class="card-media" [attr.data-theme]="item.imageKey">
+          @switch (item.imageKey) {
+            @case ('bed') {
+              <svg class="furniture-illustration" viewBox="0 0 340 128" fill="none" aria-hidden="true">
+                <rect width="340" height="128" rx="10" fill="url(#bedBg)" />
+                <ellipse cx="170" cy="112" rx="115" ry="9" fill="#073763" fill-opacity="0.18" />
+                <!-- Carved Teak Headboard -->
+                <rect x="78" y="24" width="184" height="52" rx="8" fill="#6E4427" stroke="#4D2D18" stroke-width="2" />
+                <rect x="88" y="32" width="78" height="34" rx="4" fill="#8B5A36" />
+                <rect x="174" y="32" width="78" height="34" rx="4" fill="#8B5A36" />
+                <!-- Pillows -->
+                <rect x="96" y="50" width="60" height="20" rx="6" fill="#F4F8FC" stroke="#CBDCEB" stroke-width="1.5" />
+                <rect x="184" y="50" width="60" height="20" rx="6" fill="#F4F8FC" stroke="#CBDCEB" stroke-width="1.5" />
+                <!-- Mattress & Duvet -->
+                <rect x="72" y="68" width="196" height="26" rx="6" fill="#E8F1FA" stroke="#B8D0E8" stroke-width="1.5" />
+                <rect x="72" y="76" width="196" height="18" rx="4" fill="#1685C5" fill-opacity="0.22" />
+                <!-- Teak Bed Frame & Legs -->
+                <rect x="66" y="90" width="208" height="12" rx="3" fill="#5C361D" />
+                <rect x="74" y="102" width="10" height="12" rx="2" fill="#462814" />
+                <rect x="256" y="102" width="10" height="12" rx="2" fill="#462814" />
+                <defs>
+                  <linearGradient id="bedBg" x1="0" y1="0" x2="340" y2="128" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#1E4E79" />
+                    <stop offset="1" stop-color="#0E2E4F" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            }
+            @case ('dining') {
+              <svg class="furniture-illustration" viewBox="0 0 340 128" fill="none" aria-hidden="true">
+                <rect width="340" height="128" rx="10" fill="url(#diningBg)" />
+                <ellipse cx="170" cy="112" rx="125" ry="8" fill="#073763" fill-opacity="0.2" />
+                <!-- Left & Right Dining Chairs -->
+                <path d="M56 44H66V82H90V108H83V88H63V108H56V44Z" fill="#7C4E2D" />
+                <rect x="64" y="76" width="26" height="6" rx="2" fill="#E6EEF7" />
+                <path d="M284 44H274V82H250V108H257V88H277V108H284V44Z" fill="#7C4E2D" />
+                <rect x="250" y="76" width="26" height="6" rx="2" fill="#E6EEF7" />
+                <!-- Back Chairs -->
+                <rect x="116" y="36" width="38" height="36" rx="4" fill="#6A4023" />
+                <rect x="186" y="36" width="38" height="36" rx="4" fill="#6A4023" />
+                <!-- Solid Burma Teak Dining Table -->
+                <rect x="84" y="64" width="172" height="10" rx="4" fill="#9E663C" stroke="#5A351B" stroke-width="1.5" />
+                <rect x="98" y="74" width="10" height="34" rx="2" fill="#5A351B" />
+                <rect x="232" y="74" width="10" height="34" rx="2" fill="#5A351B" />
+                <defs>
+                  <linearGradient id="diningBg" x1="0" y1="0" x2="340" y2="128" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#19527A" />
+                    <stop offset="1" stop-color="#0D3252" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            }
+            @case ('office') {
+              <svg class="furniture-illustration" viewBox="0 0 340 128" fill="none" aria-hidden="true">
+                <rect width="340" height="128" rx="10" fill="url(#officeBg)" />
+                <ellipse cx="170" cy="112" rx="115" ry="8" fill="#073763" fill-opacity="0.2" />
+                <!-- Executive Chair Behind Desk -->
+                <rect x="148" y="24" width="44" height="44" rx="8" fill="#2A3E52" stroke="#9FD8EE" stroke-width="1.2" />
+                <!-- Polished Mahogany Pedestal Desk -->
+                <rect x="74" y="56" width="192" height="9" rx="3" fill="#7D3B26" />
+                <rect x="82" y="65" width="52" height="42" rx="3" fill="#612B1A" />
+                <rect x="206" y="65" width="52" height="42" rx="3" fill="#612B1A" />
+                <rect x="134" y="65" width="72" height="14" fill="#512213" />
+                <!-- Brass Drawer Handles -->
+                <rect x="102" y="74" width="12" height="3" rx="1.5" fill="#F3C66F" />
+                <rect x="102" y="86" width="12" height="3" rx="1.5" fill="#F3C66F" />
+                <rect x="226" y="74" width="12" height="3" rx="1.5" fill="#F3C66F" />
+                <rect x="226" y="86" width="12" height="3" rx="1.5" fill="#F3C66F" />
+                <defs>
+                  <linearGradient id="officeBg" x1="0" y1="0" x2="340" y2="128" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#1E4368" />
+                    <stop offset="1" stop-color="#0C253E" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            }
+            @case ('sofabed') {
+              <svg class="furniture-illustration" viewBox="0 0 340 128" fill="none" aria-hidden="true">
+                <rect width="340" height="128" rx="10" fill="url(#sofaBedBg)" />
+                <ellipse cx="170" cy="112" rx="120" ry="8" fill="#073763" fill-opacity="0.2" />
+                <!-- Teak Daybed Frame -->
+                <rect x="64" y="38" width="212" height="50" rx="8" fill="#7D4E2D" />
+                <rect x="74" y="44" width="60" height="30" rx="5" fill="#DCE9F6" />
+                <rect x="140" y="44" width="60" height="30" rx="5" fill="#DCE9F6" />
+                <rect x="206" y="44" width="60" height="30" rx="5" fill="#DCE9F6" />
+                <rect x="70" y="72" width="200" height="16" rx="4" fill="#B6CDE4" />
+                <rect x="56" y="54" width="14" height="44" rx="4" fill="#5D371D" />
+                <rect x="270" y="54" width="14" height="44" rx="4" fill="#5D371D" />
+                <rect x="70" y="88" width="200" height="10" rx="2" fill="#5D371D" />
+                <rect x="78" y="98" width="8" height="12" rx="2" fill="#432612" />
+                <rect x="254" y="98" width="8" height="12" rx="2" fill="#432612" />
+                <defs>
+                  <linearGradient id="sofaBedBg" x1="0" y1="0" x2="340" y2="128" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#24537A" />
+                    <stop offset="1" stop-color="#112E4A" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            }
+            @case ('wardrobe') {
+              <svg class="furniture-illustration" viewBox="0 0 340 128" fill="none" aria-hidden="true">
+                <rect width="340" height="128" rx="10" fill="url(#wardrobeBg)" />
+                <ellipse cx="170" cy="115" rx="95" ry="7" fill="#073763" fill-opacity="0.22" />
+                <!-- 3-Door Royal Arch Teak Wardrobe -->
+                <rect x="102" y="16" width="136" height="94" rx="5" fill="#6F4326" stroke="#4A2B16" stroke-width="2" />
+                <rect x="108" y="22" width="38" height="82" rx="2" fill="#8A5735" />
+                <!-- Mirror Middle Door -->
+                <rect x="151" y="22" width="38" height="82" rx="2" fill="#B7D7F0" stroke="#5A361D" stroke-width="1.5" />
+                <path d="M156 32L182 54M156 46L176 64" stroke="#FFFFFF" stroke-width="1.5" stroke-opacity="0.65" stroke-linecap="round" />
+                <rect x="194" y="22" width="38" height="82" rx="2" fill="#8A5735" />
+                <!-- Brass Handles -->
+                <circle cx="141" cy="62" r="2.2" fill="#F6CE76" />
+                <circle cx="184" cy="62" r="2.2" fill="#F6CE76" />
+                <circle cx="199" cy="62" r="2.2" fill="#F6CE76" />
+                <defs>
+                  <linearGradient id="wardrobeBg" x1="0" y1="0" x2="340" y2="128" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#1B4B75" />
+                    <stop offset="1" stop-color="#0B2742" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            }
+            @default {
+              <svg class="furniture-illustration" viewBox="0 0 340 128" fill="none" aria-hidden="true">
+                <rect width="340" height="128" rx="10" fill="url(#loungeBg)" />
+                <ellipse cx="170" cy="112" rx="132" ry="9" fill="#073763" fill-opacity="0.22" />
+                <!-- 3-Seater Teak Lounge Suite -->
+                <rect x="38" y="34" width="174" height="48" rx="8" fill="#7A4B2B" />
+                <rect x="46" y="40" width="50" height="32" rx="5" fill="#EBF3FA" />
+                <rect x="100" y="40" width="50" height="32" rx="5" fill="#EBF3FA" />
+                <rect x="154" y="40" width="50" height="32" rx="5" fill="#EBF3FA" />
+                <rect x="42" y="72" width="166" height="18" rx="4" fill="#D5E5F5" />
+                <rect x="34" y="88" width="182" height="9" rx="3" fill="#5D361C" />
+                <rect x="30" y="54" width="11" height="42" rx="3" fill="#5D361C" />
+                <rect x="209" y="54" width="11" height="42" rx="3" fill="#5D361C" />
+                <rect x="44" y="97" width="7" height="14" rx="2" fill="#462814" />
+                <rect x="198" y="97" width="7" height="14" rx="2" fill="#462814" />
+                <!-- Matching Single Lounge Armchair -->
+                <rect x="236" y="46" width="68" height="44" rx="7" fill="#7A4B2B" />
+                <rect x="244" y="52" width="52" height="24" rx="4" fill="#EBF3FA" />
+                <rect x="242" y="74" width="56" height="16" rx="4" fill="#D5E5F5" />
+                <rect x="234" y="88" width="72" height="8" rx="2" fill="#5D361C" />
+                <rect x="242" y="96" width="6" height="14" rx="2" fill="#462814" />
+                <rect x="292" y="96" width="6" height="14" rx="2" fill="#462814" />
+                <defs>
+                  <linearGradient id="loungeBg" x1="0" y1="0" x2="340" y2="128" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#1E5582" />
+                    <stop offset="1" stop-color="#0E3050" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            }
+          }
+        </div>
+
+        <div class="card-body">
+          <h2 class="item-title">{{ item.itemName }}</h2>
+
+          <div class="meta-row">
+            <span class="category-wood">{{ item.category }} · {{ item.primaryWoodType }}</span>
+            <span class="sku-pill">{{ item.skuCode }}</span>
+          </div>
+
+          <div class="price-stock-row">
+            <span class="retail-price">{{ formatPrice(item.retailPrice) }}</span>
+            <span class="stock-badge" [ngClass]="stockBadgeClass(item)">
+              <span class="status-dot" aria-hidden="true"></span>
+              {{ stockBadgeText(item) }}
+            </span>
+          </div>
+
+          <hr class="card-divider" />
+
+          <div class="card-actions">
+            <button type="button" class="btn-outline" (click)="viewDetails(item)">
+              <svg width="14" height="11" viewBox="0 0 14 10" fill="none" aria-hidden="true">
+                <path d="M1 5C2.3 2.5 4.5 1.2 7 1.2C9.5 1.2 11.7 2.5 13 5C11.7 7.5 9.5 8.8 7 8.8C4.5 8.8 2.3 7.5 1 5Z" stroke="currentColor" stroke-width="1.3" />
+                <circle cx="7" cy="5" r="1.8" stroke="currentColor" stroke-width="1.3" />
+              </svg>
+              View Details
+            </button>
+
+            <button
+              type="button"
+              class="btn-outline"
+              (click)="editItem(item)"
+              [disabled]="!permissions.has('inventory.edit')"
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                <path d="M8.6 1.6L10.4 3.4L3.8 10H2V8.2L8.6 1.6Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" />
+              </svg>
+              Edit Item
+            </button>
+          </div>
+        </div>
+      </article>
+    } @empty {
+      <div class="empty-catalog">
+        <h3>No showroom furniture items matched your filter</h3>
+        <p>Try clearing the search query or selecting "All" categories.</p>
+        <button type="button" class="btn-outline" (click)="selectedCategory.set('All'); onFilterInput('')">
+          Reset Filters
+        </button>
+      </div>
+    }
+  </div>
+</section>

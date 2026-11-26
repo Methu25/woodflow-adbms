@@ -1,0 +1,311 @@
+<div class="rm-container">
+  <!-- Top Utility Bar -->
+  <div class="top-utility-bar">
+    <div class="breadcrumb-trail">
+      <a routerLink="/inventory">Inventory</a>
+      <span class="breadcrumb-separator">/</span>
+      <a routerLink="/inventory/raw-materials">Raw Materials</a>
+      <span class="breadcrumb-separator">/</span>
+      <span>{{ isEditMode() ? 'Edit SKU (' + materialCode() + ')' : 'New Material Master' }}</span>
+    </div>
+    <div class="status-pill-live">
+      <span class="status-dot-pulse"></span>
+      <span>PostgreSQL 16 · Stored Constraints Active</span>
+    </div>
+  </div>
+
+  <!-- Shared Sub-Navigation Bar -->
+  <nav class="subnav-bar" aria-label="Raw Materials Sub-navigation">
+    <a routerLink="/inventory/raw-materials" class="subnav-link">01. Stock Dashboard</a>
+    <a routerLink="/inventory/raw-materials/new" class="subnav-link active-link">02. New Material Master</a>
+    <a routerLink="/inventory/raw-materials/grn" class="subnav-link">03. Restock GRN</a>
+    <a routerLink="/inventory/suppliers" class="subnav-link">04. Suppliers</a>
+    <a routerLink="/inventory/raw-materials/consumption" class="subnav-link">05. Consumption Log</a>
+    <a routerLink="/inventory/raw-materials/reorder" class="subnav-link">06. Low-Stock Reorder</a>
+    <a routerLink="/inventory/raw-materials/allocation" class="subnav-link">07. Job Allocation</a>
+    <a routerLink="/inventory" class="subnav-showroom-link">Showroom Finished Goods &rarr;</a>
+  </nav>
+
+  <!-- Header -->
+  <div class="header-row">
+    <div class="header-titles">
+      <h1>{{ isEditMode() ? 'Edit Material SKU Master' : 'Create Raw Material Master SKU' }}</h1>
+      <p>{{ isEditMode() ? 'Update technical specifications, storage bay, reorder trigger levels and supplier terms' : 'Register a new timber species, hardware component, coating chemical or consumable into yard inventory' }}</p>
+    </div>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="status-pill CRITICAL" style="margin-bottom: 16px; padding: 10px 16px; width: 100%; border-radius: 8px;">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <!-- Form & Constraint Preview Layout -->
+  <div class="editor-layout">
+    <!-- Left: Form -->
+    <div class="form-card">
+      <h2 class="card-title">Technical Specifications & Stock Thresholds</h2>
+
+      <form (ngSubmit)="onSubmit()">
+        <div class="form-grid-2">
+          <!-- Material Code -->
+          <div class="form-group">
+            <label for="materialCode">Material SKU Code <span class="required-star">*</span></label>
+            <input
+              id="materialCode"
+              type="text"
+              class="form-control code-input"
+              placeholder="e.g. RAW-TIM-05"
+              [disabled]="isEditMode()"
+              [value]="materialCode()"
+              (input)="onCodeChange($event)"
+              required />
+            <span class="hint-text">Unique uppercase identifier (VARCHAR(30) UNIQUE)</span>
+          </div>
+
+          <!-- Category -->
+          <div class="form-group">
+            <label for="category">Category <span class="required-star">*</span></label>
+            <select
+              id="category"
+              class="form-control"
+              [value]="category()"
+              (change)="onCategoryChange($event)"
+              required>
+              @for (cat of categories; track cat) {
+                <option [value]="cat">{{ cat }}</option>
+              }
+            </select>
+            <span class="hint-text">Workshop material domain constraint</span>
+          </div>
+        </div>
+
+        <!-- Name -->
+        <div class="form-group">
+          <label for="name">Material Name & Grade <span class="required-star">*</span></label>
+          <input
+            id="name"
+            type="text"
+            class="form-control"
+            placeholder="e.g. Ceylon Nadun Hardwood Plank (2x6x10)"
+            [value]="name()"
+            (input)="onNameChange($event)"
+            required />
+          <span class="hint-text">Full commercial title including dimensional profile</span>
+        </div>
+
+        <div class="form-grid-2">
+          <!-- Unit of Measure -->
+          <div class="form-group">
+            <label for="unitOfMeasure">Unit of Measure <span class="required-star">*</span></label>
+            <select
+              id="unitOfMeasure"
+              class="form-control"
+              [value]="unitOfMeasure()"
+              (change)="onUnitChange($event)"
+              required>
+              @for (u of units; track u) {
+                <option [value]="u">{{ u }}</option>
+              }
+            </select>
+            <span class="hint-text">Standard physical consumption metric</span>
+          </div>
+
+          <!-- Storage Location -->
+          <div class="form-group">
+            <label for="storageLocation">Storage Bay / Rack Location</label>
+            <input
+              id="storageLocation"
+              type="text"
+              class="form-control"
+              placeholder="e.g. Main Yard · Rack D"
+              [value]="storageLocation()"
+              (input)="onStorageChange($event)" />
+            <span class="hint-text">Physical workshop stockroom location</span>
+          </div>
+        </div>
+
+        <div class="form-grid-2">
+          <!-- On-Hand Qty (only in create mode) -->
+          @if (!isEditMode()) {
+            <div class="form-group">
+              <label for="quantityOnHand">Initial On-Hand Stock <span class="required-star">*</span></label>
+              <input
+                id="quantityOnHand"
+                type="number"
+                step="0.01"
+                min="0"
+                class="form-control"
+                [value]="quantityOnHand()"
+                (input)="onOnHandChange($event)"
+                required />
+              <span class="hint-text">Enforced by CHECK (quantity_on_hand >= 0)</span>
+            </div>
+          }
+
+          <!-- Reorder Level -->
+          <div class="form-group">
+            <label for="reorderLevel">Safety Reorder Level <span class="required-star">*</span></label>
+            <input
+              id="reorderLevel"
+              type="number"
+              step="0.01"
+              min="0"
+              class="form-control"
+              [value]="reorderLevel()"
+              (input)="onReorderChange($event)"
+              required />
+            <span class="hint-text">Fires trg_check_low_raw_stock when on-hand drops</span>
+          </div>
+
+          <!-- Unit Cost -->
+          <div class="form-group">
+            <label for="unitCost">Unit Cost (LKR) <span class="required-star">*</span></label>
+            <input
+              id="unitCost"
+              type="number"
+              step="0.01"
+              min="0"
+              class="form-control"
+              [value]="unitCost()"
+              (input)="onUnitCostChange($event)"
+              required />
+            <span class="hint-text">Standard procurement cost per unit</span>
+          </div>
+        </div>
+
+        @if (!isEditMode()) {
+          <div class="form-grid-2">
+            <!-- Preferred Supplier -->
+            <div class="form-group">
+              <label for="preferredSupplier">Preferred Supplier</label>
+              <select
+                id="preferredSupplier"
+                class="form-control"
+                [value]="preferredSupplierId()"
+                (change)="onSupplierChange($event)">
+                <option value="">-- None / Direct Sourcing --</option>
+                @for (sup of suppliers(); track sup.supplierId) {
+                  <option [value]="sup.supplierId">{{ sup.companyName }} ({{ sup.supplierCode }})</option>
+                }
+              </select>
+              <span class="hint-text">Contracted timber mill or hardware distributor</span>
+            </div>
+
+            <!-- Lead Time -->
+            <div class="form-group">
+              <label for="leadTimeDays">Estimated Lead Time (Days)</label>
+              <input
+                id="leadTimeDays"
+                type="number"
+                min="1"
+                class="form-control"
+                [value]="leadTimeDays()"
+                (input)="onLeadTimeChange($event)" />
+              <span class="hint-text">Turnaround time from purchase order to yard receipt</span>
+            </div>
+          </div>
+        }
+
+        <!-- Notes -->
+        <div class="form-group">
+          <label for="notes">Timber Moisture & Specification Notes</label>
+          <textarea
+            id="notes"
+            class="form-control"
+            placeholder="Kiln-drying temperature, grain pattern, structural tolerance..."
+            [value]="notes()"
+            (input)="onNotesChange($event)"></textarea>
+        </div>
+
+        @if (isEditMode()) {
+          <div class="form-group" style="flex-direction: row; align-items: center; gap: 10px;">
+            <input
+              id="isActive"
+              type="checkbox"
+              [checked]="isActive()"
+              (change)="onActiveChange($event)" />
+            <label for="isActive" style="margin: 0; text-transform: none; cursor: pointer;">
+              Active in Workshop Stockroom (Uncheck to archive SKU)
+            </label>
+          </div>
+        }
+
+        <!-- Actions -->
+        <div class="form-actions">
+          <a routerLink="/inventory/raw-materials" class="btn-secondary-rm">Cancel</a>
+          <button type="submit" class="btn-primary-rm" [disabled]="submitting()">
+            {{ submitting() ? 'Saving to Database...' : (isEditMode() ? 'Save Changes' : 'Create Material SKU') }}
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Right: Trigger & Constraint Simulator Preview Card -->
+    <div class="preview-card">
+      <h3 class="card-title" style="font-size: 16px;">PostgreSQL Trigger &amp; Schema Inspector</h3>
+      
+      <!-- Trigger State Preview -->
+      <div>
+        <label style="font-size: 11px; font-weight: 700; color: #7A6F64; text-transform: uppercase;">Simulated Trigger Status</label>
+        <div>
+          @if (simulatedStatus() === 'CRITICAL') {
+            <span class="trigger-badge FIRED">&bull; FIRED CRITICAL_ALERT</span>
+          } @else if (simulatedStatus() === 'LOW STOCK') {
+            <span class="trigger-badge FIRED">&bull; FIRED LOW_STOCK_ALERT</span>
+          } @else {
+            <span class="trigger-badge ARMED">&check; NO ALERT (ADEQUATE)</span>
+          }
+        </div>
+        <p style="font-size: 11px; color: #7A6F64; margin: 4px 0 14px;">
+          Trigger <code style="color: #A44A3F;">trg_check_low_raw_stock</code> writes an audit record to <code style="color: #A44A3F;">audit_logs</code> whenever on-hand drops to &le; {{ reorderLevel() }} {{ unitOfMeasure() }}.
+        </p>
+      </div>
+
+      <!-- Live Calculation Breakdown -->
+      <div class="preview-kpis">
+        <div class="preview-kpi-row">
+          <span>Target Material:</span>
+          <strong>{{ materialCode() || 'RAW-SKU-NEW' }}</strong>
+        </div>
+        <div class="preview-kpi-row">
+          <span>On-Hand Level:</span>
+          <span>{{ quantityOnHand() }} {{ unitOfMeasure() }}</span>
+        </div>
+        <div class="preview-kpi-row">
+          <span>Reorder Safety Level:</span>
+          <span>{{ reorderLevel() }} {{ unitOfMeasure() }}</span>
+        </div>
+        <div class="preview-kpi-row">
+          <span>Unit Procurement Cost:</span>
+          <span>Rs. {{ unitCost() | number:'1.2-2' }}</span>
+        </div>
+        <div class="preview-kpi-row">
+          <span>Simulated Yard Valuation:</span>
+          <span>Rs. {{ (quantityOnHand() * unitCost()) | number:'1.2-2' }}</span>
+        </div>
+      </div>
+
+      <!-- Relational Constraints List -->
+      <h4 style="font-size: 12px; font-weight: 700; color: #2A241F; margin: 16px 0 8px;">Active Table Constraints</h4>
+      <ul class="constraint-list">
+        <li class="constraint-item">
+          <span class="constraint-name">CHECK (qty &gt;= 0)</span>
+          <span class="constraint-status">&check; VALID</span>
+        </li>
+        <li class="constraint-item">
+          <span class="constraint-name">CHECK (cost &gt;= 0)</span>
+          <span class="constraint-status">&check; VALID</span>
+        </li>
+        <li class="constraint-item">
+          <span class="constraint-name">CHECK (category IN)</span>
+          <span class="constraint-status">&check; VALID</span>
+        </li>
+        <li class="constraint-item">
+          <span class="constraint-name">CHECK (uom IN)</span>
+          <span class="constraint-status">&check; VALID</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>

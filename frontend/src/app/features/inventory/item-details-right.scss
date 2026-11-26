@@ -1,0 +1,45 @@
+.right-column-stack { display: grid; gap: 18px; }
+.db-exposure-card, .trigger-log-card { background: #fff; border: 1px solid #cfe2f3; border-radius: 16px; padding: 18px 24px 20px; box-shadow: 0 2px 8px rgba(7, 55, 99, .04); }
+.db-card-header, .trigger-log-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+.db-card-header h2, .trigger-log-header h2 { margin: 0; font-size: 16px; font-weight: 700; color: #073763; }
+.controller-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; background: #eaf3fc; border: 1px solid #cfe2f3; color: #075b91; font-size: 11.5px; font-weight: 700; }
+.controller-pill .dot { width: 7px; height: 7px; border-radius: 50%; background: #1685c5; }
+.card-line { border: 0; border-top: 1px solid #e1edf8; margin: 0 0 14px; }
+.kpi-mini-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
+.mini-kpi { padding: 12px 14px; border-radius: 12px; background: #f4f9fe; border: 1px solid #cfe2f3; display: flex; flex-direction: column; gap: 4px; }
+.kpi-label { font-size: 10.5px; font-weight: 700; color: #5c7690; letter-spacing: .03em; }
+.kpi-val { font-size: 20px; font-weight: 800; color: #073763; }
+.kpi-trigger-name { font-size: 13.5px; font-weight: 800; color: #075b91; margin: 3px 0; }
+.kpi-sub { font-size: 11px; font-weight: 600; }
+.kpi-sub.green { color: #15803d; }
+.kpi-sub.blue { color: #075b91; }
+.kpi-sub.muted { color: #5c7690; }
+.db-metadata-box { padding: 14px 18px; border-radius: 12px; background: #f8fbff; border: 1px solid #d5e6f7; }
+.meta-top-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.meta-bottom-grid { display: grid; grid-template-columns: 1.1fr 1.3fr; gap: 14px; }
+.meta-label { display: block; font-size: 10.5px; font-weight: 700; color: #5c7690; margin-bottom: 4px; letter-spacing: .03em; }
+.meta-val { font-size: 13px; font-weight: 700; color: #073763; }
+.meta-divider { border: 0; border-top: 1px solid #e1edf8; margin: 12px 0; }
+.api-endpoint-code { display: inline-block; padding: 3px 8px; border-radius: 6px; background: #eaf3fc; color: #075b91; font-size: 12px; font-weight: 700; }
+.trigger-sub { margin: 4px 0 0; font-size: 12.5px; color: #5c7690; }
+.btn-quick-audit { height: 32px; padding: 0 14px; border-radius: 8px; border: 1px solid #b8d4ec; background: #f8fbff; color: #075b91; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.btn-quick-audit:hover { background: #e5f1fc; border-color: #1685c5; }
+.table-responsive { overflow-x: auto; }
+.trigger-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-bottom: 14px; }
+.trigger-table thead th { height: 34px; padding: 0 12px; background: #f3f8fe; border-top: 1px solid #d8e8f7; border-bottom: 1px solid #d8e8f7; color: #526b85; font-size: 10.5px; font-weight: 700; text-align: left; white-space: nowrap; }
+.trigger-table tbody td { height: 56px; padding: 8px 12px; border-bottom: 1px solid #e6f0fa; vertical-align: middle; }
+.mov-id-cell { display: flex; flex-direction: column; gap: 2px; }
+.mov-id-cell strong { font-size: 13px; color: #073763; }
+.mov-id-cell span { font-size: 11px; color: #68839e; }
+.trigger-pill { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; white-space: nowrap; background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+.trigger-pill[data-tone="workshop"] { background: #e6f7ed; color: #15803d; border-color: #bbf7d0; }
+.trigger-pill[data-tone="audit"] { background: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
+.col-right { text-align: right !important; white-space: nowrap; }
+.delta-val { font-size: 13px; font-weight: 800; }
+.delta-val.pos { color: #15803d; }
+.delta-val.neg { color: #dc2626; }
+.delta-val.neutral { color: #475569; }
+.after-val { font-size: 13px; color: #073763; }
+.ref-code { font-weight: 600; color: #365573; white-space: nowrap; }
+.trigger-rule-callout { padding: 10px 16px; border-radius: 9px; background: #f3f8fe; border: 1px solid #cfe2f3; color: #075b91; font-size: 12px; font-weight: 600; }
+@media (max-width: 900px) { .kpi-mini-grid { grid-template-columns: repeat(2, 1fr); } .meta-top-grid, .meta-bottom-grid { grid-template-columns: 1fr; } }

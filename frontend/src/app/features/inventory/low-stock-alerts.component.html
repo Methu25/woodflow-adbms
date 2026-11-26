@@ -1,0 +1,250 @@
+<section class="inventory-page" aria-labelledby="alerts-heading">
+  <!-- Figma Top Header Bar -->
+  <header class="top-utility-bar">
+    <div class="global-search-box">
+      <svg class="search-icon" width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <circle cx="7" cy="7" r="5.25" stroke="#68839E" stroke-width="1.6" />
+        <path d="M11 11L14.2 14.2" stroke="#68839E" stroke-width="1.6" stroke-linecap="round" />
+      </svg>
+      <input
+        type="search"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+        placeholder="Search furniture SKUs, barcodes, categories..."
+        aria-label="Search low-stock alerts by SKU or product name"
+      />
+      <span class="kbd-shortcut" aria-hidden="true">Ctrl+K</span>
+    </div>
+
+    <div class="utility-right">
+      <div class="date-location-chip">
+        <svg class="calendar-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <rect x="2" y="3" width="12" height="11" rx="2" stroke="#1685C5" stroke-width="1.4" />
+          <path d="M2 6.5H14M5 1.8V3.8M11 1.8V3.8" stroke="#1685C5" stroke-width="1.4" stroke-linecap="round" />
+        </svg>
+        <div>
+          <p class="date-label">Fri, 13 Nov 2026</p>
+          <p class="showroom-sub">08:45 AM · Main Showroom</p>
+        </div>
+      </div>
+
+      <a class="notification-bell" routerLink="/inventory/alerts" title="Low-Stock Alerts & POS Trigger Monitor">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M8 2.2C5.9 2.2 4.2 3.9 4.2 6V9.2L2.9 10.8V11.6H13.1V10.8L11.8 9.2V6C11.8 3.9 10.1 2.2 8 2.2Z" stroke="#073763" stroke-width="1.4" />
+          <path d="M6.5 12.6C6.7 13.4 7.3 13.9 8 13.9C8.7 13.9 9.3 13.4 9.5 12.6" stroke="#073763" stroke-width="1.4" stroke-linecap="round" />
+        </svg>
+        <span class="bell-badge">{{ allAlerts().length || 6 }}</span>
+      </a>
+
+      <span class="vertical-divider" aria-hidden="true"></span>
+
+      <div class="profile-chip">
+        <div class="profile-meta">
+          <p class="profile-name">{{ userDisplayName() }}</p>
+          <p class="profile-role">{{ userRoleSubtitle() }}</p>
+        </div>
+        <div class="profile-avatar" aria-hidden="true">{{ userInitials() }}</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Module Sub-Navigation Bar -->
+  <nav class="module-subnav" aria-label="Finished Furniture Inventory navigation">
+    @for (tab of navTabs; track tab.route) {
+      <a
+        [routerLink]="tab.route"
+        routerLinkActive="active-tab"
+        [routerLinkActiveOptions]="{ exact: tab.exact }"
+        class="subnav-tab"
+      >
+        {{ tab.label }}
+      </a>
+    }
+  </nav>
+
+  <!-- Page Header Row (Matches Screen 07: 29:1639) -->
+  <div class="page-header-row">
+    <div>
+      <h1 id="alerts-heading">Low-Stock Alerts &amp; POS Trigger Monitor</h1>
+      <p class="page-subtitle">
+        Automated threshold warnings from trg_pos_stock_deduct &amp; direct workshop replenishment requests
+      </p>
+    </div>
+
+    <div class="top-action-buttons">
+      <button type="button" class="btn-sync-pos" (click)="syncPosAvailability()">
+        Sync POS Availability
+      </button>
+      <button
+        type="button"
+        class="btn-batch-restock"
+        (click)="requestBatchRestock()"
+        [disabled]="batchBusy() || !permissions.has('inventory.edit')"
+      >
+        {{ batchBusy() ? 'Requesting…' : '+ Request Batch Restock' }}
+      </button>
+    </div>
+  </div>
+
+  @if (notice()) {
+    <div class="alerts-notice" role="status">{{ notice() }}</div>
+  }
+
+  <!-- 4 KPI Row (Matches Screen 07: 29:1647) -->
+  <div class="alerts-kpi-grid">
+    <div class="kpi-card">
+      <span class="kpi-icon red" aria-hidden="true">!</span>
+      <div>
+        <span class="kpi-eyebrow">OUT-OF-STOCK FLOOR SKUS</span>
+        <strong class="kpi-number red-text">{{ outOfStockCount() }} SKUs</strong>
+        <p class="kpi-caption">Blocked on Member 1 POS Counter</p>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <span class="kpi-icon amber" aria-hidden="true">⚠</span>
+      <div>
+        <span class="kpi-eyebrow">BELOW MIN REORDER LEVEL</span>
+        <strong class="kpi-number amber-text">{{ belowMinReorderCount() }} SKUs</strong>
+        <p class="kpi-caption">current_stock &lt;= min_reorder_level</p>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <span class="kpi-icon blue" aria-hidden="true">↻</span>
+      <div>
+        <span class="kpi-eyebrow">PENDING WORKSHOP RESTOCK</span>
+        <strong class="kpi-number">{{ pendingWorkshopUnits() }} Units</strong>
+        <p class="kpi-caption">{{ activeRestockTickets() }} Active Restock Tickets in Shed</p>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <span class="kpi-icon green" aria-hidden="true">⚡</span>
+      <div>
+        <span class="kpi-eyebrow">POS STOCK DEDUCT TRIGGER</span>
+        <strong class="kpi-trigger-title">trg_pos_stock_deduct</strong>
+        <p class="kpi-caption green-text">● {{ autoDeductionsToday() }} Auto-Deductions Today</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alert Filter Bar (Matches Screen 07: 29:1672) -->
+  <div class="alert-filter-bar">
+    <div class="filter-tabs" role="tablist" aria-label="Low stock alert filters">
+      <button
+        type="button"
+        class="filter-tab"
+        [class.active]="activeFilter() === 'ALL'"
+        (click)="setFilter('ALL')"
+      >
+        All Alerts ({{ allAlerts().length || 6 }})
+      </button>
+      <button
+        type="button"
+        class="filter-tab"
+        [class.active]="activeFilter() === 'OUT_OF_STOCK'"
+        (click)="setFilter('OUT_OF_STOCK')"
+      >
+        Out of Stock ({{ outOfStockCount() }})
+      </button>
+      <button
+        type="button"
+        class="filter-tab"
+        [class.active]="activeFilter() === 'LOW_STOCK'"
+        (click)="setFilter('LOW_STOCK')"
+      >
+        Low Stock ({{ belowMinReorderCount() }})
+      </button>
+      <button
+        type="button"
+        class="filter-tab"
+        [class.active]="activeFilter() === 'RESTOCK_REQUESTED'"
+        (click)="setFilter('RESTOCK_REQUESTED')"
+      >
+        Restock Requested ({{ restockRequestedCount() }})
+      </button>
+    </div>
+
+    <p class="failsafe-rule">
+      Fail-Safe Rule: Automatically locks 0-stock SKUs on POS Counter
+    </p>
+  </div>
+
+  <!-- Low-Stock Reorder Table Card (Matches Screen 07: 29:1683) -->
+  <div class="reorder-table-card">
+    <div class="table-responsive">
+      <table class="reorder-table">
+        <thead>
+          <tr>
+            <th scope="col">FURNITURE ITEM &amp; SKU</th>
+            <th scope="col">CATEGORY &amp; WOOD</th>
+            <th scope="col">FLOOR / MIN</th>
+            <th scope="col">ALERT STATUS</th>
+            <th scope="col">LAST POS DEDUCT TRIGGER</th>
+            <th scope="col" class="col-center">RESTOCK QTY</th>
+            <th scope="col" class="col-center">WORKSHOP ACTION</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (alert of filteredAlerts(); track alert.skuCode) {
+            <tr>
+              <td>
+                <div class="cell-stack">
+                  <strong>{{ alert.itemName }}</strong>
+                  <span>{{ alert.skuCode }} · {{ formatPrice(alert.retailPrice) }}</span>
+                </div>
+              </td>
+              <td>
+                <div class="cell-stack">
+                  <strong>{{ alert.category }}</strong>
+                  <span>{{ alert.primaryWoodType }}</span>
+                </div>
+              </td>
+              <td>
+                <strong class="floor-min-val">{{ alert.currentStock }} / {{ alert.minReorderLevel }} Units</strong>
+              </td>
+              <td>
+                <span class="alert-status-pill" [ngClass]="alertBadgeClass(alert)">
+                  {{ alert.alertLabel }}
+                </span>
+              </td>
+              <td>
+                <div class="cell-stack">
+                  <strong>{{ alert.lastTriggerReference }}</strong>
+                  <span>{{ alert.lastTriggerSummary }}</span>
+                </div>
+              </td>
+              <td class="col-center">
+                <span class="restock-qty-chip" [class.queued]="alert.alertStatus === 'IN_WORKSHOP'">
+                  {{ restockQtyDisplay(alert) }}
+                </span>
+              </td>
+              <td class="col-center">
+                <button
+                  type="button"
+                  class="workshop-action-btn"
+                  [ngClass]="actionBtnClass(alert)"
+                  (click)="triggerWorkshopRestock(alert)"
+                  [disabled]="busyId() === alert.productId || !permissions.has('inventory.edit')"
+                >
+                  {{ alert.workshopActionLabel }}
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Bottom Reorder Callout Footer (Matches Screen 07: 29:1777) -->
+    <footer class="reorder-footer">
+      <p class="footer-statement">
+        Showing {{ filteredAlerts().length }} Showroom Reorder Alerts · Prevents duplicate workshop production &amp; floor stockouts (Problem Statement #3)
+      </p>
+      <button type="button" class="btn-export-reorder" (click)="exportReorderSheet()">
+        Export Reorder Sheet →
+      </button>
+    </footer>
+  </div>
+</section>

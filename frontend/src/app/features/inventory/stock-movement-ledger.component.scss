@@ -1,0 +1,38 @@
+.btn-export-pdf { height: 38px; padding: 0 20px; border: 0; border-radius: 10px; background: linear-gradient(95deg, #1685c5, #08a9c9); color: #fff; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.btn-export-pdf:hover { background: linear-gradient(95deg, #075b91, #1685c5); }
+.ledger-filter-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 20px; margin-bottom: 18px; background: #fff; border: 1px solid #cfe2f3; border-radius: 14px; flex-wrap: wrap; }
+.filter-dropdowns, .movement-type-pills { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.select-box { position: relative; display: flex; align-items: center; height: 38px; background: #f4f9fe; border: 1px solid #cfe2f3; border-radius: 9px; padding: 0 12px; }
+.item-select-box { width: 310px; max-width: 100%; }
+.date-select-box { width: 240px; max-width: 100%; gap: 8px; }
+.select-box select { width: 100%; border: 0; outline: none; background: transparent; color: #073763; font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.movement-type-pills { gap: 8px; }
+.type-pill { height: 32px; padding: 0 15px; border-radius: 8px; border: 1px solid #cfe2f3; background: #f4f9fe; color: #075b91; font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.type-pill:hover { background: #e1effc; }
+.type-pill.active { border-color: #1685c5; background: linear-gradient(95deg, #1685c5, #08a9c9); color: #fff; }
+.ledger-card { background: #fff; border: 1px solid #cfe2f3; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 8px rgba(7, 55, 99, .04); }
+.table-responsive { overflow-x: auto; }
+.ledger-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ledger-table thead th { height: 38px; padding: 0 20px; background: #f3f8fe; border-bottom: 1px solid #d8e8f7; color: #526b85; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-align: left; white-space: nowrap; }
+.ledger-table tbody td { height: 76px; padding: 12px 20px; border-bottom: 1px solid #e6f0fa; vertical-align: middle; }
+.ledger-table tbody tr:hover { background: #f8fbff; }
+.product-cell { display: flex; flex-direction: column; gap: 4px; }
+.product-cell strong { font-size: 14px; font-weight: 700; color: #073763; }
+.sku-sub { font-size: 12px; font-weight: 600; color: #68839e; }
+.date-cell, .ref-cell { font-size: 13px; color: #365573; font-weight: 500; white-space: nowrap; }
+.movement-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 999px; font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+.movement-badge .dot { width: 6.5px; height: 6.5px; border-radius: 50%; }
+.type-pos-out { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; } .type-pos-out .dot { background: #dc2626; }
+.type-workshop-in, .type-showroom-return { background: #e6f7ed; color: #15803d; border: 1px solid #bbf7d0; } .type-workshop-in .dot, .type-showroom-return .dot { background: #16a34a; }
+.type-custom-delivery { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; } .type-custom-delivery .dot { background: #d97706; }
+.type-audit-adj { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; } .type-audit-adj .dot { background: #0284c7; }
+.col-qty, .col-after { text-align: right !important; white-space: nowrap; }
+.qty-delta { font-size: 14px; font-weight: 800; }
+.qty-delta.positive { color: #15803d; }
+.qty-delta.negative { color: #dc2626; }
+.stock-after-val { font-size: 13.5px; font-weight: 700; color: #073763; }
+.empty-ledger { text-align: center; padding: 40px 20px; color: #5c7690; }
+.ledger-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 24px; background: #fbfdff; flex-wrap: wrap; }
+.footer-note { margin: 0; font-size: 12.5px; font-weight: 500; color: #526b85; }
+.btn-export-csv { height: 38px; padding: 0 24px; border-radius: 9px; border: 1px solid #b8d4ec; background: #f8fbff; color: #075b91; font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+.btn-export-csv:hover { background: #e5f1fc; border-color: #1685c5; }

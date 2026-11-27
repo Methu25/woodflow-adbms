@@ -1,0 +1,50 @@
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin-bottom: 20px; }
+.rm-card { background: #FFF; border: 1px solid #E8E2D9; border-radius: 12px; padding: 18px; box-shadow: 0 1px 3px rgba(42,36,31,.04); }
+.kpi-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #7A6F64; margin-bottom: 5px; }
+.kpi-value { font-family: 'Newsreader', Georgia, serif; font-size: 26px; font-weight: 700; line-height: 1.1; }
+.rm-muted { font-size: 11px; color: #7A6F64; margin-top: 3px; }
+.alert-card { border-color: #F1D2CE; background: #FDF7F6; }
+.alert-card .kpi-value, .accent { color: #A44A3F; }
+
+.flex-between { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.banner { flex-wrap: wrap; padding: 11px 16px; border-radius: 10px; font-size: 13px; margin-bottom: 18px; border: 1px solid transparent; }
+.banner-link, .ok-text { color: #2D6A4F; font-weight: 700; text-decoration: none; }
+.pill { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; border: 1px solid transparent; }
+.HEALTHY { background: #EBF5EE; color: #2D6A4F; border-color: #C8E6D3; }
+.LOW { background: #FEF3C7; color: #92400E; border-color: #FDE68A; }
+.CRITICAL { background: #FEE2E2; color: #991B1B; border-color: #FECACA; }
+.STANDARD { background: #F3EFEA; color: #5A5046; }
+
+.grn-layout { display: grid; grid-template-columns: 1fr 340px; gap: 20px; align-items: start; margin-bottom: 24px; }
+.form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 960px) { .grn-layout { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .form-grid-2 { grid-template-columns: 1fr; } }
+
+.preview-card { background: #FDFBF7; border-color: #E2D9CC; }
+.card-title { font-family: 'Newsreader', Georgia, serif; font-size: 20px; font-weight: 700; margin: 0 0 14px; border-bottom: 1px solid #F0ECE6; padding-bottom: 10px; }
+.preview-heading { font-size: 16px; }
+.form-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+.field-label { font-size: 11px; font-weight: 700; color: #5A5046; text-transform: uppercase; letter-spacing: .03em; }
+.form-control { height: 38px; padding: 0 12px; border: 1px solid #D5CABE; border-radius: 8px; font-size: 13px; color: #2A241F; background: #FFF; outline: none; }
+.form-control:focus { border-color: #A44A3F; }
+textarea.form-control { height: 72px; padding: 10px 12px; resize: vertical; }
+.form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; padding-top: 14px; border-top: 1px solid #F0ECE6; }
+button:disabled { opacity: .55; cursor: not-allowed; }
+
+.inset-box { background: #FFF; border: 1px solid #E8E2D9; border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+.flex-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 6px 0; font-size: 15px; }
+.kpi-row { font-size: 12px; margin-bottom: 6px; }
+.total-row { margin-bottom: 0; padding-top: 6px; border-top: 1px dashed #E8E2D9; font-weight: 700; color: #A44A3F; }
+.constraint-list { list-style: none; padding: 0; margin: 6px 0 0; font-size: 11px; }
+.constraint-item { padding: 5px 0; border-bottom: 1px dashed #E8E2D9; }
+.mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; }
+.grn-code { color: #1E3A8A; }
+
+.ledger-card { padding: 0; overflow: hidden; }
+.ledger-header { flex-wrap: wrap; padding: 14px 18px; border-bottom: 1px solid #E8E2D9; }
+.search-input { width: 280px; max-width: 100%; height: 36px; }
+.stock-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+.stock-table th { background: #F8F5F0; padding: 11px 14px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #7A6F64; border-bottom: 1px solid #E8E2D9; }
+.stock-table td { padding: 12px 14px; border-bottom: 1px solid #F0ECE6; vertical-align: middle; }
+.uom-badge { display: inline-block; padding: 2px 6px; border-radius: 4px; background: #F3EFEA; font-size: 11px; font-weight: 600; color: #5A5046; margin-left: 4px; }
+.empty-state { text-align: center; padding: 36px 20px; color: #7A6F64; }

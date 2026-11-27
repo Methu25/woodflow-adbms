@@ -8,7 +8,7 @@
 
 .flex-between { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .banner { flex-wrap: wrap; padding: 11px 16px; border-radius: 10px; font-size: 13px; margin-bottom: 18px; border: 1px solid transparent; }
-.banner-link, .ok-text { color: #2D6A4F; font-weight: 700; text-decoration: none; }
+.ok-text { color: #2D6A4F; font-weight: 700; }
 .pill { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; border: 1px solid transparent; }
 .HEALTHY { background: #EBF5EE; color: #2D6A4F; border-color: #C8E6D3; }
 .LOW { background: #FEF3C7; color: #92400E; border-color: #FDE68A; }
@@ -22,7 +22,6 @@
 
 .preview-card { background: #FDFBF7; border-color: #E2D9CC; }
 .card-title { font-family: 'Newsreader', Georgia, serif; font-size: 20px; font-weight: 700; margin: 0 0 14px; border-bottom: 1px solid #F0ECE6; padding-bottom: 10px; }
-.preview-heading { font-size: 16px; }
 .form-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
 .field-label { font-size: 11px; font-weight: 700; color: #5A5046; text-transform: uppercase; letter-spacing: .03em; }
 .form-control { height: 38px; padding: 0 12px; border: 1px solid #D5CABE; border-radius: 8px; font-size: 13px; color: #2A241F; background: #FFF; outline: none; }
@@ -34,11 +33,8 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .inset-box { background: #FFF; border: 1px solid #E8E2D9; border-radius: 8px; padding: 12px; margin-bottom: 12px; }
 .flex-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 6px 0; font-size: 15px; }
 .kpi-row { font-size: 12px; margin-bottom: 6px; }
-.total-row { margin-bottom: 0; padding-top: 6px; border-top: 1px dashed #E8E2D9; font-weight: 700; color: #A44A3F; }
-.constraint-list { list-style: none; padding: 0; margin: 6px 0 0; font-size: 11px; }
 .constraint-item { padding: 5px 0; border-bottom: 1px dashed #E8E2D9; }
 .mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; }
-.grn-code { color: #1E3A8A; }
 
 .ledger-card { padding: 0; overflow: hidden; }
 .ledger-header { flex-wrap: wrap; padding: 14px 18px; border-bottom: 1px solid #E8E2D9; }

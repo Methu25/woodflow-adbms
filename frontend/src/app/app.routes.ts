@@ -102,6 +102,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/raw-materials/restock-grn/restock-grn.component').then(m => m.RestockGrnComponent),
       },
       {
+        path: 'inventory/suppliers',
+        canActivate: [permissionGuard], data: { permission: 'inventory.view' },
+        title: 'Approved Suppliers Directory | WoodFlow',
+        loadComponent: () => import('./features/raw-materials/supplier-directory/supplier-directory.component').then(m => m.SupplierDirectoryComponent),
+      },
+      {
         path: 'inventory/alerts',
         canActivate: [permissionGuard], data: { permission: 'inventory.view' },
         title: 'Low-Stock Alerts & POS Trigger Monitor | WoodFlow',

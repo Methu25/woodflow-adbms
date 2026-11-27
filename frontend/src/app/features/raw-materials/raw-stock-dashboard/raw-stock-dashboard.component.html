@@ -39,7 +39,7 @@
   @if (service.loading()) {
     <div class="empty-state">Loading workshop stock ledger...</div>
   } @else if (service.error()) {
-    <div class="empty-state" style="color: #A44A3F;">{{ service.error() }}</div>
+    <div class="empty-state" style="color: #dc2626;">{{ service.error() }}</div>
   } @else {
     @if (service.dashboard(); as dash) {
       <!-- 4 KPI Cards -->

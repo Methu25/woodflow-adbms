@@ -1,0 +1,367 @@
+<div class="rm-container">
+  <div class="top-utility-bar">
+    <div class="breadcrumb-trail">
+      <a routerLink="/inventory">Inventory</a>
+      <span class="breadcrumb-separator">/</span>
+      <a routerLink="/inventory/raw-materials">Raw Materials</a>
+      <span class="breadcrumb-separator">/</span>
+      <span>Restock GRN</span>
+    </div>
+    <div class="status-pill-live">
+      <span class="status-dot-pulse"></span>
+      <span>ACID Stock-In · FOR UPDATE Lock Active</span>
+    </div>
+  </div>
+
+  <nav class="subnav-bar" aria-label="Raw Materials Sub-navigation">
+    <a routerLink="/inventory/raw-materials" class="subnav-link">01. Stock Dashboard</a>
+    <a routerLink="/inventory/raw-materials/new" class="subnav-link">02. New Material Master</a>
+    <a routerLink="/inventory/raw-materials/grn" class="subnav-link active-link">03. Restock GRN</a>
+    <a routerLink="/inventory/suppliers" class="subnav-link">04. Suppliers</a>
+    <a routerLink="/inventory/raw-materials/consumption" class="subnav-link">05. Consumption Log</a>
+    <a routerLink="/inventory/raw-materials/reorder" class="subnav-link">06. Low-Stock Reorder</a>
+    <a routerLink="/inventory/raw-materials/allocation" class="subnav-link">07. Job Allocation</a>
+    <a routerLink="/inventory" class="subnav-showroom-link">Showroom Finished Goods &rarr;</a>
+  </nav>
+
+  <div class="header-row">
+    <div class="header-titles">
+      <h1>Goods Receipt Note (GRN) &amp; Yard Restock</h1>
+      <p>Log accredited timber &amp; supply deliveries, verify moisture grading, and commit transactional stock-in records</p>
+    </div>
+    <div class="header-actions">
+      <a routerLink="/inventory/raw-materials" class="btn-secondary-rm">&larr; Stock Dashboard</a>
+      <button type="button" class="btn-secondary-rm" (click)="refreshData()" [disabled]="loading()">
+        {{ loading() ? 'Refreshing...' : 'Refresh Ledger' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="rm-card">
+      <div class="kpi-label">Receipts Logged</div>
+      <div class="kpi-value">{{ totalReceiptsCount() }}</div>
+      <div class="rm-muted">Recent Yard GRN Entries</div>
+    </div>
+    <div class="rm-card">
+      <div class="kpi-label">Total Units Received</div>
+      <div class="kpi-value">{{ totalUnitsReceived() | number:'1.2-2' }}</div>
+      <div class="rm-muted">Cumulative Intake Volume</div>
+    </div>
+    <div class="rm-card">
+      <div class="kpi-label">Total GRN Value</div>
+      <div class="kpi-value">Rs. {{ totalGrnValueLkr() | number:'1.2-2' }}</div>
+      <div class="rm-muted">Logged Procurement Spend</div>
+    </div>
+    <div class="rm-card" [class.alert-card]="lowStockSkuCount() > 0">
+      <div class="kpi-label">Pending Restock SKUs</div>
+      <div class="kpi-value">{{ lowStockSkuCount() }}</div>
+      <div class="rm-muted">Materials At or Below Reorder</div>
+    </div>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="flex-between banner CRITICAL" role="alert">
+      <strong>GRN Error:</strong> {{ errorMessage() }}
+    </div>
+  }
+
+  @if (successBanner(); as grn) {
+    <div class="flex-between banner HEALTHY" role="status">
+      <div>
+        <strong>Posted {{ grn.grnNumber }}:</strong>
+        Added +{{ grn.quantityReceived | number:'1.2-2' }} {{ grn.unitOfMeasure }} to
+        <span class="mono accent">{{ grn.materialCode }}</span> ({{ grn.materialName }})
+        @if (grn.supplierName) {
+          from {{ grn.supplierName }}
+        }.
+      </div>
+      <a routerLink="/inventory/raw-materials" class="ok-text" style="text-decoration:none">View Updated Dashboard &rarr;</a>
+    </div>
+  }
+
+  <div class="grn-layout">
+    <div class="rm-card">
+      <h2 class="card-title">Post New Goods Receipt Note</h2>
+
+      @if (!canCreate()) {
+        <div class="flex-between banner LOW">
+          Read-only view: posting a GRN requires <code>inventory.create</code> permission.
+        </div>
+      }
+
+      <form (submit)="onSubmit($event)">
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="field-label" for="grnMaterial">Raw Material SKU <span class="accent">*</span></label>
+            <select
+              id="grnMaterial"
+              class="form-control"
+              [value]="selectedMaterialId() ?? ''"
+              (change)="onMaterialChange($event)"
+              required>
+              <option value="">-- Select Raw Material SKU --</option>
+              @for (mat of materials(); track mat.materialId) {
+                <option [value]="mat.materialId">
+                  {{ mat.materialCode }} · {{ mat.name }} ({{ mat.quantityOnHand | number:'1.2-2' }} {{ mat.unitOfMeasure }})
+                </option>
+              }
+            </select>
+            <span class="rm-muted">Target yard SKU locked with SELECT ... FOR UPDATE on commit</span>
+          </div>
+
+          <div class="form-group">
+            <label class="field-label" for="grnSupplier">Accredited Supplier</label>
+            <select
+              id="grnSupplier"
+              class="form-control"
+              [value]="selectedSupplierId() ?? ''"
+              (change)="onSupplierChange($event)">
+              <option value="">-- Direct Yard / Walk-in Mill --</option>
+              @for (sup of suppliers(); track sup.supplierId) {
+                <option [value]="sup.supplierId">
+                  {{ sup.companyName }} ({{ sup.supplierCode }})
+                </option>
+              }
+            </select>
+            <span class="rm-muted">Preferred supplier auto-selected when contracted</span>
+          </div>
+        </div>
+
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="field-label" for="grnQty">
+              Quantity Received
+              @if (selectedMaterial(); as mat) {
+                ({{ mat.unitOfMeasure }})
+              }
+              <span class="accent">*</span>
+            </label>
+            <input
+              id="grnQty"
+              type="number"
+              step="0.01"
+              min="0.01"
+              class="form-control"
+              [value]="quantityReceived()"
+              (input)="onQtyChange($event)"
+              required />
+            <span class="rm-muted">Enforced by CHECK (quantity_received &gt; 0)</span>
+          </div>
+
+          <div class="form-group">
+            <label class="field-label" for="grnCost">Unit Cost (LKR) <span class="accent">*</span></label>
+            <input
+              id="grnCost"
+              type="number"
+              step="0.01"
+              min="0"
+              class="form-control"
+              [value]="unitCost()"
+              (input)="onUnitCostChange($event)"
+              required />
+            <span class="rm-muted">Updates standard SKU unit cost on receipt</span>
+          </div>
+        </div>
+
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="field-label" for="grnMoisture">Timber Moisture Content (%)</label>
+            <input
+              id="grnMoisture"
+              type="number"
+              step="0.1"
+              min="0"
+              max="100"
+              class="form-control"
+              [value]="moisturePct()"
+              (input)="onMoistureChange($event)" />
+            <span class="rm-muted">Ideal kiln-dried range: 8% – 14% (0% for non-timber)</span>
+          </div>
+
+          <div class="form-group">
+            <label class="field-label" for="grnReceivedBy">Received By <span class="accent">*</span></label>
+            <input
+              id="grnReceivedBy"
+              type="text"
+              class="form-control"
+              placeholder="e.g. Sunil Perera (Foreman)"
+              [value]="receivedBy()"
+              (input)="onReceivedByChange($event)"
+              required />
+            <span class="rm-muted">Responsible storekeeper or workshop foreman</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="field-label" for="grnNotes">Lorry Number &amp; Inspection Notes</label>
+          <textarea
+            id="grnNotes"
+            class="form-control"
+            placeholder="e.g. Delivered via Moratuwa Lorry WP-GA-4512, planks inspected free of sapwood defects..."
+            [value]="notes()"
+            (input)="onNotesChange($event)"></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-secondary-rm" (click)="resetForm()" [disabled]="submitting()">
+            Reset
+          </button>
+          <button
+            type="submit"
+            class="btn-primary-rm"
+            [disabled]="submitting() || !canCreate() || !selectedMaterialId()">
+            {{ submitting() ? 'Committing GRN...' : 'Post Goods Receipt (GRN)' }}
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div class="rm-card preview-card">
+      <h3 class="card-title" style="font-size:16px">Live Stock-In &amp; Trigger Inspector</h3>
+
+      @if (selectedMaterial(); as mat) {
+        <div class="inset-box">
+          <div class="field-label">Projected Stock Transition · <span class="mono accent">{{ mat.materialCode }}</span></div>
+          <div class="flex-row">
+            <span>{{ mat.quantityOnHand | number:'1.2-2' }}</span>
+            <span>&rarr;</span>
+            <strong class="ok-text">{{ projectedOnHand() | number:'1.2-2' }} {{ mat.unitOfMeasure }}</strong>
+          </div>
+          <div class="flex-row">
+            <span class="pill" [ngClass]="mat.stockStatus === 'LOW STOCK' ? 'LOW' : mat.stockStatus">
+              Now: {{ mat.stockStatus }}
+            </span>
+            <span>&rarr;</span>
+            <span class="pill" [ngClass]="projectedStatus() === 'LOW STOCK' ? 'LOW' : projectedStatus()">
+              After: {{ projectedStatus() }}
+            </span>
+          </div>
+          @if (clearsLowStockAlert()) {
+            <div class="ok-text rm-muted">&check; Restock clears active low-stock threshold ({{ mat.reorderLevel | number:'1.2-2' }} {{ mat.unitOfMeasure }}).</div>
+          }
+        </div>
+
+        <div class="inset-box">
+          <div class="flex-between kpi-row">
+            <span>Safety Reorder Level:</span>
+            <span>{{ mat.reorderLevel | number:'1.2-2' }} {{ mat.unitOfMeasure }}</span>
+          </div>
+          <div class="flex-between kpi-row">
+            <span>Storage Bay:</span>
+            <span>{{ mat.storageLocation }}</span>
+          </div>
+          <div class="flex-between kpi-row">
+            <span>Moisture Inspection:</span>
+            <span class="pill" [ngClass]="moistureAssessment().level === 'IDEAL' ? 'HEALTHY' : (moistureAssessment().level === 'CAUTION' ? 'LOW' : (moistureAssessment().level === 'HIGH' ? 'CRITICAL' : 'STANDARD'))">
+              {{ moisturePct() | number:'1.1-1' }}% · {{ moistureAssessment().label }}
+            </span>
+          </div>
+          <div class="flex-between kpi-row">
+            <span>GRN Line Total:</span>
+            <strong>Rs. {{ lineTotalLkr() | number:'1.2-2' }}</strong>
+          </div>
+          <div class="flex-between kpi-row" style="margin-bottom:0;padding-top:6px;border-top:1px dashed #cfe2f3;font-weight:700;color:#073763">
+            <span>Updated SKU Valuation:</span>
+            <span>Rs. {{ projectedValuationLkr() | number:'1.2-2' }}</span>
+          </div>
+        </div>
+      } @else {
+        <div class="inset-box rm-muted">
+          Select a raw material SKU on the left to inspect its stock transition and database pipeline.
+        </div>
+      }
+
+      <h4 class="field-label">PostgreSQL ACID Transaction Pipeline</h4>
+      <ul style="list-style:none;padding:0;margin:6px 0 0;font-size:11px">
+        <li class="flex-between constraint-item">
+          <span class="mono rm-muted">1. SELECT ... FOR UPDATE</span>
+          <span class="ok-text">ROW LOCK</span>
+        </li>
+        <li class="flex-between constraint-item">
+          <span class="mono rm-muted">2. UPDATE raw_materials</span>
+          <span class="ok-text">+QTY &amp; COST</span>
+        </li>
+        <li class="flex-between constraint-item">
+          <span class="mono rm-muted">3. INSERT raw_material_receipts</span>
+          <span class="ok-text">GRN-2026</span>
+        </li>
+        <li class="flex-between constraint-item">
+          <span class="mono rm-muted">4. trg_check_low_raw_stock</span>
+          <span class="ok-text">{{ projectedStatus() }}</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="rm-card ledger-card">
+    <div class="flex-between ledger-header">
+      <div>
+        <h2 class="card-title" style="font-size:16px;border:0;padding:0;margin:0">Recent Goods Receipt Ledger</h2>
+        <p class="rm-muted">Audit history of yard stock-in deliveries from <code>raw_material_receipts</code></p>
+      </div>
+      <input
+        type="text"
+        class="form-control search-input"
+        placeholder="Filter GRN #, SKU, supplier or foreman..."
+        [value]="ledgerSearch()"
+        (input)="onLedgerSearch($event)" />
+    </div>
+
+    <table class="stock-table">
+      <thead>
+        <tr>
+          <th>GRN Number</th>
+          <th>Material SKU</th>
+          <th>Supplier</th>
+          <th>Qty Received</th>
+          <th>Unit Cost &amp; Total</th>
+          <th>Moisture %</th>
+          <th>Received By &amp; Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (loading() && receipts().length === 0) {
+          <tr>
+            <td colspan="7" class="empty-state">Loading Goods Receipt Note ledger...</td>
+          </tr>
+        } @else {
+          @for (r of filteredReceipts(); track r.receiptId) {
+            <tr>
+              <td><span class="mono" style="color:#1E3A8A">{{ r.grnNumber }}</span></td>
+              <td>
+                <div><span class="mono accent">{{ r.materialCode }}</span></div>
+                <strong>{{ r.materialName }}</strong>
+                @if (r.notes) {
+                  <div class="rm-muted">{{ r.notes }}</div>
+                }
+              </td>
+              <td>{{ r.supplierName || 'Direct Yard Sourcing' }}</td>
+              <td>
+                <strong class="ok-text">+{{ r.quantityReceived | number:'1.2-2' }}</strong>
+                <span class="uom-badge">{{ r.unitOfMeasure }}</span>
+              </td>
+              <td>
+                <div>Rs. {{ r.unitCost | number:'1.2-2' }}</div>
+                <div class="rm-muted">Total: Rs. {{ (r.quantityReceived * r.unitCost) | number:'1.2-2' }}</div>
+              </td>
+              <td>
+                <span class="pill" [ngClass]="r.moisturePct > 18 ? 'CRITICAL' : 'HEALTHY'">
+                  {{ r.moisturePct | number:'1.1-1' }}%
+                </span>
+              </td>
+              <td>
+                <strong>{{ r.receivedBy }}</strong>
+                <div class="rm-muted">{{ r.receivedAt | date:'medium' }}</div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="empty-state">No Goods Receipt Notes match the current filter.</td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

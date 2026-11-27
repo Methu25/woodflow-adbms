@@ -1,0 +1,29 @@
+.petty-table-card { background: #fff; border: 1px solid #d9e6f2; border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; }
+.petty-filter-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 16px 24px; flex-wrap: wrap; }
+.filter-pills-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.filter-pill { height: 32px; padding: 0 18px; border-radius: 999px; border: 1px solid #d9e6f2; background: #f4f8fc; color: #526b85; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.filter-pill.active-pill { background: #1685c5; border-color: #1685c5; color: #fff; }
+.opening-balance-label { margin: 0; font-size: 12px; font-weight: 700; color: #526b85; }
+.table-responsive { width: 100%; overflow-x: auto; }
+.petty-ledger-table { width: 100%; border-collapse: collapse; }
+.petty-ledger-table thead tr { height: 38px; background: #f4f8fc; border-bottom: 1px solid #d9e6f2; }
+.petty-ledger-table th { padding: 0 16px; font-size: 10.5px; font-weight: 700; color: #526b85; text-align: left; white-space: nowrap; }
+.petty-ledger-table th.col-voucher, .petty-ledger-table td.col-voucher { padding-left: 24px; }
+.petty-ledger-table th.col-num, .petty-ledger-table td.col-num { text-align: right; font-variant-numeric: tabular-nums; }
+.petty-ledger-table th.col-balance, .petty-ledger-table td.col-balance { padding-right: 24px; }
+.petty-row { height: 70px; border-bottom: 1px solid #ebf2f8; transition: background .12s ease; }
+.petty-row:hover { background: #f8fbff; }
+.cell-date { margin: 0; font-size: 11.5px; font-weight: 700; color: #073763; }
+.cell-code { margin: 3px 0 0; font-size: 10.5px; color: #8295a8; }
+.cell-cat-note { font-size: 11.5px; font-weight: 700; color: #102d50; }
+.flow-pill { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 11px; border-radius: 999px; font-size: 10.5px; font-weight: 700; }
+.flow-pill-dot { width: 6.4px; height: 6.4px; border-radius: 50%; }
+.pill-cash-in { background: #dcfce7; color: #15803d; } .pill-cash-in .flow-pill-dot { background: #16a34a; }
+.pill-cash-out { background: #fee2e2; color: #b91c1c; } .pill-cash-out .flow-pill-dot { background: #ef4444; }
+.val-cash-in { font-size: 12.5px; font-weight: 700; color: #16a34a; }
+.val-cash-out { font-size: 12.5px; font-weight: 700; color: #ef4444; }
+.val-dash { font-size: 12.5px; color: #8295a8; }
+.cell-running-bal { font-size: 13px; font-weight: 700; color: #073763; }
+.petty-table-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 24px; flex-wrap: wrap; }
+.footer-note { margin: 0; font-size: 11.5px; color: #8295a8; }
+.footer-closing-bal { margin: 0; font-size: 13.5px; font-weight: 700; color: #1685c5; font-variant-numeric: tabular-nums; }

@@ -50,6 +50,20 @@
     </div>
   </header>
 
+  <!-- Finance Module Sub-Navigation Bar -->
+  <nav class="module-subnav" aria-label="Employee Advances & Cash Management screens">
+    @for (tab of navTabs; track tab.route) {
+      <a
+        [routerLink]="tab.route"
+        routerLinkActive="active-tab"
+        [routerLinkActiveOptions]="{ exact: tab.exact }"
+        class="subnav-tab"
+      >
+        {{ tab.label }}
+      </a>
+    }
+  </nav>
+
   <!-- Page Title & Top-Right Action Button (Node 109:1635..109:1638) -->
   <div class="page-header-row">
     <div>

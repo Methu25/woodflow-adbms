@@ -1,0 +1,35 @@
+.settlement-main-grid { display: grid; grid-template-columns: 540px minmax(0, 1fr); gap: 22px; align-items: start; }
+.settlement-left-col { display: flex; flex-direction: column; gap: 16px; }
+.settlement-card { background: #fff; border: 1px solid #d9e6f2; border-radius: 14px; padding: 18px 22px; box-shadow: 0 2px 8px rgba(7, 55, 99, .05); }
+.card-header-line { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.card-header-line h2, .card-title-block h2, .receipt-preview-header h2 { margin: 0; font-size: 16px; font-weight: 700; color: #073763; }
+.card-subtitle { margin: 4px 0 14px; font-size: 11px; color: #8295a8; }
+.open-advances-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; background: #fee2e2; color: #b91c1c; font-size: 10.5px; font-weight: 700; }
+.pill-dot { width: 6.5px; height: 6.5px; border-radius: 50%; background: #ef4444; }
+.card-divider { height: 1px; background: #d9e6f2; margin: 12px 0; }
+.light-divider { background: #ebf2f8; }
+.employee-summary-row { display: flex; align-items: center; gap: 14px; }
+.emp-avatar-circle { width: 44px; height: 44px; border-radius: 50%; background: #075b91; color: #fff; font-size: 16px; font-weight: 700; display: grid; place-items: center; flex-shrink: 0; }
+.emp-bio { flex: 1; min-width: 0; }
+.emp-name { margin: 0; font-size: 15px; font-weight: 700; color: #073763; }
+.emp-role-line { margin: 2px 0; font-size: 11.5px; color: #526b85; }
+.emp-dept-line { margin: 0; font-size: 11px; color: #8295a8; }
+.btn-change-emp { height: 30px; padding: 0 16px; border-radius: 6px; border: 1px solid #d9e6f2; background: #f4f8fc; color: #1685c5; font: inherit; font-size: 11.5px; font-weight: 700; cursor: pointer; }
+.btn-change-emp:hover { background: #eaf3fc; border-color: #1685c5; }
+.emp-metrics-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.metric-tile { padding: 11px 13px; border-radius: 10px; border: 1px solid #d9e6f2; }
+.tile-neutral { background: #f4f8fc; }
+.tile-danger { background: #fef2f2; border-color: #fecaca; }
+.tile-success { background: #ecfdf5; border-color: #a7f3d0; }
+.tile-label { margin: 0 0 5px; font-size: 10px; font-weight: 700; color: #526b85; }
+.danger-label { color: #991b1b; }
+.success-label { color: #15803d; }
+.tile-value { margin: 0 0 4px; font-size: 16px; font-weight: 700; }
+.navy-text { color: #073763; }
+.red-text { color: #ef4444; }
+.green-text { color: #16a34a; }
+.tile-sub { margin: 0; font-size: 10px; color: #8295a8; }
+.danger-sub { color: #b91c1c; }
+.success-sub { color: #15803d; }
+@media (max-width: 1100px) { .settlement-main-grid { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .emp-metrics-grid { grid-template-columns: 1fr; } }

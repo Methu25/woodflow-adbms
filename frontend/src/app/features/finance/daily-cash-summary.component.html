@@ -1,0 +1,272 @@
+<section class="finance-page" aria-labelledby="daily-summary-heading">
+  <!-- Top Utility Header Bar -->
+  <header class="top-utility-bar">
+    <div class="global-search-box" role="search">
+      <svg class="search-icon" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+        <circle cx="9" cy="9" r="6" fill="none" stroke="#6d8299" stroke-width="1.8" />
+        <line x1="13.5" y1="13.5" x2="17.5" y2="17.5" stroke="#6d8299" stroke-width="1.8" stroke-linecap="round" />
+      </svg>
+      <input
+        type="search"
+        [ngModel]="searchTerm()"
+        (ngModelChange)="searchTerm.set($event)"
+        placeholder="Search employee advances, petty cash, vouchers..."
+        aria-label="Search transaction categories"
+      />
+      <span class="kbd-shortcut">Ctrl+K</span>
+    </div>
+
+    <div class="utility-right">
+      <div class="date-location-chip">
+        <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+          <rect x="2.5" y="4" width="15" height="13.5" rx="2" fill="none" stroke="#1685c5" stroke-width="1.6" />
+          <line x1="2.5" y1="8" x2="17.5" y2="8" stroke="#1685c5" stroke-width="1.6" />
+          <line x1="6.5" y1="2.5" x2="6.5" y2="5.5" stroke="#1685c5" stroke-width="1.6" stroke-linecap="round" />
+          <line x1="13.5" y1="2.5" x2="13.5" y2="5.5" stroke="#1685c5" stroke-width="1.6" stroke-linecap="round" />
+        </svg>
+        <div>
+          <p class="date-label">{{ selectedDate() }}</p>
+          <p class="showroom-sub">08:45 AM · Main Cash Till</p>
+        </div>
+      </div>
+
+      <a class="notification-bell" routerLink="/finance/advances/issue" aria-label="5 active finance notifications">
+        <svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true">
+          <path d="M10 3a5 5 0 0 0-5 5v2.8L3.4 13a.8.8 0 0 0 .65 1.25h11.9A.8.8 0 0 0 16.6 13L15 10.8V8a5 5 0 0 0-5-5Z" fill="none" stroke="#073763" stroke-width="1.6" />
+          <path d="M8.2 15.8a2 2 0 0 0 3.6 0" fill="none" stroke="#073763" stroke-width="1.6" stroke-linecap="round" />
+        </svg>
+        <span class="bell-badge">5</span>
+      </a>
+
+      <div class="vertical-divider" aria-hidden="true"></div>
+
+      <div class="profile-chip">
+        <div class="profile-meta">
+          <p class="profile-name">{{ userDisplayName() }}</p>
+          <p class="profile-role">{{ userRoleSubtitle() }}</p>
+        </div>
+        <div class="profile-avatar" aria-hidden="true">{{ userInitials() }}</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Sub-navigation tabs across Member 9 screens -->
+  <nav class="module-subnav" aria-label="Finance and Employee Advances Screens">
+    @for (tab of navTabs; track tab.route) {
+      <a
+        class="subnav-tab"
+        [routerLink]="tab.route"
+        routerLinkActive="active-tab"
+        [routerLinkActiveOptions]="{ exact: tab.exact }"
+      >
+        {{ tab.label }}
+      </a>
+    }
+  </nav>
+
+  <!-- Page Header Row -->
+  <div class="page-header-row">
+    <div>
+      <h1 id="daily-summary-heading">Daily Cash Summary</h1>
+      <p class="page-subtitle">
+        Opening/closing balances, incoming vs outgoing cash breakdown &amp; category reconciliation
+      </p>
+    </div>
+
+    <div class="summary-header-actions">
+      <button
+        type="button"
+        class="date-selector-btn"
+        (click)="cycleDate()"
+        title="Click to switch EOD reconciliation date"
+      >
+        <svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true">
+          <rect x="2.5" y="4" width="15" height="13.5" rx="2" fill="none" stroke="#1685c5" stroke-width="1.6" />
+          <line x1="2.5" y1="8" x2="17.5" y2="8" stroke="#1685c5" stroke-width="1.6" />
+          <line x1="6.5" y1="2.5" x2="6.5" y2="5.5" stroke="#1685c5" stroke-width="1.6" stroke-linecap="round" />
+          <line x1="13.5" y1="2.5" x2="13.5" y2="5.5" stroke="#1685c5" stroke-width="1.6" stroke-linecap="round" />
+        </svg>
+        <span>Date: {{ summaryData().dateLabel }}</span>
+      </button>
+
+      <button type="button" class="btn-print-summary" (click)="printSummary()">
+        <svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true">
+          <path d="M5.5 7V3.2h9V7" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linejoin="round" />
+          <rect x="3" y="7" width="14" height="7" rx="1.6" fill="none" stroke="#ffffff" stroke-width="1.6" />
+          <rect x="5.5" y="11.5" width="9" height="5.2" fill="#073763" stroke="#ffffff" stroke-width="1.5" />
+        </svg>
+        <span>Print Summary</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Feedback Banners -->
+  @if (error()) {
+    <div class="feedback-banner error-banner" role="alert">
+      <strong>Error:</strong> {{ error() }}
+    </div>
+  }
+  @if (success()) {
+    <div class="feedback-banner success-banner" role="status">
+      <strong>Ready:</strong> {{ success() }}
+    </div>
+  }
+
+  <!-- 4 Summary KPI Cards Row -->
+  <div class="summary-kpi-grid">
+    <article class="summary-kpi-card">
+      <p class="kpi-title">Opening Balance (08:00 AM)</p>
+      <p class="kpi-value navy-text">{{ formatLkr(summaryData().openingBalanceAmount) }}</p>
+      <p class="kpi-caption">Verified carried-over till</p>
+    </article>
+
+    <article class="summary-kpi-card">
+      <p class="kpi-title">Total Cash In</p>
+      <p class="kpi-value green-text">+ {{ formatLkr(summaryData().totalCashInAmount) }}</p>
+      <p class="kpi-caption">Sales, deposits &amp; scrap in</p>
+    </article>
+
+    <article class="summary-kpi-card">
+      <p class="kpi-title">Total Cash Out</p>
+      <p class="kpi-value red-text">- {{ formatLkr(summaryData().totalCashOutAmount) }}</p>
+      <p class="kpi-caption">Advances, COD &amp; expenses</p>
+    </article>
+
+    <article class="summary-kpi-card dark-eod-card">
+      <p class="kpi-title eod-title">Closing Balance (EOD)</p>
+      <p class="kpi-value eod-value">{{ formatLkr(summaryData().closingBalanceAmount) }}</p>
+      <p class="kpi-caption eod-caption">
+        Net {{ formatSignedLkr(summaryData().netDailyMovementAmount) }} today
+      </p>
+    </article>
+  </div>
+
+  <!-- Main Two-Column Grid -->
+  <div class="summary-main-grid">
+    <!-- Left Card: Daily Cash Movement Breakdown -->
+    <article class="summary-panel movement-card">
+      <div class="panel-header">
+        <h2>Daily Cash Movement Breakdown</h2>
+        <p class="panel-sub">Incoming (Green) vs. Outgoing (Red) funds by category</p>
+      </div>
+
+      <div class="panel-divider"></div>
+
+      <!-- Incoming Cash Section -->
+      <section class="movement-section" aria-label="Incoming Cash Breakdown">
+        <p class="section-heading green-heading">
+          INCOMING CASH (+ {{ formatLkr(summaryData().totalCashInAmount) }})
+        </p>
+
+        @for (bar of incomingBars(); track bar.label) {
+          <div class="movement-row">
+            <div class="movement-label-line">
+              <span class="movement-name">{{ bar.label }}</span>
+              <span class="movement-amount green-text">{{ formatLkr(bar.amount) }}</span>
+            </div>
+            <div class="movement-track green-track">
+              <div class="movement-fill green-fill" [style.width.%]="bar.widthPercent"></div>
+            </div>
+          </div>
+        }
+      </section>
+
+      <div class="panel-divider"></div>
+
+      <!-- Outgoing Cash Section -->
+      <section class="movement-section" aria-label="Outgoing Cash Breakdown">
+        <p class="section-heading red-heading">
+          OUTGOING CASH (- {{ formatLkr(summaryData().totalCashOutAmount) }})
+        </p>
+
+        @for (bar of outgoingBars(); track bar.label) {
+          <div class="movement-row">
+            <div class="movement-label-line">
+              <span class="movement-name">{{ bar.label }}</span>
+              <span class="movement-amount red-text">- {{ formatLkr(bar.amount) }}</span>
+            </div>
+            <div class="movement-track red-track">
+              <div class="movement-fill red-fill" [style.width.%]="bar.widthPercent"></div>
+            </div>
+          </div>
+        }
+      </section>
+
+      <!-- Bottom Net Daily Cash Movement Banner -->
+      <div class="net-movement-card">
+        <div>
+          <p class="net-label">NET DAILY CASH MOVEMENT</p>
+          <p class="net-value">{{ formatSignedLkr(summaryData().netDailyMovementAmount) }}</p>
+        </div>
+        <span class="positive-inflow-pill">{{ summaryData().netMovementStatusLabel }}</span>
+      </div>
+    </article>
+
+    <!-- Right Card: Cash Category Summary Table -->
+    <article class="summary-panel category-table-card">
+      <div class="table-card-header">
+        <h2>Cash Category Summary Table — {{ summaryData().tableTitleDateLabel }}</h2>
+      </div>
+
+      <div class="category-table-wrap">
+        <table class="category-summary-table">
+          <thead>
+            <tr>
+              <th scope="col">TRANSACTION CATEGORY</th>
+              <th scope="col" class="num-col">TXNS</th>
+              <th scope="col" class="num-col">CASH IN (+)</th>
+              <th scope="col" class="num-col">CASH OUT (-)</th>
+              <th scope="col" class="num-col">NET (LKR)</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of filteredCategoryRows(); track row.categoryName) {
+              <tr>
+                <td>
+                  <div class="category-cell">
+                    <span
+                      class="category-dot"
+                      [class.green-dot]="row.flowType === 'IN'"
+                      [class.red-dot]="row.flowType === 'OUT'"
+                      aria-hidden="true"
+                    ></span>
+                    <span class="category-title">{{ row.categoryName }}</span>
+                  </div>
+                </td>
+                <td class="num-col txns-cell">{{ row.transactionCount }}</td>
+                <td class="num-col" [class.green-num]="row.cashInAmount !== null" [class.muted-dash]="row.cashInAmount === null">
+                  {{ formatTableCell(row.cashInAmount, '+') }}
+                </td>
+                <td class="num-col" [class.red-num]="row.cashOutAmount !== null" [class.muted-dash]="row.cashOutAmount === null">
+                  {{ formatTableCell(row.cashOutAmount, '-') }}
+                </td>
+                <td
+                  class="num-col net-col"
+                  [class.green-num]="row.netAmount >= 0"
+                  [class.red-num]="row.netAmount < 0"
+                >
+                  {{ formatNetCell(row.netAmount) }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Bottom EOD Cash Reconciliation Formula Box -->
+      <div class="eod-formula-box">
+        <div class="formula-left">
+          <p class="formula-caption">EOD CASH RECONCILIATION FORMULA</p>
+          <p class="formula-expression">
+            Opening ({{ formatWholeLkr(summaryData().openingBalanceAmount) }}) + Cash In ({{
+              formatWholeLkr(summaryData().totalCashInAmount)
+            }}) - Cash Out ({{ formatWholeLkr(summaryData().totalCashOutAmount) }})
+          </p>
+        </div>
+        <p class="formula-closing">
+          Closing Balance: {{ formatLkr(summaryData().closingBalanceAmount) }}
+        </p>
+      </div>
+    </article>
+  </div>
+</section>

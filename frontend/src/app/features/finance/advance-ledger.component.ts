@@ -3,7 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import {
@@ -16,7 +16,7 @@ export type StaffLedgerFilterTab = 'ALL' | 'OUTSTANDING' | 'SETTLED';
 @Component({
   selector: 'app-advance-ledger',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive],
   templateUrl: './advance-ledger.component.html',
   styleUrls: [
     './finance-header.scss',
@@ -28,6 +28,14 @@ export class AdvanceLedgerComponent {
   private readonly service = inject(EmployeeAdvanceService);
   private readonly destroyRef = inject(DestroyRef);
   readonly auth = inject(AuthService);
+
+  readonly navTabs = [
+    { label: '01 Advance Issuance', route: '/finance/advances/issue', exact: true },
+    { label: '02 Advance Ledger', route: '/finance/advances', exact: true },
+    { label: '03 Petty Cash Ledger', route: '/finance/petty-cash', exact: true },
+    { label: '04 Daily Cash Summary', route: '/finance/daily-summary', exact: true },
+    { label: '05 Advance Settlement & Receipt', route: '/finance/advances/settle', exact: false },
+  ];
 
   readonly loading = signal<boolean>(false);
   readonly settling = signal<boolean>(false);

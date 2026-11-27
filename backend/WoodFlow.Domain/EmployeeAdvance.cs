@@ -50,3 +50,15 @@ public sealed record EmployeeAdvanceLedgerRecord(
     string LedgerStatus, // "DEFICIT" | "OPEN" | "SETTLED"
     IReadOnlyList<AdvanceTransactionHistoryRecord> Transactions
 );
+
+public sealed record PettyCashLedgerRecord(
+    int EntryId,
+    string VoucherCode,
+    string DateAndTimeLabel,
+    string FlowType, // "CASH_IN" | "CASH_OUT"
+    string Category,
+    string NoteDescription,
+    decimal Amount,
+    decimal RunningBalance,
+    DateTimeOffset CreatedAt
+);

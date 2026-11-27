@@ -114,3 +114,68 @@ public sealed record SettleEmployeeAdvanceResponseDto(
     string Message,
     EmployeeAdvanceLedgerRowDto UpdatedLedgerRow
 );
+
+public sealed record PettyCashEntryDto(
+    int EntryId,
+    string VoucherCode,
+    string DateAndTimeLabel,
+    string FlowType, // "CASH_IN" | "CASH_OUT"
+    string FlowLabel, // "Cash In" | "Cash Out"
+    string Category,
+    string NoteDescription,
+    string CategoryAndNoteLabel,
+    decimal Amount,
+    decimal RunningBalance
+);
+
+public sealed record PettyCashLedgerResponseDto(
+    decimal CashInHandBalance,
+    decimal InTodayAmount,
+    decimal OutTodayAmount,
+    decimal OpeningBalanceAmount,
+    decimal ClosingTillBalanceAmount,
+    int AllTransactionsCount,
+    int CashInCount,
+    int CashOutCount,
+    IReadOnlyList<string> CashOutCategories,
+    IReadOnlyList<string> CashInCategories,
+    IReadOnlyList<PettyCashEntryDto> Entries
+);
+
+public sealed record CreatePettyCashEntryRequest(
+    string FlowType, // "CASH_IN" | "CASH_OUT"
+    string Category,
+    decimal Amount,
+    string VoucherNote
+);
+
+public sealed record DailyCashMovementBarDto(
+    string Label,
+    decimal Amount,
+    int WidthPercent,
+    string FlowType // "IN" | "OUT"
+);
+
+public sealed record DailyCashCategorySummaryDto(
+    string CategoryName,
+    int TransactionCount,
+    decimal? CashInAmount,
+    decimal? CashOutAmount,
+    decimal NetAmount,
+    string FlowType // "IN" | "OUT"
+);
+
+public sealed record DailyCashSummaryResponseDto(
+    string DateLabel,
+    string TableTitleDateLabel,
+    decimal OpeningBalanceAmount,
+    decimal TotalCashInAmount,
+    decimal TotalCashOutAmount,
+    decimal ClosingBalanceAmount,
+    decimal NetDailyMovementAmount,
+    string NetMovementStatusLabel,
+    IReadOnlyList<DailyCashMovementBarDto> IncomingBars,
+    IReadOnlyList<DailyCashMovementBarDto> OutgoingBars,
+    IReadOnlyList<DailyCashCategorySummaryDto> CategoryRows
+);
+

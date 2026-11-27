@@ -2,8 +2,8 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import {
@@ -15,7 +15,7 @@ import {
 @Component({
   selector: 'app-advance-issuance',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, RouterLinkActive],
   templateUrl: './advance-issuance.component.html',
   styleUrls: [
     './finance-header.scss',
@@ -29,6 +29,14 @@ export class AdvanceIssuanceComponent {
   private readonly service = inject(EmployeeAdvanceService);
   private readonly destroyRef = inject(DestroyRef);
   readonly auth = inject(AuthService);
+
+  readonly navTabs = [
+    { label: '01 Advance Issuance', route: '/finance/advances/issue', exact: true },
+    { label: '02 Advance Ledger', route: '/finance/advances', exact: true },
+    { label: '03 Petty Cash Ledger', route: '/finance/petty-cash', exact: true },
+    { label: '04 Daily Cash Summary', route: '/finance/daily-summary', exact: true },
+    { label: '05 Advance Settlement & Receipt', route: '/finance/advances/settle', exact: false },
+  ];
 
   readonly employees = signal<EmployeeAdvanceProfile[]>([]);
   readonly disbursementSources = signal<string[]>([

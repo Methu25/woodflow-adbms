@@ -1,0 +1,32 @@
+.petty-top-grid { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 18px; margin-bottom: 18px; align-items: stretch; }
+.cash-vault-card { background: #073763; border: 1px solid #073763; border-radius: 14px; padding: 18px 22px; min-height: 118px; display: flex; flex-direction: column; justify-content: space-between; }
+.vault-caption { margin: 0; font-size: 10.5px; font-weight: 700; letter-spacing: .02em; color: #9fd8ee; }
+.vault-balance { margin: 6px 0; font-size: 28px; font-weight: 700; color: #65c9ed; font-variant-numeric: tabular-nums; }
+.vault-today-sub { margin: 0; font-size: 11px; font-weight: 700; color: #cfe4f5; }
+.quick-entry-card { background: #fff; border: 1px solid #d9e6f2; border-radius: 14px; padding: 12px 20px 14px; min-height: 118px; display: flex; flex-direction: column; justify-content: space-between; }
+.quick-entry-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+.quick-title-group { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.quick-title-group h2 { margin: 0; font-size: 13.5px; font-weight: 700; color: #073763; }
+.quick-hint { font-size: 11px; color: #8295a8; }
+.till-active-pill { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 11px; border-radius: 999px; background: #dcfce7; color: #15803d; font-size: 10.5px; font-weight: 700; }
+.till-dot { width: 6.4px; height: 6.4px; border-radius: 50%; background: #16a34a; }
+.quick-entry-bar { display: grid; grid-template-columns: 168px 180px 118px minmax(140px, 1fr) 82px; gap: 10px; align-items: end; }
+.entry-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.entry-field label { font-size: 11.5px; font-weight: 700; color: #102d50; white-space: nowrap; }
+.flow-segmented-control { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; height: 38px; padding: 3px; border-radius: 8px; background: #f4f8fc; border: 1.2px solid #d9e6f2; }
+.flow-seg-btn { display: inline-flex; align-items: center; justify-content: center; gap: 5px; height: 100%; border: 1.2px solid transparent; border-radius: 6px; background: transparent; color: #526b85; font: inherit; font-size: 11.5px; font-weight: 700; cursor: pointer; padding: 0 6px; white-space: nowrap; }
+.flow-seg-btn.active-cash-out { background: #fee2e2; border-color: #ef4444; color: #b91c1c; }
+.flow-seg-btn.active-cash-in { background: #dcfce7; border-color: #16a34a; color: #15803d; }
+.flow-dot { width: 6.4px; height: 6.4px; border-radius: 50%; flex-shrink: 0; }
+.dot-green { background: #16a34a; }
+.dot-red { background: #ef4444; }
+.select-wrap { position: relative; display: flex; align-items: center; }
+.entry-field select, .entry-field input { width: 100%; height: 38px; padding: 0 11px; border-radius: 8px; border: 1.2px solid #d9e6f2; background: #fff; color: #102d50; font: inherit; font-size: 11.5px; font-weight: 700; outline: none; }
+.entry-field select { appearance: none; padding-right: 26px; cursor: pointer; }
+.select-chevron { position: absolute; right: 10px; pointer-events: none; }
+.entry-field input.amount-focus-input { border: 1.6px solid #1685c5; }
+.entry-field input:focus, .entry-field select:focus { border-color: #1685c5; }
+.btn-add-petty { width: 100%; height: 38px; border: 0; border-radius: 8px; background: #1685c5; color: #fff; font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+.btn-add-petty:hover:not(:disabled) { background: #075b91; }
+.btn-add-petty:disabled { opacity: .65; cursor: not-allowed; }
+@media (max-width: 1120px) { .petty-top-grid { grid-template-columns: 1fr; } .quick-entry-bar { grid-template-columns: repeat(2, 1fr); } }

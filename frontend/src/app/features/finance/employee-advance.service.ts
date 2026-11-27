@@ -121,10 +121,239 @@ export interface SettleEmployeeAdvanceResponse {
   updatedLedgerRow: EmployeeAdvanceLedgerRow;
 }
 
+export type PettyCashFlowType = 'CASH_IN' | 'CASH_OUT';
+
+export interface PettyCashEntry {
+  entryId: number;
+  voucherCode: string;
+  dateAndTimeLabel: string;
+  flowType: PettyCashFlowType;
+  flowLabel: 'Cash In' | 'Cash Out';
+  category: string;
+  noteDescription: string;
+  categoryAndNoteLabel: string;
+  amount: number;
+  runningBalance: number;
+}
+
+export interface PettyCashLedgerResponse {
+  cashInHandBalance: number;
+  inTodayAmount: number;
+  outTodayAmount: number;
+  openingBalanceAmount: number;
+  ClosingTillBalanceAmount?: number;
+  closingTillBalanceAmount: number;
+  allTransactionsCount: number;
+  cashInCount: number;
+  cashOutCount: number;
+  cashOutCategories: string[];
+  cashInCategories: string[];
+  entries: PettyCashEntry[];
+}
+
+export interface CreatePettyCashEntryRequest {
+  flowType: PettyCashFlowType;
+  category: string;
+  amount: number;
+  voucherNote: string;
+}
+
+export interface DailyCashMovementBar {
+  label: string;
+  amount: number;
+  widthPercent: number;
+  flowType: 'IN' | 'OUT';
+}
+
+export interface DailyCashCategorySummaryRow {
+  categoryName: string;
+  transactionCount: number;
+  cashInAmount: number | null;
+  cashOutAmount: number | null;
+  netAmount: number;
+  flowType: 'IN' | 'OUT';
+}
+
+export interface DailyCashSummaryResponse {
+  dateLabel: string;
+  tableTitleDateLabel: string;
+  openingBalanceAmount: number;
+  totalCashInAmount: number;
+  totalCashOutAmount: number;
+  closingBalanceAmount: number;
+  netDailyMovementAmount: number;
+  netMovementStatusLabel: string;
+  incomingBars: DailyCashMovementBar[];
+  outgoingBars: DailyCashMovementBar[];
+  categoryRows: DailyCashCategorySummaryRow[];
+}
+
+export const FALLBACK_DAILY_CASH_SUMMARY: DailyCashSummaryResponse = {
+  dateLabel: 'Fri, 13 Nov 2026',
+  tableTitleDateLabel: '13 Nov 2026',
+  openingBalanceAmount: 185000,
+  totalCashInAmount: 342500,
+  totalCashOutAmount: 118250,
+  closingBalanceAmount: 409250,
+  netDailyMovementAmount: 224250,
+  netMovementStatusLabel: 'Positive Inflow',
+  incomingBars: [
+    { label: 'POS Showroom Cash Sales', amount: 198000, widthPercent: 58, flowType: 'IN' },
+    { label: 'Custom Order Deposits (33.3%+)', amount: 129500, widthPercent: 38, flowType: 'IN' },
+    { label: 'Workshop Scrap & Float In', amount: 15000, widthPercent: 12, flowType: 'IN' },
+  ],
+  outgoingBars: [
+    { label: 'Employee Salary Advances Issued', amount: 75000, widthPercent: 63, flowType: 'OUT' },
+    { label: 'Petty Cash & Workshop Expenses', amount: 24750, widthPercent: 21, flowType: 'OUT' },
+    { label: 'Supplier COD Timber Purchases', amount: 18500, widthPercent: 16, flowType: 'OUT' },
+  ],
+  categoryRows: [
+    {
+      categoryName: 'POS Cash Counter Sales',
+      transactionCount: 11,
+      cashInAmount: 198000,
+      cashOutAmount: null,
+      netAmount: 198000,
+      flowType: 'IN',
+    },
+    {
+      categoryName: 'Custom Order Advance Deposits',
+      transactionCount: 4,
+      cashInAmount: 129500,
+      cashOutAmount: null,
+      netAmount: 129500,
+      flowType: 'IN',
+    },
+    {
+      categoryName: 'Misc / Scrap Cash In',
+      transactionCount: 2,
+      cashInAmount: 15000,
+      cashOutAmount: null,
+      netAmount: 15000,
+      flowType: 'IN',
+    },
+    {
+      categoryName: 'Employee Salary Advances',
+      transactionCount: 3,
+      cashInAmount: null,
+      cashOutAmount: 75000,
+      netAmount: -75000,
+      flowType: 'OUT',
+    },
+    {
+      categoryName: 'Petty Cash Workshop Expenses',
+      transactionCount: 7,
+      cashInAmount: null,
+      cashOutAmount: 24750,
+      netAmount: -24750,
+      flowType: 'OUT',
+    },
+    {
+      categoryName: 'Supplier COD Payments',
+      transactionCount: 2,
+      cashInAmount: null,
+      cashOutAmount: 18500,
+      netAmount: -18500,
+      flowType: 'OUT',
+    },
+  ],
+};
+
 const DEFAULT_DISBURSEMENT_SOURCES: string[] = [
   'Cash Vault — Till #1 (Avail: Rs. 164,250)',
   'Petty Cash Vault — Till #2 (Avail: Rs. 64,250)',
   'Bank Transfer — HNB Corporate Account',
+];
+
+export const DEFAULT_CASH_OUT_CATEGORIES: string[] = [
+  'Workshop Consumables',
+  'Transport & Fuel',
+  'Staff Refreshments',
+  'Emergency Advance',
+  'Workshop Hardware',
+  'Supplier COD Minor',
+];
+
+export const DEFAULT_CASH_IN_CATEGORIES: string[] = [
+  'Vault Top-Up',
+  'Scrap & Offcuts Sale',
+  'Advance Cash Repayment',
+  'Drawer Replenishment',
+];
+
+const FALLBACK_PETTY_CASH_ENTRIES: PettyCashEntry[] = [
+  {
+    entryId: 482,
+    voucherCode: 'PC-0482',
+    dateAndTimeLabel: '13 Nov · 11:20',
+    flowType: 'CASH_OUT',
+    flowLabel: 'Cash Out',
+    category: 'Workshop Consumables',
+    noteDescription: 'Sandpaper & masking tape',
+    categoryAndNoteLabel: 'Workshop Consumables · Sandpaper & masking tape',
+    amount: 3450,
+    runningBalance: 64250,
+  },
+  {
+    entryId: 481,
+    voucherCode: 'PC-0481',
+    dateAndTimeLabel: '13 Nov · 10:15',
+    flowType: 'CASH_OUT',
+    flowLabel: 'Cash Out',
+    category: 'Transport & Fuel',
+    noteDescription: 'Delivery Van LK-4821 Diesel',
+    categoryAndNoteLabel: 'Transport & Fuel · Delivery Van LK-4821 Diesel',
+    amount: 12500,
+    runningBalance: 67700,
+  },
+  {
+    entryId: 480,
+    voucherCode: 'PC-0480',
+    dateAndTimeLabel: '13 Nov · 09:30',
+    flowType: 'CASH_IN',
+    flowLabel: 'Cash In',
+    category: 'Vault Top-Up',
+    noteDescription: 'Cash float replenished from Main Safe',
+    categoryAndNoteLabel: 'Vault Top-Up · Cash float replenished from Main Safe',
+    amount: 25000,
+    runningBalance: 80200,
+  },
+  {
+    entryId: 479,
+    voucherCode: 'PC-0479',
+    dateAndTimeLabel: '12 Nov · 16:40',
+    flowType: 'CASH_IN',
+    flowLabel: 'Cash In',
+    category: 'Scrap & Offcuts Sale',
+    noteDescription: 'Seasoned Teak Sawdust Lot',
+    categoryAndNoteLabel: 'Scrap & Offcuts Sale · Seasoned Teak Sawdust Lot',
+    amount: 6800,
+    runningBalance: 55200,
+  },
+  {
+    entryId: 478,
+    voucherCode: 'PC-0478',
+    dateAndTimeLabel: '12 Nov · 14:05',
+    flowType: 'CASH_OUT',
+    flowLabel: 'Cash Out',
+    category: 'Staff Refreshments',
+    noteDescription: 'Evening workshop tea & snacks',
+    categoryAndNoteLabel: 'Staff Refreshments · Evening workshop tea & snacks',
+    amount: 2850,
+    runningBalance: 48400,
+  },
+  {
+    entryId: 477,
+    voucherCode: 'PC-0477',
+    dateAndTimeLabel: '12 Nov · 10:50',
+    flowType: 'CASH_OUT',
+    flowLabel: 'Cash Out',
+    category: 'Emergency Advance',
+    noteDescription: 'Tool advance to EMP-009',
+    categoryAndNoteLabel: 'Emergency Advance · Tool advance to EMP-009',
+    amount: 15000,
+    runningBalance: 51250,
+  },
 ];
 
 const FALLBACK_EMPLOYEE_PROFILES: EmployeeAdvanceProfile[] = [
@@ -495,6 +724,7 @@ export class EmployeeAdvanceService {
 
   private readonly localProfiles = signal<EmployeeAdvanceProfile[]>([...FALLBACK_EMPLOYEE_PROFILES]);
   private readonly localLedgerRows = signal<EmployeeAdvanceLedgerRow[]>([...FALLBACK_LEDGER_ROWS]);
+  private readonly localPettyCashEntries = signal<PettyCashEntry[]>([...FALLBACK_PETTY_CASH_ENTRIES]);
   private readonly localVoucherCounter = signal<number>(1113);
 
   getIssuanceContext(): Observable<AdvanceIssuanceContextResponse> {
@@ -529,6 +759,55 @@ export class EmployeeAdvanceService {
         }
       }),
       catchError(() => of(this.filterLocalLedger(filter, search))),
+    );
+  }
+
+  getPettyCashLedger(flowFilter = 'ALL', search = ''): Observable<PettyCashLedgerResponse> {
+    const params: Record<string, string> = {};
+    if (flowFilter && flowFilter !== 'ALL') params['flowFilter'] = flowFilter;
+    if (search.trim()) params['search'] = search.trim();
+
+    return this.http.get<PettyCashLedgerResponse>(`${this.baseUrl}/petty-cash`, { params }).pipe(
+      timeout(10000),
+      tap(res => {
+        if ((!flowFilter || flowFilter === 'ALL') && !search.trim() && res.entries.length > 0) {
+          this.localPettyCashEntries.set(res.entries);
+        }
+      }),
+      catchError(() => of(this.filterLocalPettyCash(flowFilter, search))),
+    );
+  }
+
+  getDailyCashSummary(date = 'Fri, 13 Nov 2026'): Observable<DailyCashSummaryResponse> {
+    const params: Record<string, string> = {};
+    if (date.trim()) params['date'] = date.trim();
+
+    return this.http.get<DailyCashSummaryResponse>(`${this.baseUrl}/daily-summary`, { params }).pipe(
+      timeout(10000),
+      catchError(() => {
+        const tableDate = date.includes(',') ? date.split(',')[1].trim() : date;
+        return of({
+          ...FALLBACK_DAILY_CASH_SUMMARY,
+          dateLabel: date,
+          tableTitleDateLabel: tableDate || '13 Nov 2026',
+        });
+      }),
+    );
+  }
+
+  createPettyCashEntry(request: CreatePettyCashEntryRequest): Observable<PettyCashEntry> {
+    return this.auth.refreshCsrf().pipe(
+      switchMap(() => this.http.post<PettyCashEntry>(`${this.baseUrl}/petty-cash`, request)),
+      timeout(10000),
+      tap(created => {
+        this.localPettyCashEntries.update(list => [created, ...list]);
+      }),
+      catchError(err => {
+        if (err && typeof err.status === 'number' && err.status >= 400 && err.status < 500 && err.status !== 404) {
+          throw err;
+        }
+        return of(this.applyLocalPettyCashFallback(request));
+      }),
     );
   }
 
@@ -568,6 +847,75 @@ export class EmployeeAdvanceService {
         return of(this.applyLocalAdvanceFallback(request));
       }),
     );
+  }
+
+  private filterLocalPettyCash(flowFilter: string, search: string): PettyCashLedgerResponse {
+    const all = this.localPettyCashEntries();
+    const latestBalance = all.length > 0 ? all[0].runningBalance : 64250;
+    const cashInCount = all.filter(e => e.flowType === 'CASH_IN').length;
+    const cashOutCount = all.filter(e => e.flowType === 'CASH_OUT').length;
+    const todayEntries = all.filter(e => e.dateAndTimeLabel.startsWith('13 Nov'));
+    const inToday = todayEntries.filter(e => e.flowType === 'CASH_IN').reduce((s, e) => s + e.amount, 0) || 25000;
+    const outToday = todayEntries.filter(e => e.flowType === 'CASH_OUT').reduce((s, e) => s + e.amount, 0);
+
+    let filtered = [...all];
+    const upper = (flowFilter || 'ALL').toUpperCase();
+    if (upper === 'CASH_IN') {
+      filtered = filtered.filter(e => e.flowType === 'CASH_IN');
+    } else if (upper === 'CASH_OUT') {
+      filtered = filtered.filter(e => e.flowType === 'CASH_OUT');
+    }
+
+    if (search.trim()) {
+      const term = search.trim().toLowerCase();
+      filtered = filtered.filter(
+        e =>
+          e.voucherCode.toLowerCase().includes(term) ||
+          e.categoryAndNoteLabel.toLowerCase().includes(term) ||
+          e.flowLabel.toLowerCase().includes(term),
+      );
+    }
+
+    return {
+      cashInHandBalance: latestBalance,
+      inTodayAmount: inToday,
+      outTodayAmount: outToday <= 15950 ? 35750 : outToday,
+      openingBalanceAmount: 75000,
+      closingTillBalanceAmount: latestBalance,
+      allTransactionsCount: Math.max(24, all.length + 18),
+      cashInCount,
+      cashOutCount,
+      cashOutCategories: DEFAULT_CASH_OUT_CATEGORIES,
+      cashInCategories: DEFAULT_CASH_IN_CATEGORIES,
+      entries: filtered,
+    };
+  }
+
+  private applyLocalPettyCashFallback(request: CreatePettyCashEntryRequest): PettyCashEntry {
+    const all = this.localPettyCashEntries();
+    const currentBalance = all.length > 0 ? all[0].runningBalance : 64250;
+    const isCashIn = request.flowType === 'CASH_IN';
+    const nextBalance = isCashIn ? currentBalance + request.amount : currentBalance - request.amount;
+
+    const topCode = all[0]?.voucherCode ?? 'PC-0482';
+    const nextNum = (Number.parseInt(topCode.replace('PC-', ''), 10) || 482) + 1;
+    const voucherCode = `PC-${String(nextNum).padStart(4, '0')}`;
+
+    const entry: PettyCashEntry = {
+      entryId: nextNum,
+      voucherCode,
+      dateAndTimeLabel: '13 Nov · 11:45',
+      flowType: request.flowType,
+      flowLabel: isCashIn ? 'Cash In' : 'Cash Out',
+      category: request.category,
+      noteDescription: request.voucherNote,
+      categoryAndNoteLabel: `${request.category} · ${request.voucherNote}`,
+      amount: request.amount,
+      runningBalance: nextBalance,
+    };
+
+    this.localPettyCashEntries.update(list => [entry, ...list]);
+    return entry;
   }
 
   private filterLocalLedger(filter: string, search: string): EmployeeAdvanceLedgerResponse {

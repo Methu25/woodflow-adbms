@@ -1,0 +1,433 @@
+<section class="finance-page" aria-labelledby="settlement-page-heading">
+  <!-- Top Utility Header Bar -->
+  <header class="top-utility-bar">
+    <div class="global-search-box" role="search">
+      <svg class="search-icon" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+        <circle cx="9" cy="9" r="6" fill="none" stroke="#1685c5" stroke-width="1.8" />
+        <line x1="13.5" y1="13.5" x2="17.5" y2="17.5" stroke="#1685c5" stroke-width="1.8" stroke-linecap="round" />
+      </svg>
+      <input
+        type="search"
+        [ngModel]="searchTerm()"
+        (ngModelChange)="searchTerm.set($event)"
+        placeholder="Search employee advances, petty cash, vouchers..."
+        aria-label="Search employee advances, petty cash, vouchers"
+      />
+      <span class="kbd-shortcut">Ctrl+K</span>
+    </div>
+
+    <div class="utility-right">
+      <div class="date-location-chip">
+        <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+          <rect x="2.5" y="4" width="15" height="13.5" rx="2" fill="none" stroke="#1685c5" stroke-width="1.6" />
+          <line x1="2.5" y1="8" x2="17.5" y2="8" stroke="#1685c5" stroke-width="1.6" />
+          <line x1="6.5" y1="2.5" x2="6.5" y2="5.5" stroke="#1685c5" stroke-width="1.6" stroke-linecap="round" />
+          <line x1="13.5" y1="2.5" x2="13.5" y2="5.5" stroke="#1685c5" stroke-width="1.6" stroke-linecap="round" />
+        </svg>
+        <div>
+          <p class="date-label">Fri, 13 Nov 2026</p>
+          <p class="showroom-sub">08:45 AM · Main Cash Till</p>
+        </div>
+      </div>
+
+      <a class="notification-bell" routerLink="/finance/advances" aria-label="5 active finance notifications">
+        <svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true">
+          <path d="M10 3a5 5 0 0 0-5 5v2.8L3.4 13a.8.8 0 0 0 .65 1.25h11.9A.8.8 0 0 0 16.6 13L15 10.8V8a5 5 0 0 0-5-5Z" fill="none" stroke="#073763" stroke-width="1.6" />
+          <path d="M8.2 15.8a2 2 0 0 0 3.6 0" fill="none" stroke="#073763" stroke-width="1.6" stroke-linecap="round" />
+        </svg>
+        <span class="bell-badge">5</span>
+      </a>
+
+      <div class="vertical-divider" aria-hidden="true"></div>
+
+      <div class="profile-chip">
+        <div class="profile-meta">
+          <p class="profile-name">{{ userDisplayName() }}</p>
+          <p class="profile-role">{{ userRoleSubtitle() }}</p>
+        </div>
+        <div class="profile-avatar" aria-hidden="true">{{ userInitials() }}</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Sub-Navigation Tabs across all 5 Member 9 Screens -->
+  <nav class="module-subnav" aria-label="Employee Advances & Cash Management screens">
+    @for (tab of navTabs; track tab.route) {
+      <a
+        class="subnav-tab"
+        [routerLink]="tab.route"
+        routerLinkActive="active-tab"
+        [routerLinkActiveOptions]="{ exact: tab.exact }"
+      >
+        {{ tab.label }}
+      </a>
+    }
+  </nav>
+
+  <!-- Page Title & Back to Ledger Button -->
+  <div class="page-header-row">
+    <div>
+      <h1 id="settlement-page-heading">Advance Settlement &amp; Receipt</h1>
+      <p class="page-subtitle">
+        Recover outstanding staff advances via payroll deduction or cash repayment &amp; issue official receipt
+      </p>
+    </div>
+
+    <a routerLink="/finance/advances" class="btn-header-outline">
+      ← Advance Ledger
+    </a>
+  </div>
+
+  <!-- Feedback Banners -->
+  @if (error()) {
+    <div class="feedback-banner error-banner" role="alert">
+      <strong>Error:</strong> {{ error() }}
+    </div>
+  }
+  @if (success()) {
+    <div class="feedback-banner success-banner" role="status">
+      <strong>Success:</strong> {{ success() }}
+    </div>
+  }
+
+  <!-- Main Two-Column Settlement Grid -->
+  <div class="settlement-main-grid">
+    <!-- Left Column: Card 1 (Employee Summary) + Card 2 (Settlement Form) -->
+    <div class="settlement-left-col">
+      <!-- Card 1: 1. Employee & Outstanding Advance Summary -->
+      <article class="settlement-card">
+        <div class="card-header-line">
+          <h2>1. Employee &amp; Outstanding Advance Summary</h2>
+          <span class="open-advances-pill">
+            <span class="pill-dot" aria-hidden="true"></span>
+            {{ openAdvancesCount() }} Open Advances
+          </span>
+        </div>
+
+        <div class="card-divider"></div>
+
+        <!-- Employee Profile Row -->
+        <div class="employee-summary-row">
+          <div class="emp-avatar-circle" aria-hidden="true">{{ selectedEmployee().initials }}</div>
+          <div class="emp-bio">
+            <p class="emp-name">{{ selectedEmployee().fullName }}</p>
+            <p class="emp-role-line">
+              {{ selectedEmployeeRoleDisplay() }} · {{ selectedEmployee().employeeCode }} · NIC:
+              {{ selectedEmployeeNic() }}
+            </p>
+            <p class="emp-dept-line">
+              {{ selectedEmployee().department }} · Hybrid (Base Salary + Piecework)
+            </p>
+          </div>
+          <button
+            type="button"
+            class="btn-change-emp"
+            (click)="cycleEmployee()"
+            title="Switch employee to settle"
+          >
+            Change
+          </button>
+        </div>
+
+        <div class="card-divider light-divider"></div>
+
+        <!-- 3 Mini Financial Metrics -->
+        <div class="emp-metrics-grid">
+          <div class="metric-tile tile-neutral">
+            <p class="tile-label">MTD GROSS EARNINGS</p>
+            <p class="tile-value navy-text">{{ formatLkr(selectedEmployee().totalMtdGrossEarnings) }}</p>
+            <p class="tile-sub">
+              Base {{ formatShortK(selectedEmployee().baseMonthlySalary) }} + Piecework
+              {{ formatShortK(selectedEmployee().approvedPieceworkCredits) }}
+            </p>
+          </div>
+
+          <div class="metric-tile tile-danger">
+            <p class="tile-label danger-label">OUTSTANDING ADVANCE</p>
+            <p class="tile-value red-text">- {{ formatLkr(totalOutstanding()) }}</p>
+            <p class="tile-sub danger-sub">{{ openAdvancesVoucherSub() }}</p>
+          </div>
+
+          <div class="metric-tile tile-success">
+            <p class="tile-label success-label">MAX PAYROLL DEDUCT</p>
+            <p class="tile-value green-text">{{ formatLkr(maxPayrollDeduct()) }}</p>
+            <p class="tile-sub success-sub">100% Recoverable Now</p>
+          </div>
+        </div>
+      </article>
+
+      <!-- Card 2: 2. Advance Settlement & Recovery Details -->
+      <article class="settlement-card" [formGroup]="form">
+        <div class="card-title-block">
+          <h2>2. Advance Settlement &amp; Recovery Details</h2>
+          <p class="card-subtitle">
+            Select recovery method and enter settlement amount to update worker_advances
+          </p>
+        </div>
+
+        <!-- 3 Settlement Method Cards -->
+        <div class="method-cards-grid" role="radiogroup" aria-label="Settlement recovery method">
+          <button
+            type="button"
+            class="method-option-card"
+            [class.active-method]="selectedMethod() === 'PAYROLL_DEDUCT'"
+            (click)="selectMethod('PAYROLL_DEDUCT')"
+          >
+            <span class="method-badge-circle" [class.active-circle]="selectedMethod() === 'PAYROLL_DEDUCT'">
+              ✓
+            </span>
+            <span class="method-text">
+              <strong class="method-name">Payroll Deduct</strong>
+              <small class="method-sub">Nov Payroll Run</small>
+            </span>
+          </button>
+
+          <button
+            type="button"
+            class="method-option-card"
+            [class.active-method]="selectedMethod() === 'CASH_REPAYMENT'"
+            (click)="selectMethod('CASH_REPAYMENT')"
+          >
+            <span class="method-badge-circle" [class.active-circle]="selectedMethod() === 'CASH_REPAYMENT'">
+              Rs
+            </span>
+            <span class="method-text">
+              <strong class="method-name">Cash Repayment</strong>
+              <small class="method-sub">Till #1 Cash In</small>
+            </span>
+          </button>
+
+          <button
+            type="button"
+            class="method-option-card"
+            [class.active-method]="selectedMethod() === 'BANK_TRANSFER'"
+            (click)="selectMethod('BANK_TRANSFER')"
+          >
+            <span class="method-badge-circle" [class.active-circle]="selectedMethod() === 'BANK_TRANSFER'">
+              HNB
+            </span>
+            <span class="method-text">
+              <strong class="method-name">Bank Transfer</strong>
+              <small class="method-sub">Slip Verification</small>
+            </span>
+          </button>
+        </div>
+
+        <!-- Settlement Amount & Settlement Voucher # Row -->
+        <div class="settlement-inputs-row">
+          <div class="field-group">
+            <label for="settlement-amount-input">Settlement Amount (LKR) *</label>
+            <div class="amount-input-box">
+              <input
+                id="settlement-amount-input"
+                type="text"
+                formControlName="settlementAmountInput"
+                (blur)="onAmountBlur()"
+              />
+              <span class="pct-chip">{{ recoveryPercent() }}%</span>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label for="settlement-voucher-input">Settlement Voucher #</label>
+            <input
+              id="settlement-voucher-input"
+              type="text"
+              class="readonly-voucher-input"
+              formControlName="settlementVoucher"
+              readonly
+            />
+          </div>
+        </div>
+
+        <!-- Advance Recovery Progress & Remaining Balance Card -->
+        <div class="recovery-progress-box">
+          <div class="progress-top-line">
+            <span class="progress-caption">ADVANCE RECOVERY PROGRESS</span>
+            <span class="progress-stat">
+              Settling Rs. {{ (settlementAmountSignal() | number: '1.0-0') }} of Rs.
+              {{ (totalOutstanding() | number: '1.0-0') }}
+            </span>
+          </div>
+
+          <div class="progress-track">
+            <div class="progress-fill" [style.width.%]="recoveryPercent()"></div>
+          </div>
+
+          <div class="remaining-balance-line">
+            <span class="remaining-label">Remaining Unsettled Advance Balance:</span>
+            <span class="remaining-amount">{{ formatLkr(remainingAdvanceBalance()) }}</span>
+            <span class="carry-forward-pill">
+              {{ remainingAdvanceBalance() > 0 ? 'Carry Forward' : 'Fully Settled' }}
+            </span>
+          </div>
+
+          <p class="allocation-footnote">{{ allocationSummaryNote() }}</p>
+        </div>
+
+        <!-- Stored Procedure Confirmation Banner -->
+        <div class="sp-confirm-banner">
+          <span class="sp-check-circle" aria-hidden="true">✓</span>
+          <div>
+            <p class="sp-banner-title">
+              Settlement Verified &amp; Ready to Commit (sp_settle_monthly_payroll)
+            </p>
+            <p class="sp-banner-sub">
+              Employee net payout after advance recovery: {{ formatLkr(netEmployeePayoutAfterRecovery()) }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Bottom Action Buttons -->
+        <div class="settlement-actions-row">
+          <button
+            type="button"
+            class="btn-confirm-settlement"
+            [disabled]="submitting()"
+            (click)="confirmSettlement()"
+          >
+            <span aria-hidden="true">✓</span>
+            <span>
+              {{ submitting() ? 'Committing Settlement...' : 'Confirm Settlement & Issue Receipt' }}
+            </span>
+          </button>
+
+          <a routerLink="/finance/advances" class="btn-cancel-settlement">Cancel</a>
+        </div>
+      </article>
+    </div>
+
+    <!-- Right Column: Advance Settlement Receipt Preview -->
+    <article class="settlement-card receipt-preview-card" aria-label="Advance Settlement Receipt Preview">
+      <div class="receipt-preview-header">
+        <h2>Advance Settlement Receipt Preview</h2>
+        <div class="receipt-header-btns">
+          <button type="button" class="btn-download-pdf" (click)="downloadPdf()">Download PDF</button>
+          <button type="button" class="btn-print-receipt" (click)="printReceipt()">Print Receipt</button>
+        </div>
+      </div>
+
+      <!-- Inner Printable Voucher Sheet -->
+      <div class="voucher-sheet">
+        <!-- Letterhead Banner -->
+        <header class="voucher-letterhead">
+          <div class="letterhead-brand">
+            <div class="brand-w-box" aria-hidden="true">W</div>
+            <div>
+              <p class="letterhead-title">WIMALASIRI FURNITURE</p>
+              <p class="letterhead-address">High Level Road, Kottawa · Tel: 011-2845120</p>
+            </div>
+          </div>
+
+          <div class="letterhead-right">
+            <span class="voucher-badge">
+              <span class="voucher-dot" aria-hidden="true"></span>
+              SETTLEMENT VOUCHER
+            </span>
+            <p class="voucher-no">No: {{ form.controls.settlementVoucher.value.slice(0, 13) }}</p>
+          </div>
+        </header>
+
+        <!-- Receipt Body -->
+        <div class="voucher-body">
+          <!-- Meta Grid -->
+          <div class="voucher-meta-grid">
+            <div>
+              <p class="meta-caption">EMPLOYEE NAME &amp; ID</p>
+              <p class="meta-primary">
+                {{ selectedEmployee().fullName }} ({{ selectedEmployee().employeeCode }})
+              </p>
+              <p class="meta-secondary">
+                {{ selectedEmployee().department }} · {{ selectedEmployeeRoleDisplay() }}
+              </p>
+            </div>
+
+            <div>
+              <p class="meta-caption">SETTLEMENT DATE &amp; METHOD</p>
+              <p class="meta-primary">13 Nov 2026 · 08:45 AM</p>
+              <p class="meta-method">{{ settlementMethodDisplay() }}</p>
+            </div>
+          </div>
+
+          <div class="voucher-divider"></div>
+
+          <!-- Line Item Table -->
+          <table class="voucher-items-table">
+            <thead>
+              <tr>
+                <th scope="col">ADVANCE / SETTLEMENT DESCRIPTION</th>
+                <th scope="col" class="center-col">STATUS</th>
+                <th scope="col" class="right-col">AMOUNT (LKR)</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of receiptAdvanceLines(); track item.voucherReference) {
+                <tr>
+                  <td>
+                    <p class="item-title">{{ item.titleLabel }}</p>
+                    <p class="item-sub">{{ item.subtitleLabel }}</p>
+                  </td>
+                  <td class="center-col">
+                    <span class="receipt-status-pill" [ngClass]="item.statusClass">
+                      {{ item.statusLabel }}
+                    </span>
+                  </td>
+                  <td class="right-col item-amount">- {{ formatLkr(item.amount) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+
+          <!-- Reconciliation Summary Box -->
+          <div class="voucher-reconciliation-box">
+            <div class="recon-line">
+              <span class="recon-label">Total Outstanding Advance Balance</span>
+              <span class="recon-out">- {{ formatLkr(totalOutstanding()) }}</span>
+            </div>
+
+            <div class="recon-line">
+              <span class="recon-recovered-label">
+                Settlement Recovered Today ({{ settlementMethodShortLabel() }})
+              </span>
+              <span class="recon-in">+ {{ formatLkr(settlementAmountSignal()) }}</span>
+            </div>
+
+            <div class="recon-divider"></div>
+
+            <div class="recon-line recon-total-line">
+              <span class="recon-remaining-title">REMAINING ADVANCE BALANCE</span>
+              <span class="recon-remaining-val">- {{ formatLkr(remainingAdvanceBalance()) }}</span>
+            </div>
+
+            <div class="recon-confirmation-strip">
+              <p class="confirm-line-1">
+                CONFIRMATION: {{ formatLkr(settlementAmountSignal()) }} credited to Employee Advance Ledger
+              </p>
+              <p class="confirm-line-2">
+                Posted by {{ userDisplayName() }} ({{ userRoleSubtitle() }}) · Ref:
+                {{ form.controls.settlementVoucher.value }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Signatures Footer -->
+          <div class="voucher-signatures">
+            <div class="sig-block">
+              <div class="sig-line"></div>
+              <p class="sig-label">Employee Signature ({{ selectedEmployee().employeeCode }})</p>
+            </div>
+
+            <div class="sig-block">
+              <div class="sig-line"></div>
+              <p class="sig-label">Authorized Cashier / Owner</p>
+            </div>
+          </div>
+
+          <p class="voucher-footer-stamp">
+            WoodFlow ERP · Official Employee Advance Recovery Voucher · Kottawa
+          </p>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>

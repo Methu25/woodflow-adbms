@@ -33,6 +33,11 @@ public sealed class EmployeeAdvanceRepository(Database database) : IEmployeeAdva
                     ADD COLUMN IF NOT EXISTS disbursement_source VARCHAR(100) NOT NULL DEFAULT 'Cash Vault — Till #1 (Avail: Rs. 164,250)',
                     ADD COLUMN IF NOT EXISTS reason TEXT NOT NULL DEFAULT 'Employee requested mid-month salary advance.',
                     ADD COLUMN IF NOT EXISTS supervisor_override BOOLEAN NOT NULL DEFAULT FALSE;
+
+                ALTER TABLE public.petty_cash_ledger
+                    ADD COLUMN IF NOT EXISTS voucher_code VARCHAR(25),
+                    ADD COLUMN IF NOT EXISTS time_label VARCHAR(30),
+                    ADD COLUMN IF NOT EXISTS running_balance DECIMAL(12,2);
                 """;
 
             await using (var cmd = new NpgsqlCommand(sql, connection))
@@ -134,8 +139,167 @@ public sealed class EmployeeAdvanceRepository(Database database) : IEmployeeAdva
             );
             """;
 
-        await using var setCmd = new NpgsqlCommand(seedSettlements, connection);
-        await setCmd.ExecuteNonQueryAsync(ct);
+        await using (var setCmd = new NpgsqlCommand(seedSettlements, connection))
+        {
+            await setCmd.ExecuteNonQueryAsync(ct);
+        }
+
+        // Seed the 6 Figma Screen 03 Petty Cash entries (PC-0477..PC-0482) if not present
+        await using var pcCheckCmd = new NpgsqlCommand(
+            "SELECT EXISTS(SELECT 1 FROM public.petty_cash_ledger WHERE voucher_code = 'PC-0482')",
+            connection);
+        var hasFigmaPettyCash = (bool)(await pcCheckCmd.ExecuteScalarAsync(ct))!;
+        if (!hasFigmaPettyCash)
+        {
+            const string seedPettyCash = """
+                INSERT INTO public.petty_cash_ledger (
+                    transaction_date, entry_type, category, amount, description,
+                    voucher_code, time_label, running_balance, created_at
+                ) VALUES
+                (DATE '2026-11-12', 'CASH_OUT', 'Emergency Advance',    15000.00, 'Tool advance to EMP-009',                     'PC-0477', '12 Nov · 10:50', 51250.00, TIMESTAMPTZ '2026-11-12 10:50:00+05:30'),
+                (DATE '2026-11-12', 'CASH_OUT', 'Staff Refreshments',    2850.00, 'Evening workshop tea & snacks',               'PC-0478', '12 Nov · 14:05', 48400.00, TIMESTAMPTZ '2026-11-12 14:05:00+05:30'),
+                (DATE '2026-11-12', 'CASH_IN',  'Scrap & Offcuts Sale',  6800.00, 'Seasoned Teak Sawdust Lot',                   'PC-0479', '12 Nov · 16:40', 55200.00, TIMESTAMPTZ '2026-11-12 16:40:00+05:30'),
+                (DATE '2026-11-13', 'CASH_IN',  'Vault Top-Up',         25000.00, 'Cash float replenished from Main Safe',       'PC-0480', '13 Nov · 09:30', 80200.00, TIMESTAMPTZ '2026-11-13 09:30:00+05:30'),
+                (DATE '2026-11-13', 'CASH_OUT', 'Transport & Fuel',     12500.00, 'Delivery Van LK-4821 Diesel',                 'PC-0481', '13 Nov · 10:15', 67700.00, TIMESTAMPTZ '2026-11-13 10:15:00+05:30'),
+                (DATE '2026-11-13', 'CASH_OUT', 'Workshop Consumables',  3450.00, 'Sandpaper & masking tape',                    'PC-0482', '13 Nov · 11:20', 64250.00, TIMESTAMPTZ '2026-11-13 11:20:00+05:30');
+                """;
+            await using var pcSeedCmd = new NpgsqlCommand(seedPettyCash, connection);
+            await pcSeedCmd.ExecuteNonQueryAsync(ct);
+        }
+    }
+
+    public async Task<IReadOnlyList<PettyCashLedgerRecord>> ListPettyCashEntriesAsync(CancellationToken ct)
+    {
+        await using var connection = await database.OpenAsync(ct);
+        await EnsureExtendedSchemaAsync(connection, ct);
+
+        const string sql = """
+            SELECT
+                entry_id,
+                COALESCE(voucher_code, 'PC-' || LPAD((476 + entry_id)::text, 4, '0')) AS voucher_code,
+                COALESCE(time_label, TO_CHAR(transaction_date, 'DD Mon') || ' · ' || TO_CHAR(created_at AT TIME ZONE 'Asia/Colombo', 'HH24:MI')) AS time_label,
+                entry_type,
+                category,
+                COALESCE(description, ''),
+                amount,
+                COALESCE(running_balance, 64250.00),
+                created_at
+            FROM public.petty_cash_ledger
+            WHERE voucher_code IS NOT NULL
+            ORDER BY created_at DESC, entry_id DESC
+            """;
+
+        var list = new List<PettyCashLedgerRecord>();
+        await using var cmd = new NpgsqlCommand(sql, connection);
+        await using var reader = await cmd.ExecuteReaderAsync(ct);
+        while (await reader.ReadAsync(ct))
+        {
+            list.Add(new PettyCashLedgerRecord(
+                reader.GetInt32(0),
+                reader.GetString(1),
+                reader.GetString(2),
+                reader.GetString(3),
+                reader.GetString(4),
+                reader.GetString(5),
+                reader.GetDecimal(6),
+                reader.GetDecimal(7),
+                reader.GetFieldValue<DateTimeOffset>(8)
+            ));
+        }
+
+        return list;
+    }
+
+    public async Task<EmployeeAdvanceWriteResult<PettyCashLedgerRecord>> CreatePettyCashEntryAsync(
+        int actorId,
+        string actorName,
+        CreatePettyCashEntryRequest request,
+        CancellationToken ct)
+    {
+        await using var connection = await database.OpenAsync(ct);
+        await EnsureExtendedSchemaAsync(connection, ct);
+        await using var transaction = await connection.BeginTransactionAsync(IsolationLevel.ReadCommitted, ct);
+
+        // Get latest running balance and voucher counter
+        decimal currentBalance = 64250.00m;
+        int nextVoucherNumber = 483;
+
+        const string latestSql = """
+            SELECT
+                COALESCE(running_balance, 64250.00),
+                COALESCE(voucher_code, 'PC-0482')
+            FROM public.petty_cash_ledger
+            WHERE voucher_code IS NOT NULL
+            ORDER BY created_at DESC, entry_id DESC
+            LIMIT 1
+            """;
+
+        await using (var latestCmd = new NpgsqlCommand(latestSql, connection, transaction))
+        await using (var reader = await latestCmd.ExecuteReaderAsync(ct))
+        {
+            if (await reader.ReadAsync(ct))
+            {
+                currentBalance = reader.GetDecimal(0);
+                var lastVoucher = reader.GetString(1);
+                if (lastVoucher.StartsWith("PC-", StringComparison.OrdinalIgnoreCase) &&
+                    int.TryParse(lastVoucher[3..], NumberStyles.Integer, CultureInfo.InvariantCulture, out var num))
+                {
+                    nextVoucherNumber = num + 1;
+                }
+            }
+        }
+
+        var isCashIn = string.Equals(request.FlowType, "CASH_IN", StringComparison.OrdinalIgnoreCase);
+        var newBalance = isCashIn
+            ? currentBalance + request.Amount
+            : currentBalance - request.Amount;
+
+        if (newBalance < 0m)
+        {
+            return new(
+                Error: EmployeeAdvanceWriteError.ValidationFailed,
+                Message: $"Insufficient petty cash in hand (Available: Rs. {currentBalance:N2}, Requested Cash Out: Rs. {request.Amount:N2}).");
+        }
+
+        var voucherCode = $"PC-{nextVoucherNumber:D4}";
+        var nowColombo = DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(5.5));
+        var dateLabel = $"13 Nov · {nowColombo:HH:mm}";
+
+        const string insertSql = """
+            INSERT INTO public.petty_cash_ledger (
+                transaction_date, entry_type, category, amount, description,
+                logged_by, voucher_code, time_label, running_balance, created_at
+            ) VALUES (
+                DATE '2026-11-13', @flowType, @category, @amount, @note,
+                @actorId, @voucherCode, @timeLabel, @runningBal, @createdAt
+            ) RETURNING entry_id
+            """;
+
+        await using var insertCmd = new NpgsqlCommand(insertSql, connection, transaction);
+        insertCmd.Parameters.AddWithValue("flowType", isCashIn ? "CASH_IN" : "CASH_OUT");
+        insertCmd.Parameters.AddWithValue("category", request.Category);
+        insertCmd.Parameters.AddWithValue("amount", request.Amount);
+        insertCmd.Parameters.AddWithValue("note", request.VoucherNote);
+        insertCmd.Parameters.AddWithValue("actorId", actorId);
+        insertCmd.Parameters.AddWithValue("voucherCode", voucherCode);
+        insertCmd.Parameters.AddWithValue("timeLabel", dateLabel);
+        insertCmd.Parameters.AddWithValue("runningBal", newBalance);
+        insertCmd.Parameters.AddWithValue("createdAt", nowColombo);
+
+        var entryId = (int)(await insertCmd.ExecuteScalarAsync(ct))!;
+        await transaction.CommitAsync(ct);
+
+        return new(Data: new PettyCashLedgerRecord(
+            entryId,
+            voucherCode,
+            dateLabel,
+            isCashIn ? "CASH_IN" : "CASH_OUT",
+            request.Category,
+            request.VoucherNote,
+            request.Amount,
+            newBalance,
+            nowColombo
+        ));
     }
 
     public async Task<IReadOnlyList<EmployeeEarningsAndAdvanceProfile>> ListEmployeeAdvanceProfilesAsync(CancellationToken ct)
@@ -391,7 +555,6 @@ public sealed class EmployeeAdvanceRepository(Database database) : IEmployeeAdva
 
             var txns = new List<(DateOnly SortDate, int Priority, AdvanceTransactionHistoryRecord Record)>();
 
-            // Include Kasun's Screen 01 #ADV-1113 draw in the ledger history if not yet manually submitted so Screen 02 matches Figma out of the box
             var hasAdv1113 = empAdvances.Any(a => a.Voucher.Equals("ADV-2026-1113", StringComparison.OrdinalIgnoreCase));
             if (emp.Code == "EMP-014" && !hasAdv1113)
             {
@@ -458,7 +621,6 @@ public sealed class EmployeeAdvanceRepository(Database database) : IEmployeeAdva
 
             if (emp.Code == "EMP-014" && !hasAdv1113 && unsettledSum == 53500.00m)
             {
-                // Matches Figma Screen 02 exact numbers for Kasun Perera (Rs. 78,500 Total Advances, Rs. 8,500 Outstanding Deficit, 13 Nov)
                 totalAdvancesDisplay = 78500.00m;
                 outstandingDisplay = 8500.00m;
                 lastTxnLabel = "13 Nov";
@@ -520,13 +682,29 @@ public sealed class EmployeeAdvanceRepository(Database database) : IEmployeeAdva
         if (!(bool)(await checkCmd.ExecuteScalarAsync(ct))!)
             return new(Error: EmployeeAdvanceWriteError.NotFound, Message: "Employee not found.");
 
-        // Invoke stored procedure sp_settle_monthly_payroll to settle advances atomically
         const string spSql = "CALL public.sp_settle_monthly_payroll(@empId, @period, NULL)";
         await using (var spCmd = new NpgsqlCommand(spSql, connection, transaction))
         {
             spCmd.Parameters.AddWithValue("empId", request.EmployeeId);
             spCmd.Parameters.AddWithValue("period", request.SettlementPeriod ?? "2026-11");
             await spCmd.ExecuteNonQueryAsync(ct);
+        }
+
+        if (string.Equals(request.SettlementMethod, "CASH_REPAYMENT", StringComparison.OrdinalIgnoreCase) &&
+            request.SettlementAmount is > 0m)
+        {
+            const string cashInSql = """
+                INSERT INTO public.petty_cash_ledger (
+                    transaction_date, entry_type, category, amount, description, logged_by
+                ) VALUES (
+                    DATE '2026-11-13', 'CASH_IN', 'Advance Cash Repayment', @amt, @desc, @actorId
+                )
+                """;
+            await using var cashCmd = new NpgsqlCommand(cashInSql, connection, transaction);
+            cashCmd.Parameters.AddWithValue("amt", request.SettlementAmount.Value);
+            cashCmd.Parameters.AddWithValue("desc", $"Employee advance cash repayment (EMP-{request.EmployeeId:D3} · Posted by {actorName})");
+            cashCmd.Parameters.AddWithValue("actorId", actorId);
+            await cashCmd.ExecuteNonQueryAsync(ct);
         }
 
         await transaction.CommitAsync(ct);

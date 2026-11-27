@@ -1,0 +1,306 @@
+<section class="finance-page" aria-labelledby="petty-cash-heading">
+  <!-- Figma Top Header Bar (Node 109:2001..109:2025) -->
+  <header class="top-utility-bar">
+    <div class="global-search-box">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <circle cx="7" cy="7" r="5.25" stroke="#1685C5" stroke-width="1.8" />
+        <path d="M11 11L14.2 14.2" stroke="#1685C5" stroke-width="1.8" stroke-linecap="round" />
+      </svg>
+      <input
+        type="search"
+        [ngModel]="searchTerm()"
+        (ngModelChange)="onSearchChange($event)"
+        placeholder="Search employee advances, petty cash, vouchers..."
+        aria-label="Search employee advances, petty cash, vouchers"
+      />
+      <span class="kbd-shortcut" aria-hidden="true">Ctrl+K</span>
+    </div>
+
+    <div class="utility-right">
+      <div class="date-location-chip">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <rect x="1.5" y="2.8" width="13" height="11.5" rx="1.8" stroke="#1685C5" stroke-width="1.6" />
+          <path d="M1.5 6.2H14.5M5 1.4V3.6M11 1.4V3.6" stroke="#1685C5" stroke-width="1.6" stroke-linecap="round" />
+        </svg>
+        <div>
+          <p class="date-label">Fri, 13 Nov 2026</p>
+          <p class="showroom-sub">08:45 AM · Main Cash Till</p>
+        </div>
+      </div>
+
+      <span class="notification-bell" title="5 Active Advance & Cash Vault Alerts">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path
+            d="M8 2.2C5.9 2.2 4.2 3.9 4.2 6V9.2L2.9 10.8V11.6H13.1V10.8L11.8 9.2V6C11.8 3.9 10.1 2.2 8 2.2Z"
+            stroke="#073763"
+            stroke-width="1.5"
+          />
+          <path d="M6.5 12.6C6.7 13.4 7.3 13.9 8 13.9C8.7 13.9 9.3 13.4 9.5 12.6" stroke="#073763" stroke-width="1.5" stroke-linecap="round" />
+        </svg>
+        <span class="bell-badge">5</span>
+      </span>
+
+      <span class="vertical-divider" aria-hidden="true"></span>
+
+      <div class="profile-chip">
+        <div class="profile-meta">
+          <p class="profile-name">{{ userDisplayName() }}</p>
+          <p class="profile-role">{{ userRoleSubtitle() }}</p>
+        </div>
+        <div class="profile-avatar" aria-hidden="true">{{ userInitials() }}</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Finance Module Sub-Navigation Bar -->
+  <nav class="module-subnav" aria-label="Employee Advances & Cash Management screens">
+    @for (tab of navTabs; track tab.route) {
+      <a
+        [routerLink]="tab.route"
+        routerLinkActive="active-tab"
+        [routerLinkActiveOptions]="{ exact: tab.exact }"
+        class="subnav-tab"
+      >
+        {{ tab.label }}
+      </a>
+    }
+  </nav>
+
+  <!-- Page Title & Export Petty Cash Action Button (Node 109:2026..109:2030) -->
+  <div class="page-header-row">
+    <div>
+      <h1 id="petty-cash-heading">Petty Cash Ledger</h1>
+      <p class="page-subtitle">
+        Record workshop cash expenses, track vault replenishments &amp; verify running cash balance
+      </p>
+    </div>
+
+    <button type="button" class="btn-header-outline" (click)="exportPettyCash()">
+      <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+        <path
+          d="M7 1.8V9.2M7 9.2L4.2 6.4M7 9.2L9.8 6.4M2.2 11.8H11.8"
+          stroke="#1685C5"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+      Export Petty Cash
+    </button>
+  </div>
+
+  @if (error()) {
+    <div class="feedback-banner error-banner" role="alert">{{ error() }}</div>
+  }
+  @if (success()) {
+    <div class="feedback-banner success-banner" role="status">{{ success() }}</div>
+  }
+
+  <!-- Top Row: Cash in Hand Vault KPI Card (360px) + Quick Petty Cash Entry Card with Cash In / Cash Out Toggle (774px) -->
+  <div class="petty-top-grid">
+    <!-- Left Card: Cash in Hand (Petty Cash Vault) (Node 109:2032..109:2035) -->
+    <div class="cash-vault-card">
+      <p class="vault-caption">CASH IN HAND (PETTY CASH VAULT)</p>
+      <p class="vault-balance">{{ formatLkr(cashInHandBalance()) }}</p>
+      <p class="vault-today-sub">
+        In today: + {{ formatWholeLkr(inTodayAmount()) }} | Out today: - {{ formatWholeLkr(outTodayAmount()) }}
+      </p>
+    </div>
+
+    <!-- Right Card: Quick Petty Cash Entry (Updated with Cash In / Cash Out Flow Toggle & Dynamic Category) -->
+    <div class="quick-entry-card">
+      <div class="quick-entry-header">
+        <div class="quick-title-group">
+          <h2>Quick Petty Cash Entry</h2>
+          <span class="quick-hint">· Category list adapts to selected Cash In / Cash Out flow</span>
+        </div>
+
+        <span class="till-active-pill">
+          <span class="till-dot" aria-hidden="true"></span>
+          Till #2 Active
+        </span>
+      </div>
+
+      <form [formGroup]="entryForm" (ngSubmit)="submitEntry()" class="quick-entry-bar">
+        <!-- 1. Flow Type * (Cash In / Cash Out Segmented Toggle) -->
+        <div class="entry-field flow-toggle-field">
+          <label>Flow Type *</label>
+          <div class="flow-segmented-control" role="group" aria-label="Select Cash In or Cash Out flow">
+            <button
+              type="button"
+              class="flow-seg-btn"
+              [class.active-cash-in]="selectedFlowType() === 'CASH_IN'"
+              (click)="selectFlowType('CASH_IN')"
+            >
+              <span class="flow-dot dot-green" aria-hidden="true"></span>
+              Cash In
+            </button>
+
+            <button
+              type="button"
+              class="flow-seg-btn"
+              [class.active-cash-out]="selectedFlowType() === 'CASH_OUT'"
+              (click)="selectFlowType('CASH_OUT')"
+            >
+              <span class="flow-dot dot-red" aria-hidden="true"></span>
+              Cash Out
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. Dynamic Cash Out / Cash In Category * -->
+        <div class="entry-field category-field">
+          <label for="petty-category">{{ categoryFieldLabel() }}</label>
+          <div class="select-wrap">
+            <select id="petty-category" formControlName="category">
+              @for (cat of activeCategories(); track cat) {
+                <option [value]="cat">{{ cat }}</option>
+              }
+            </select>
+            <svg class="select-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none" aria-hidden="true">
+              <path d="M1 1L5 5L9 1" stroke="#8295A8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </div>
+        </div>
+
+        <!-- 3. Amount (LKR) * -->
+        <div class="entry-field amount-field">
+          <label for="petty-amount">Amount (LKR) *</label>
+          <input
+            id="petty-amount"
+            type="text"
+            formControlName="amountInput"
+            (blur)="onAmountBlur()"
+            class="amount-focus-input"
+            placeholder="Rs. 3,450.00"
+          />
+        </div>
+
+        <!-- 4. Voucher / Note * -->
+        <div class="entry-field note-field">
+          <label for="petty-note">Voucher / Note *</label>
+          <input
+            id="petty-note"
+            type="text"
+            formControlName="voucherNote"
+            placeholder="80-grit sandpaper rolls — Kottawa"
+          />
+        </div>
+
+        <!-- 5. + Add Submit Button -->
+        <div class="entry-action-col">
+          <button type="submit" class="btn-add-petty" [disabled]="saving()">
+            {{ saving() ? 'Adding…' : '+ Add' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Main Petty Cash Ledger Table Card (Node 109:2054..109:2131) -->
+  <div class="petty-table-card">
+    <div class="petty-filter-row">
+      <div class="filter-pills-group" role="tablist" aria-label="Filter petty cash transactions">
+        <button
+          type="button"
+          class="filter-pill"
+          [class.active-pill]="activeFilter() === 'ALL'"
+          (click)="setFilter('ALL')"
+        >
+          All Transactions ({{ allTransactionsCount() }})
+        </button>
+
+        <button
+          type="button"
+          class="filter-pill"
+          [class.active-pill]="activeFilter() === 'CASH_IN'"
+          (click)="setFilter('CASH_IN')"
+        >
+          Cash In (+)
+        </button>
+
+        <button
+          type="button"
+          class="filter-pill"
+          [class.active-pill]="activeFilter() === 'CASH_OUT'"
+          (click)="setFilter('CASH_OUT')"
+        >
+          Cash Out (-)
+        </button>
+      </div>
+
+      <p class="opening-balance-label">
+        Opening Balance: {{ formatLkr(openingBalanceAmount()) }} · Currency: LKR
+      </p>
+    </div>
+
+    <div class="table-responsive">
+      <table class="petty-ledger-table" aria-label="Petty Cash Transactions">
+        <thead>
+          <tr>
+            <th class="col-voucher">DATE &amp; VOUCHER</th>
+            <th class="col-cat">CATEGORY &amp; NOTE</th>
+            <th class="col-flow">FLOW TYPE</th>
+            <th class="col-num">CASH IN (+ LKR)</th>
+            <th class="col-num">CASH OUT (- LKR)</th>
+            <th class="col-num col-balance">RUNNING BALANCE</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (entry of entries(); track entry.entryId) {
+            <tr class="petty-row">
+              <td class="col-voucher">
+                <p class="cell-date">{{ entry.dateAndTimeLabel }}</p>
+                <p class="cell-code">{{ entry.voucherCode }}</p>
+              </td>
+
+              <td class="col-cat cell-cat-note">
+                {{ entry.categoryAndNoteLabel }}
+              </td>
+
+              <td class="col-flow">
+                <span
+                  class="flow-pill"
+                  [class.pill-cash-in]="entry.flowType === 'CASH_IN'"
+                  [class.pill-cash-out]="entry.flowType === 'CASH_OUT'"
+                >
+                  <span class="flow-pill-dot" aria-hidden="true"></span>
+                  {{ entry.flowLabel }}
+                </span>
+              </td>
+
+              <td class="col-num">
+                @if (entry.flowType === 'CASH_IN') {
+                  <span class="val-cash-in">+ {{ formatLkr(entry.amount) }}</span>
+                } @else {
+                  <span class="val-dash">—</span>
+                }
+              </td>
+
+              <td class="col-num">
+                @if (entry.flowType === 'CASH_OUT') {
+                  <span class="val-cash-out">- {{ formatLkr(entry.amount) }}</span>
+                } @else {
+                  <span class="val-dash">—</span>
+                }
+              </td>
+
+              <td class="col-num col-balance cell-running-bal">
+                {{ formatLkr(entry.runningBalance) }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="petty-table-footer">
+      <p class="footer-note">
+        Showing latest {{ entries().length }} petty cash entries · Cash In = Green, Cash Out = Red
+      </p>
+      <p class="footer-closing-bal">
+        Closing Till Balance: {{ formatLkr(closingTillBalanceAmount()) }}
+      </p>
+    </div>
+  </div>
+</section>

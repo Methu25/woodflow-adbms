@@ -95,9 +95,29 @@ export const routes: Routes = [
         loadComponent: () => import('./features/finance/advance-issuance.component').then(m => m.AdvanceIssuanceComponent),
       },
       {
+        path: 'finance/advances/settle/:employeeId',
+        title: 'Advance Settlement & Receipt | WoodFlow',
+        loadComponent: () => import('./features/finance/advance-settlement.component').then(m => m.AdvanceSettlementComponent),
+      },
+      {
+        path: 'finance/advances/settle',
+        title: 'Advance Settlement & Receipt | WoodFlow',
+        loadComponent: () => import('./features/finance/advance-settlement.component').then(m => m.AdvanceSettlementComponent),
+      },
+      {
         path: 'finance/advances',
         title: 'Employee Advance Ledger | WoodFlow',
         loadComponent: () => import('./features/finance/advance-ledger.component').then(m => m.AdvanceLedgerComponent),
+      },
+      {
+        path: 'finance/petty-cash',
+        title: 'Petty Cash Ledger | WoodFlow',
+        loadComponent: () => import('./features/finance/petty-cash-ledger.component').then(m => m.PettyCashLedgerComponent),
+      },
+      {
+        path: 'finance/daily-summary',
+        title: 'Daily Cash Summary | WoodFlow',
+        loadComponent: () => import('./features/finance/daily-cash-summary.component').then(m => m.DailyCashSummaryComponent),
       },
       {
         path: 'finance',

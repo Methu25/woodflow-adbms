@@ -10,6 +10,7 @@ namespace WoodFlow.Api.Controllers;
 [ApiController]
 [Route("api/finance/advances")]
 [Route("api/advances")]
+[Route("api/finance")]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public sealed class EmployeeAdvancesController(EmployeeAdvanceService service) : ControllerBase
 {
@@ -25,6 +26,34 @@ public sealed class EmployeeAdvancesController(EmployeeAdvanceService service) :
         string? filter = null,
         string? search = null) =>
         Ok(await service.GetAdvanceLedgerAsync(filter, search, ct));
+
+    [Authorize]
+    [HttpGet("petty-cash")]
+    public async Task<ActionResult<PettyCashLedgerResponseDto>> GetPettyCashLedger(
+        CancellationToken ct,
+        string? flowFilter = null,
+        string? search = null) =>
+        Ok(await service.GetPettyCashLedgerAsync(flowFilter, search, ct));
+
+    [Authorize]
+    [HttpGet("daily-summary")]
+    public async Task<ActionResult<DailyCashSummaryResponseDto>> GetDailyCashSummary(
+        CancellationToken ct,
+        string? date = null) =>
+        Ok(await service.GetDailyCashSummaryAsync(date, ct));
+
+    [Authorize]
+    [HttpPost("petty-cash")]
+    [RequestSizeLimit(8192)]
+    public async Task<IActionResult> CreatePettyCashEntry(CreatePettyCashEntryRequest request, CancellationToken ct)
+    {
+        var result = await service.CreatePettyCashEntryAsync(ActorId, ActorName, request, ct);
+        return result.Error switch
+        {
+            EmployeeAdvanceWriteError.None => StatusCode(201, result.Data),
+            _ => BadRequest(new { message = result.Message ?? "Invalid petty cash entry request." })
+        };
+    }
 
     [Authorize]
     [HttpGet("employees/{employeeId:int:min(1)}")]

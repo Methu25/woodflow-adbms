@@ -1,0 +1,317 @@
+<section class="finance-page" aria-labelledby="advance-ledger-heading">
+  <!-- Figma Top Header Bar (Node 109:1778..109:1802) -->
+  <header class="top-utility-bar">
+    <div class="global-search-box">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <circle cx="7" cy="7" r="5.25" stroke="#1685C5" stroke-width="1.8" />
+        <path d="M11 11L14.2 14.2" stroke="#1685C5" stroke-width="1.8" stroke-linecap="round" />
+      </svg>
+      <input
+        type="search"
+        [ngModel]="searchTerm()"
+        (ngModelChange)="onSearchChange($event)"
+        placeholder="Search employee advances, petty cash, vouchers..."
+        aria-label="Search employee advances, petty cash, vouchers"
+      />
+      <span class="kbd-shortcut" aria-hidden="true">Ctrl+K</span>
+    </div>
+
+    <div class="utility-right">
+      <div class="date-location-chip">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <rect x="1.5" y="2.8" width="13" height="11.5" rx="1.8" stroke="#1685C5" stroke-width="1.6" />
+          <path d="M1.5 6.2H14.5M5 1.4V3.6M11 1.4V3.6" stroke="#1685C5" stroke-width="1.6" stroke-linecap="round" />
+        </svg>
+        <div>
+          <p class="date-label">Fri, 13 Nov 2026</p>
+          <p class="showroom-sub">08:45 AM · Main Cash Till</p>
+        </div>
+      </div>
+
+      <span class="notification-bell" title="5 Active Advance & Cash Vault Alerts">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path
+            d="M8 2.2C5.9 2.2 4.2 3.9 4.2 6V9.2L2.9 10.8V11.6H13.1V10.8L11.8 9.2V6C11.8 3.9 10.1 2.2 8 2.2Z"
+            stroke="#073763"
+            stroke-width="1.5"
+          />
+          <path d="M6.5 12.6C6.7 13.4 7.3 13.9 8 13.9C8.7 13.9 9.3 13.4 9.5 12.6" stroke="#073763" stroke-width="1.5" stroke-linecap="round" />
+        </svg>
+        <span class="bell-badge">5</span>
+      </span>
+
+      <span class="vertical-divider" aria-hidden="true"></span>
+
+      <div class="profile-chip">
+        <div class="profile-meta">
+          <p class="profile-name">{{ userDisplayName() }}</p>
+          <p class="profile-role">{{ userRoleSubtitle() }}</p>
+        </div>
+        <div class="profile-avatar" aria-hidden="true">{{ userInitials() }}</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Page Title & + Issue Advance Button (Node 109:1803..109:1806) -->
+  <div class="page-header-row">
+    <div>
+      <h1 id="advance-ledger-heading">Employee Advance Ledger</h1>
+      <p class="page-subtitle">Monitor staff advance balances, payroll recoveries &amp; settle outstanding employee dues</p>
+    </div>
+
+    <a routerLink="/finance/advances/issue" class="btn-issue-advance-top">
+      + Issue Advance
+    </a>
+  </div>
+
+  @if (error()) {
+    <div class="feedback-banner error-banner" role="alert">{{ error() }}</div>
+  }
+  @if (success()) {
+    <div class="feedback-banner success-banner" role="status">{{ success() }}</div>
+  }
+
+  <!-- 4 KPI Summary Cards Row (Node 109:1807..109:1822) -->
+  <div class="kpi-cards-row">
+    <div class="kpi-card">
+      <p class="kpi-title">Total Advances Issued (Nov)</p>
+      <p class="kpi-value val-out-red">- {{ formatLkr(totalAdvancesIssuedMonth()) }}</p>
+      <p class="kpi-sub">Outgoing cash &amp; bank draws</p>
+    </div>
+
+    <div class="kpi-card">
+      <p class="kpi-title">Settled via Payroll / Cash</p>
+      <p class="kpi-value val-in-green">+ {{ formatLkr(settledViaPayrollOrCash()) }}</p>
+      <p class="kpi-sub">Recovered funds returned</p>
+    </div>
+
+    <div class="kpi-card">
+      <p class="kpi-title">Active Outstanding Balance</p>
+      <p class="kpi-value val-deficit-darkred">- {{ formatLkr(activeOutstandingBalance()) }}</p>
+      <p class="kpi-sub">Open balance across {{ activeOutstandingStaffCount() }} staff</p>
+    </div>
+
+    <div class="kpi-card">
+      <p class="kpi-title">Avg Recovery Period</p>
+      <p class="kpi-value val-navy-bold">{{ avgRecoveryPeriodLabel() }}</p>
+      <p class="kpi-sub">All draws tracked in payroll</p>
+    </div>
+  </div>
+
+  <!-- Main Two-Column Grid: Left Table (746px) + Right Drawer (388px) -->
+  <div class="ledger-main-grid">
+    <!-- Left Card: Staff Advance Table (Node 109:1823..109:1904) -->
+    <div class="staff-table-card">
+      <!-- Filter Tabs Bar (Node 109:1824..109:1829) -->
+      <div class="filter-pills-bar" role="tablist" aria-label="Filter staff advances by status">
+        <button
+          type="button"
+          class="filter-pill"
+          [class.active-pill]="activeFilter() === 'ALL'"
+          (click)="setFilter('ALL')"
+        >
+          All Staff ({{ allStaffCount() }})
+        </button>
+
+        <button
+          type="button"
+          class="filter-pill"
+          [class.active-pill]="activeFilter() === 'OUTSTANDING'"
+          (click)="setFilter('OUTSTANDING')"
+        >
+          Outstanding ({{ outstandingStaffCount() }})
+        </button>
+
+        <button
+          type="button"
+          class="filter-pill"
+          [class.active-pill]="activeFilter() === 'SETTLED'"
+          (click)="setFilter('SETTLED')"
+        >
+          Settled ({{ settledStaffCount() }})
+        </button>
+      </div>
+
+      <!-- Staff Advance Table -->
+      <div class="table-responsive">
+        <table class="advance-table" aria-label="Employee Advance Ledger">
+          <thead>
+            <tr>
+              <th class="col-emp">EMPLOYEE NAME</th>
+              <th class="col-num">TOTAL ADVANCES</th>
+              <th class="col-num">OUTSTANDING BAL</th>
+              <th class="col-date">LAST TXN</th>
+              <th class="col-status">STATUS</th>
+              <th class="col-action">ACTION</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of staffRows(); track row.employeeId) {
+              <tr
+                class="staff-row"
+                [class.selected-row]="row.employeeId === selectedEmployeeRow().employeeId"
+                (click)="selectRow(row)"
+              >
+                <td class="col-emp">
+                  <p class="emp-cell-name">{{ row.fullName }}</p>
+                  <p class="emp-cell-role">{{ row.roleTitle }}</p>
+                </td>
+
+                <td class="col-num cell-total-adv">
+                  {{ formatLkr(row.totalAdvancesAmount) }}
+                </td>
+
+                <td
+                  class="col-num"
+                  [class.cell-out-red]="row.outstandingBalance > 0"
+                  [class.cell-out-green]="row.outstandingBalance <= 0"
+                >
+                  {{ formatLkr(row.outstandingBalance) }}
+                </td>
+
+                <td class="col-date cell-last-txn">
+                  {{ row.lastTransactionDateLabel }}
+                </td>
+
+                <td class="col-status">
+                  <span
+                    class="status-pill"
+                    [class.pill-deficit]="row.status === 'DEFICIT'"
+                    [class.pill-open]="row.status === 'OPEN'"
+                    [class.pill-settled]="row.status === 'SETTLED'"
+                  >
+                    <span class="status-dot" aria-hidden="true"></span>
+                    {{ row.statusLabel }}
+                  </span>
+                </td>
+
+                <td class="col-action">
+                  @if (row.outstandingBalance > 0) {
+                    <button
+                      type="button"
+                      class="btn-row-settle"
+                      (click)="settleRow(row, $event)"
+                      [disabled]="settling()"
+                    >
+                      Settle
+                    </button>
+                  } @else {
+                    <span class="paid-label">Paid</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <p class="table-footer-hint">
+        Click any employee row to inspect full advance history &amp; cash settlements
+      </p>
+    </div>
+
+    <!-- Right Card: Employee Advance Drawer (Node 109:1905..109:1948) -->
+    <aside class="advance-drawer-card" aria-labelledby="drawer-heading">
+      <div class="drawer-banner-header">
+        <h2 id="drawer-heading">Employee Advance Drawer</h2>
+        <span class="emp-code-badge">{{ selectedEmployeeRow().employeeCode }}</span>
+      </div>
+
+      <div class="drawer-body">
+        <!-- Summary Progress Box (Node 109:1911..109:1916) -->
+        <div class="drawer-summary-box">
+          <p class="drawer-emp-title">
+            {{ selectedEmployeeRow().fullName }} · {{ selectedEmployeeRow().department }}
+          </p>
+
+          <div class="drawer-amounts-row">
+            <span class="drawer-total-drawn">
+              Total Drawn: {{ formatWholeLkr(selectedEmployeeRow().totalAdvancesAmount) }}
+            </span>
+
+            @if (selectedEmployeeRow().outstandingBalance > 0) {
+              <span class="drawer-out-red">
+                Out: - {{ formatLkr(selectedEmployeeRow().outstandingBalance) }}
+              </span>
+            } @else {
+              <span class="drawer-out-settled">
+                Out: Rs. 0.00 (Settled)
+              </span>
+            }
+          </div>
+
+          <div class="drawer-progress-track" aria-hidden="true">
+            <div
+              class="drawer-progress-fill"
+              [style.width.%]="selectedEmployeeRow().recoveryProgressPercent"
+            ></div>
+          </div>
+        </div>
+
+        <!-- Transaction History Section (Node 109:1917..109:1941) -->
+        <p class="drawer-section-caption">TRANSACTION HISTORY (IN = GREEN / OUT = RED)</p>
+
+        <div class="drawer-txn-list">
+          @for (txn of selectedEmployeeRow().transactions; track txn.transactionId) {
+            <div
+              class="drawer-txn-item"
+              [class.txn-out-card]="txn.flowType === 'OUT'"
+              [class.txn-in-card]="txn.flowType === 'IN'"
+            >
+              <div class="txn-left">
+                @if (txn.flowType === 'OUT') {
+                  <svg class="txn-arrow" width="11" height="12" viewBox="0 0 11 12" fill="none" aria-hidden="true">
+                    <path d="M5.5 10.5V1.5M5.5 1.5L1.5 5.5M5.5 1.5L9.5 5.5" stroke="#EF4444" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                } @else {
+                  <svg class="txn-arrow" width="11" height="12" viewBox="0 0 11 12" fill="none" aria-hidden="true">
+                    <path d="M5.5 1.5V10.5M5.5 10.5L1.5 6.5M5.5 10.5L9.5 6.5" stroke="#16A34A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                }
+
+                <div>
+                  <p class="txn-title">{{ txn.title }}</p>
+                  <p class="txn-date">{{ txn.dateLabel }}</p>
+                </div>
+              </div>
+
+              <span
+                class="txn-amount"
+                [class.txn-amount-out]="txn.flowType === 'OUT'"
+                [class.txn-amount-in]="txn.flowType === 'IN'"
+              >
+                {{ txn.flowType === 'OUT' ? '- ' + formatLkr(txn.amount) : '+ ' + formatLkr(txn.amount) }}
+              </span>
+            </div>
+          }
+        </div>
+
+        <!-- Bottom Action Buttons (Node 109:1942..109:1948) -->
+        <div class="drawer-actions">
+          <button
+            type="button"
+            class="btn-drawer-settle"
+            (click)="settleRow(selectedEmployeeRow())"
+            [disabled]="settling() || selectedEmployeeRow().outstandingBalance <= 0"
+          >
+            <svg width="12" height="10" viewBox="0 0 12 10" fill="none" aria-hidden="true">
+              <path d="M1.5 5.2L4.4 8.1L10.5 1.9" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            @if (selectedEmployeeRow().outstandingBalance > 0) {
+              Settle Advance Balance ({{ formatWholeLkr(selectedEmployeeRow().outstandingBalance) }})
+            } @else {
+              Advance Balance Settled (Rs. 0)
+            }
+          </button>
+
+          <button type="button" class="btn-drawer-print" (click)="printStatement()">
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <path d="M3.5 5V1.8H10.5V5M3.5 10.5H2V6.2C2 5.5 2.5 5 3.2 5H10.8C11.5 5 12 5.5 12 6.2V10.5H10.5M3.5 8.5H10.5V12.2H3.5V8.5Z" stroke="#1685C5" stroke-width="1.4" stroke-linejoin="round" />
+            </svg>
+            Print Employee Advance Statement
+          </button>
+        </div>
+      </div>
+    </aside>
+  </div>
+</section>

@@ -1,0 +1,40 @@
+.editor-layout { display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: start; }
+@media (max-width: 960px) { .editor-layout { grid-template-columns: 1fr; } }
+
+.form-card, .preview-card { background: #FFFFFF; border: 1px solid #E8E2D9; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(42,36,31,.04); }
+
+.card-title { font-family: 'Newsreader', Georgia, serif; font-size: 20px; font-weight: 700; color: #2A241F; margin: 0 0 16px; border-bottom: 1px solid #F0ECE6; padding-bottom: 12px; }
+
+.form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+@media (max-width: 600px) { .form-grid-2 { grid-template-columns: 1fr; } }
+
+.form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.form-group label { font-size: 12px; font-weight: 700; color: #5A5046; text-transform: uppercase; letter-spacing: .03em; }
+.required-star { color: #A44A3F; }
+
+.form-control { height: 38px; padding: 0 12px; border: 1px solid #D5CABE; border-radius: 8px; font-family: 'Inter', sans-serif; font-size: 13px; color: #2A241F; background: #FFFFFF; outline: none; transition: border-color .15s ease; }
+.form-control:focus { border-color: #A44A3F; box-shadow: 0 0 0 2px rgba(164,74,63,.15); }
+.form-control:disabled { background: #F8F5F0; color: #8F8377; cursor: not-allowed; }
+.code-input { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #A44A3F; text-transform: uppercase; }
+
+textarea.form-control { height: 80px; padding: 10px 12px; resize: vertical; }
+
+.hint-text { font-size: 11px; color: #8F8377; }
+.error-text { font-size: 11px; color: #D9534F; font-weight: 600; }
+
+.form-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; padding-top: 18px; border-top: 1px solid #F0ECE6; }
+
+/* Trigger Preview Card */
+.preview-card { background: #FDFBF7; border: 1px solid #E2D9CC; }
+.trigger-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; font-family: 'JetBrains Mono', monospace; margin-bottom: 12px; }
+.trigger-badge.FIRED { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
+.trigger-badge.ARMED { background: #EBF5EE; color: #2D6A4F; border: 1px solid #C8E6D3; }
+
+.constraint-list { list-style: none; padding: 0; margin: 0 0 16px; font-size: 12px; }
+.constraint-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #E8E2D9; }
+.constraint-name { font-family: 'JetBrains Mono', monospace; color: #7A6F64; font-size: 11px; }
+.constraint-status { font-weight: 700; color: #2D6A4F; }
+
+.preview-kpis { background: #FFFFFF; border: 1px solid #E8E2D9; border-radius: 8px; padding: 12px; margin-top: 12px; }
+.preview-kpi-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; }
+.preview-kpi-row:last-child { margin-bottom: 0; font-weight: 700; color: #A44A3F; }

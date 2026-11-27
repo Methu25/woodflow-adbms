@@ -1,0 +1,355 @@
+<section class="inventory-page" aria-labelledby="editor-heading">
+  <!-- Figma Top Header Bar -->
+  <header class="top-utility-bar">
+    <div class="global-search-box">
+      <svg class="search-icon" width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <circle cx="7" cy="7" r="5.25" stroke="#68839E" stroke-width="1.6" />
+        <path d="M11 11L14.2 14.2" stroke="#68839E" stroke-width="1.6" stroke-linecap="round" />
+      </svg>
+      <input type="search" placeholder="Search furniture SKUs, barcodes, categories..." aria-label="Search furniture SKUs, barcodes, categories" />
+      <span class="kbd-shortcut" aria-hidden="true">Ctrl+K</span>
+    </div>
+
+    <div class="utility-right">
+      <div class="date-location-chip">
+        <svg class="calendar-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <rect x="2" y="3" width="12" height="11" rx="2" stroke="#1685C5" stroke-width="1.4" />
+          <path d="M2 6.5H14M5 1.8V3.8M11 1.8V3.8" stroke="#1685C5" stroke-width="1.4" stroke-linecap="round" />
+        </svg>
+        <div>
+          <p class="date-label">Fri, 13 Nov 2026</p>
+          <p class="showroom-sub">08:45 AM · Main Showroom</p>
+        </div>
+      </div>
+
+      <a class="notification-bell" routerLink="/inventory/alerts" title="View Low-Stock Alerts & POS Trigger Monitor">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M8 2.2C5.9 2.2 4.2 3.9 4.2 6V9.2L2.9 10.8V11.6H13.1V10.8L11.8 9.2V6C11.8 3.9 10.1 2.2 8 2.2Z" stroke="#073763" stroke-width="1.4" />
+          <path d="M6.5 12.6C6.7 13.4 7.3 13.9 8 13.9C8.7 13.9 9.3 13.4 9.5 12.6" stroke="#073763" stroke-width="1.4" stroke-linecap="round" />
+        </svg>
+        <span class="bell-badge">6</span>
+      </a>
+
+      <span class="vertical-divider" aria-hidden="true"></span>
+
+      <div class="profile-chip">
+        <div class="profile-meta">
+          <p class="profile-name">{{ userDisplayName() }}</p>
+          <p class="profile-role">{{ userRoleSubtitle() }}</p>
+        </div>
+        <div class="profile-avatar" aria-hidden="true">{{ userInitials() }}</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Module Sub-Navigation Bar -->
+  <nav class="module-subnav" aria-label="Finished Furniture Inventory navigation">
+    @for (tab of navTabs; track tab.route) {
+      <a
+        [routerLink]="tab.route"
+        routerLinkActive="active-tab"
+        [routerLinkActiveOptions]="{ exact: tab.exact }"
+        class="subnav-tab"
+      >
+        {{ tab.label }}
+      </a>
+    }
+  </nav>
+
+  <!-- Page Header Row (Matches Screen 02: 1:840) -->
+  <div class="page-header-row">
+    <div>
+      <h1 id="editor-heading">Add / Edit Finished Furniture Item</h1>
+      <p class="page-subtitle">Manage showroom product imagery, barcode mapping, wood grade, pricing &amp; reorder rules</p>
+    </div>
+
+    <a routerLink="/inventory" class="btn-back-catalog">
+      Back to Catalog
+    </a>
+  </div>
+
+  @if (error()) {
+    <div class="feedback-banner error-banner" role="alert">{{ error() }}</div>
+  }
+  @if (success()) {
+    <div class="feedback-banner success-banner" role="status">{{ success() }}</div>
+  }
+
+  <!-- Two-Column Layout matching Screen 02 (Left 404px photography/preview, Right 728px specs form) -->
+  <div class="editor-grid">
+    <!-- Left Column: Item Photography & Live Showroom Card Preview -->
+    <aside class="photography-panel" aria-labelledby="photo-heading">
+      <div class="panel-top-row">
+        <h2 id="photo-heading">Item Photography</h2>
+        <span class="pill-badge">Primary Catalog Photo</span>
+      </div>
+
+      <!-- Primary Photo Stage (356x236) -->
+      <div class="primary-photo-stage">
+        @if (uploadedDataUrl(); as dataUrl) {
+          <img [src]="dataUrl" alt="Uploaded furniture preview" class="uploaded-preview-img" />
+        } @else {
+          @switch (selectedImageKey()) {
+            @case ('bed') {
+              <svg viewBox="0 0 356 236" fill="none" class="stage-svg" aria-hidden="true">
+                <rect width="356" height="236" rx="12" fill="url(#stageBedBg)" />
+                <ellipse cx="178" cy="198" rx="135" ry="14" fill="#073763" fill-opacity="0.25" />
+                <rect x="64" y="54" width="228" height="74" rx="10" fill="#6E4427" stroke="#4D2D18" stroke-width="2.5" />
+                <rect x="78" y="66" width="94" height="48" rx="6" fill="#8B5A36" />
+                <rect x="184" y="66" width="94" height="48" rx="6" fill="#8B5A36" />
+                <rect x="88" y="92" width="74" height="28" rx="8" fill="#F4F8FC" stroke="#CBDCEB" stroke-width="1.5" />
+                <rect x="194" y="92" width="74" height="28" rx="8" fill="#F4F8FC" stroke="#CBDCEB" stroke-width="1.5" />
+                <rect x="56" y="118" width="244" height="38" rx="8" fill="#E8F1FA" stroke="#B8D0E8" stroke-width="1.5" />
+                <rect x="56" y="132" width="244" height="24" rx="6" fill="#1685C5" fill-opacity="0.24" />
+                <rect x="48" y="152" width="260" height="18" rx="4" fill="#5C361D" />
+                <rect x="60" y="170" width="12" height="22" rx="3" fill="#462814" />
+                <rect x="284" y="170" width="12" height="22" rx="3" fill="#462814" />
+                <defs>
+                  <linearGradient id="stageBedBg" x1="0" y1="0" x2="356" y2="236" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#1E4E79" />
+                    <stop offset="1" stop-color="#0E2E4F" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            }
+            @case ('dining') {
+              <svg viewBox="0 0 356 236" fill="none" class="stage-svg" aria-hidden="true">
+                <rect width="356" height="236" rx="12" fill="url(#stageDiningBg)" />
+                <ellipse cx="178" cy="198" rx="140" ry="14" fill="#073763" fill-opacity="0.25" />
+                <path d="M46 86H58V140H92V188H82V150H56V188H46V86Z" fill="#7C4E2D" />
+                <rect x="56" y="132" width="36" height="8" rx="3" fill="#E6EEF7" />
+                <path d="M310 86H298V140H264V188H274V150H300V188H310V86Z" fill="#7C4E2D" />
+                <rect x="264" y="132" width="36" height="8" rx="3" fill="#E6EEF7" />
+                <rect x="114" y="72" width="50" height="52" rx="6" fill="#6A4023" />
+                <rect x="192" y="72" width="50" height="52" rx="6" fill="#6A4023" />
+                <rect x="78" y="114" width="200" height="14" rx="5" fill="#9E663C" stroke="#5A351B" stroke-width="2" />
+                <rect x="96" y="128" width="12" height="60" rx="3" fill="#5A351B" />
+                <rect x="248" y="128" width="12" height="60" rx="3" fill="#5A351B" />
+                <defs>
+                  <linearGradient id="stageDiningBg" x1="0" y1="0" x2="356" y2="236" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#19527A" />
+                    <stop offset="1" stop-color="#0D3252" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            }
+            @default {
+              <svg viewBox="0 0 356 236" fill="none" class="stage-svg" aria-hidden="true">
+                <rect width="356" height="236" rx="12" fill="url(#stageLoungeBg)" />
+                <ellipse cx="178" cy="196" rx="146" ry="14" fill="#073763" fill-opacity="0.25" />
+                <!-- 3-Seater Teak Lounge Suite -->
+                <rect x="34" y="74" width="192" height="68" rx="10" fill="#7A4B2B" />
+                <rect x="44" y="82" width="54" height="44" rx="6" fill="#EBF3FA" />
+                <rect x="103" y="82" width="54" height="44" rx="6" fill="#EBF3FA" />
+                <rect x="162" y="82" width="54" height="44" rx="6" fill="#EBF3FA" />
+                <rect x="40" y="124" width="180" height="24" rx="6" fill="#D5E5F5" />
+                <rect x="30" y="148" width="200" height="12" rx="4" fill="#5D361C" />
+                <rect x="24" y="102" width="12" height="58" rx="4" fill="#5D361C" />
+                <rect x="224" y="102" width="12" height="58" rx="4" fill="#5D361C" />
+                <rect x="40" y="160" width="9" height="24" rx="2" fill="#462814" />
+                <rect x="210" y="160" width="9" height="24" rx="2" fill="#462814" />
+                <!-- Companion Lounge Armchair -->
+                <rect x="252" y="92" width="76" height="56" rx="8" fill="#7A4B2B" />
+                <rect x="260" y="100" width="60" height="32" rx="5" fill="#EBF3FA" />
+                <rect x="258" y="130" width="64" height="20" rx="5" fill="#D5E5F5" />
+                <rect x="248" y="148" width="84" height="10" rx="3" fill="#5D361C" />
+                <rect x="258" y="158" width="8" height="24" rx="2" fill="#462814" />
+                <rect x="314" y="158" width="8" height="24" rx="2" fill="#462814" />
+                <defs>
+                  <linearGradient id="stageLoungeBg" x1="0" y1="0" x2="356" y2="236" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#1E5582" />
+                    <stop offset="1" stop-color="#0E3050" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            }
+          }
+        }
+      </div>
+
+      <!-- Dropzone Upload Box (356x98) -->
+      <label class="upload-dropzone">
+        <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onPhotoSelected($event)" hidden />
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 16V4M12 4L8 8M12 4L16 8" stroke="#1685C5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+          <path d="M4 17V18C4 19.1 4.9 20 6 20H18C19.1 20 20 19.1 20 18V17" stroke="#1685C5" stroke-width="1.8" stroke-linecap="round" />
+        </svg>
+        <span class="dropzone-title">
+          {{ uploadedFileName() ? 'Uploaded: ' + uploadedFileName() : 'Click or drag high-res showroom photo here' }}
+        </span>
+        <span class="dropzone-hint">JPG, PNG or WebP · Max 5 MB per photo</span>
+      </label>
+
+      <!-- Gallery Thumbnails (3 Uploaded) -->
+      <p class="section-caption">GALLERY THUMBNAILS (3 UPLOADED)</p>
+      <div class="thumbnail-row">
+        @for (thumb of galleryThumbnails; track thumb.key) {
+          <button
+            type="button"
+            class="thumb-card"
+            [class.active-thumb]="!uploadedDataUrl() && selectedImageKey() === thumb.key"
+            (click)="selectThumbnail(thumb.key)"
+            [attr.aria-label]="thumb.label"
+          >
+            <div class="thumb-visual" [attr.data-key]="thumb.key">
+              <span class="thumb-tag">{{ thumb.label }}</span>
+            </div>
+          </button>
+        }
+      </div>
+
+      <!-- Live Showroom Card Preview (Matches Screen 02: 1:873) -->
+      <div class="live-card-preview">
+        <p class="preview-caption">LIVE SHOWROOM CARD PREVIEW</p>
+        <h3 class="preview-title">{{ previewTitle() }}</h3>
+        <p class="preview-meta">
+          {{ form.controls.category.value }} · {{ previewWoodShort() }} · {{ form.controls.skuCode.value }}
+        </p>
+        <div class="preview-bottom">
+          <span class="preview-price">{{ previewPriceFormatted() }}</span>
+          <span class="stock-badge" [ngClass]="previewStockBadgeClass()">
+            <span class="status-dot" aria-hidden="true"></span>
+            {{ previewStockBadgeText() }}
+          </span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Right Column: Finished Furniture Item Specifications Form -->
+    <div class="specs-panel">
+      <div class="specs-header">
+        <h2>Finished Furniture Item Specifications</h2>
+        <span class="mode-badge">
+          {{ isEditMode() ? 'Edit Mode · SKU Active' : 'Create Mode · New SKU' }}
+        </span>
+      </div>
+
+      <hr class="specs-divider" />
+
+      <form [formGroup]="form" (ngSubmit)="save()" class="specs-form">
+        <!-- Row 1: Product SKU * & Showroom Barcode (EAN-13) * -->
+        <div class="form-row-2">
+          <div class="field-group">
+            <label for="sku-code">Product SKU *</label>
+            <input id="sku-code" type="text" formControlName="skuCode" placeholder="FF-LIV-001" />
+          </div>
+
+          <div class="field-group">
+            <label for="barcode-input">Showroom Barcode (EAN-13) *</label>
+            <div class="barcode-field-wrap">
+              <input id="barcode-input" type="text" formControlName="barcode" placeholder="8901245001928" />
+              <button
+                type="button"
+                class="barcode-gen-btn"
+                (click)="generateEan13()"
+                title="Generate new EAN-13 barcode"
+                aria-label="Generate new EAN-13 barcode"
+              >
+                <svg width="16" height="13" viewBox="0 0 16 13" fill="none" aria-hidden="true">
+                  <path d="M1 1V12M4 1V12M6 1V12M9 1V12M12 1V12M15 1V12" stroke="#075B91" stroke-width="1.5" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 2: Product Name * -->
+        <div class="field-group">
+          <label for="item-name">Product Name *</label>
+          <input
+            id="item-name"
+            type="text"
+            formControlName="itemName"
+            placeholder="Aurelia 3-Piece Teak Lounge Suite (3+1+1)"
+          />
+        </div>
+
+        <!-- Row 3: Category Dropdown * & Primary Wood Type * -->
+        <div class="form-row-2">
+          <div class="field-group">
+            <label for="category-select">Category Dropdown *</label>
+            <select id="category-select" formControlName="category">
+              @for (cat of categories; track cat) {
+                <option [value]="cat">{{ cat }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label for="wood-select">Primary Wood Type *</label>
+            <select id="wood-select" formControlName="primaryWoodType">
+              @for (wood of woodTypes; track wood) {
+                <option [value]="wood">{{ wood }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <!-- Row 4: Showroom Price (LKR) *, Minimum Reorder Level *, Current Opening Stock -->
+        <div class="form-row-3">
+          <div class="field-group">
+            <label for="retail-price">Showroom Price (LKR) *</label>
+            <div class="input-with-prefix">
+              <span class="prefix">Rs.</span>
+              <input id="retail-price" type="number" min="0" step="500" formControlName="retailPrice" />
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label for="min-reorder">Minimum Reorder Level *</label>
+            <div class="input-with-suffix">
+              <input id="min-reorder" type="number" min="0" step="1" formControlName="minReorderLevel" />
+              <span class="suffix">Units</span>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label for="opening-stock">Current Opening Stock</label>
+            <div class="input-with-suffix">
+              <input id="opening-stock" type="number" min="0" step="1" formControlName="currentStock" />
+              <span class="suffix">Units</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 5: Standard Dimensions & Finish -->
+        <div class="field-group">
+          <label for="dimensions-finish">Standard Dimensions &amp; Finish</label>
+          <input
+            id="dimensions-finish"
+            type="text"
+            formControlName="dimensionsFinish"
+            placeholder="84&quot; × 32&quot; × 30&quot; (3-Seater) · Matte PU Clear Lacquer + 32D Foam Cushions"
+          />
+        </div>
+
+        <!-- Row 6: Catalog Description & Warranty Notes -->
+        <div class="field-group">
+          <label for="description-notes">Catalog Description &amp; Warranty Notes</label>
+          <textarea
+            id="description-notes"
+            rows="3"
+            formControlName="descriptionNotes"
+            placeholder="Hand-crafted solid Burma &amp; Ceylon teak lounge suite..."
+          ></textarea>
+        </div>
+
+        <hr class="specs-divider footer-divider" />
+
+        <!-- Action Buttons: Cancel & Save Item -->
+        <div class="specs-actions">
+          <button type="button" class="btn-cancel" (click)="cancel()" [disabled]="saving()">
+            Cancel
+          </button>
+
+          <button type="submit" class="btn-save-item" [disabled]="saving()">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M3 8.5L6.5 12L13 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            {{ saving() ? 'Saving Item…' : 'Save Item' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>

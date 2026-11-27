@@ -1,0 +1,27 @@
+.issuance-grid { display: grid; grid-template-columns: minmax(0, 716fr) minmax(360px, 418fr); gap: 22px; align-items: stretch; }
+.advance-request-card { background: #fff; border: 1px solid #d9e6f2; border-radius: 14px; padding: 20px 28px 24px; display: flex; flex-direction: column; }
+.card-header-row, .form-actions-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.card-header-row { margin-bottom: 14px; }
+.card-header-row h2 { margin: 0; font-size: 16px; font-weight: 700; color: #073763; }
+.till-out-pill, .deficit-flagged-pill, .safe-flagged-pill { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 11px; border-radius: 999px; font-size: 10.5px; font-weight: 700; }
+.till-out-pill, .deficit-flagged-pill { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+.safe-flagged-pill { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+.pill-dot, .pill-dot-green { width: 6.4px; height: 6.4px; border-radius: 50%; background: #ef4444; }
+.pill-dot-green { background: #16a34a; }
+.card-divider { border: 0; border-top: 1px solid #d9e6f2; margin: 0 0 16px; }
+.advance-form { display: flex; flex-direction: column; gap: 18px; flex: 1; }
+.form-row-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.field-group { display: flex; flex-direction: column; gap: 7px; }
+.field-group label { font-size: 11.5px; font-weight: 700; color: #102d50; }
+.field-group input, .field-group select, .field-group textarea { width: 100%; height: 42px; padding: 0 14px; border-radius: 8px; border: 1.2px solid #d9e6f2; background: #fff; color: #102d50; font: inherit; font-size: 12.5px; font-weight: 700; outline: none; }
+.field-group input:focus, .field-group select:focus, .field-group textarea:focus { border-color: #1685c5; }
+.select-wrap, .date-input-wrap { position: relative; display: flex; align-items: center; }
+.select-wrap select { appearance: none; padding-right: 36px; cursor: pointer; }
+.select-wrap.primary-focus-border select { border: 1.6px solid #1685c5; }
+.select-chevron, .input-calendar-icon { position: absolute; right: 13px; pointer-events: none; }
+.field-group input.deficit-input { border: 1.6px solid #ef4444; background: #fff8f8; }
+.date-input-wrap input { padding-right: 36px; }
+.field-group input.voucher-readonly-look { background: #eaf0f6; }
+.field-group textarea { height: 82px; padding: 12px 14px; font-weight: 400; line-height: 1.55; resize: vertical; }
+@media (max-width: 1080px) { .issuance-grid { grid-template-columns: 1fr; } }
+@media (max-width: 680px) { .form-row-2 { grid-template-columns: 1fr; } }

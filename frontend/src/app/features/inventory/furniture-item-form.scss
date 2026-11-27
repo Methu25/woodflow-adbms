@@ -1,0 +1,26 @@
+.stock-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 700; }
+.status-dot { width: 6.5px; height: 6.5px; border-radius: 50%; }
+.badge-in { background: #e6f7ed; color: #15803d; border: 1px solid #bbf7d0; } .badge-in .status-dot { background: #16a34a; }
+.badge-low { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; } .badge-low .status-dot { background: #d97706; }
+.badge-out { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; } .badge-out .status-dot { background: #dc2626; }
+.specs-divider { border: 0; border-top: 1px solid #e1edf8; margin: 0 0 16px; }
+.specs-form { display: grid; gap: 16px; }
+.form-row-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+.form-row-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.field-group { display: flex; flex-direction: column; gap: 6px; }
+.field-group label { font-size: 12.5px; font-weight: 700; color: #073763; }
+.field-group input, .field-group select, .field-group textarea { width: 100%; height: 42px; padding: 0 14px; border-radius: 9px; border: 1px solid #c5dcf0; background: #f8fbff; color: #073763; font: inherit; font-size: 13px; }
+.field-group textarea { height: 92px; padding: 11px 14px; resize: vertical; line-height: 1.5; }
+.field-group input:focus, .field-group select:focus, .field-group textarea:focus { outline: 2px solid #1685c5; background: #fff; }
+.barcode-field-wrap, .input-with-prefix, .input-with-suffix { position: relative; display: flex; align-items: center; }
+.barcode-field-wrap input { padding-right: 40px; }
+.barcode-gen-btn { position: absolute; right: 8px; width: 28px; height: 28px; border: 0; border-radius: 6px; background: #eaf3fc; cursor: pointer; display: grid; place-items: center; }
+.input-with-prefix .prefix { position: absolute; left: 12px; font-size: 12.5px; font-weight: 700; color: #5c7690; }
+.input-with-prefix input { padding-left: 36px; }
+.input-with-suffix .suffix { position: absolute; right: 12px; font-size: 12px; font-weight: 600; color: #5c7690; }
+.input-with-suffix input { padding-right: 48px; }
+.footer-divider { margin: 8px 0 4px; }
+.specs-actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.btn-cancel { width: 150px; height: 46px; border-radius: 10px; border: 1px solid #b8d4ec; background: #f8fbff; color: #075b91; font: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer; }
+.btn-save-item { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 210px; height: 46px; border: 0; border-radius: 10px; background: linear-gradient(95deg, #1685c5, #08a9c9); color: #fff; font: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer; }
+@media (max-width: 1050px) { .form-row-2, .form-row-3 { grid-template-columns: 1fr; } }

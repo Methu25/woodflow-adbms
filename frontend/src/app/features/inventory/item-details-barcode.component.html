@@ -1,0 +1,333 @@
+<section class="inventory-page" aria-labelledby="details-heading">
+  <!-- Figma Top Header Bar -->
+  <header class="top-utility-bar">
+    <div class="global-search-box">
+      <svg class="search-icon" width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <circle cx="7" cy="7" r="5.25" stroke="#68839E" stroke-width="1.6" />
+        <path d="M11 11L14.2 14.2" stroke="#68839E" stroke-width="1.6" stroke-linecap="round" />
+      </svg>
+      <input type="search" placeholder="Search furniture SKUs, barcodes, categories..." aria-label="Search furniture SKUs, barcodes, categories" />
+      <span class="kbd-shortcut" aria-hidden="true">Ctrl+K</span>
+    </div>
+
+    <div class="utility-right">
+      <div class="date-location-chip">
+        <svg class="calendar-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <rect x="2" y="3" width="12" height="11" rx="2" stroke="#1685C5" stroke-width="1.4" />
+          <path d="M2 6.5H14M5 1.8V3.8M11 1.8V3.8" stroke="#1685C5" stroke-width="1.4" stroke-linecap="round" />
+        </svg>
+        <div>
+          <p class="date-label">Fri, 13 Nov 2026</p>
+          <p class="showroom-sub">08:45 AM · Main Showroom</p>
+        </div>
+      </div>
+
+      <a class="notification-bell" routerLink="/inventory/alerts" title="View Low-Stock Alerts & POS Trigger Monitor">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M8 2.2C5.9 2.2 4.2 3.9 4.2 6V9.2L2.9 10.8V11.6H13.1V10.8L11.8 9.2V6C11.8 3.9 10.1 2.2 8 2.2Z" stroke="#073763" stroke-width="1.4" />
+          <path d="M6.5 12.6C6.7 13.4 7.3 13.9 8 13.9C8.7 13.9 9.3 13.4 9.5 12.6" stroke="#073763" stroke-width="1.4" stroke-linecap="round" />
+        </svg>
+        <span class="bell-badge">6</span>
+      </a>
+
+      <span class="vertical-divider" aria-hidden="true"></span>
+
+      <div class="profile-chip">
+        <div class="profile-meta">
+          <p class="profile-name">{{ userDisplayName() }}</p>
+          <p class="profile-role">{{ userRoleSubtitle() }}</p>
+        </div>
+        <div class="profile-avatar" aria-hidden="true">{{ userInitials() }}</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Module Sub-Navigation Bar -->
+  <nav class="module-subnav" aria-label="Finished Furniture Inventory navigation">
+    @for (tab of navTabs; track tab.route) {
+      <a
+        [routerLink]="tab.route"
+        routerLinkActive="active-tab"
+        [routerLinkActiveOptions]="{ exact: tab.exact }"
+        class="subnav-tab"
+      >
+        {{ tab.label }}
+      </a>
+    }
+  </nav>
+
+  <!-- Page Header Row (Matches Screen 06: 18:1639) -->
+  <div class="page-header-row">
+    <div>
+      <h1 id="details-heading">Showroom Item Details, Price Card &amp; SKU Tag</h1>
+      <p class="page-subtitle">
+        Inspect single-SKU specifications, print showroom barcode price cards &amp; monitor trg_pos_stock_deduct history
+      </p>
+    </div>
+
+    <div class="top-action-buttons">
+      <a routerLink="/inventory" class="btn-back-catalog">
+        ← Back to Catalog
+      </a>
+      <button type="button" class="btn-print-tag" (click)="printPriceTag()">
+        🖨 Print SKU Price Tag
+      </button>
+    </div>
+  </div>
+
+  <!-- Two-Column Layout matching Screen 06 (Left 440px Product & SKU Tag, Right 692px DB & Trigger Log) -->
+  <div class="details-grid">
+    <!-- Left Column: Showroom Display Item & Printable Floor Price Tag (18:1647) -->
+    <aside class="left-tag-panel" aria-labelledby="left-panel-title">
+      <div class="panel-header-row">
+        <h2 id="left-panel-title">Showroom Display Item &amp; Floor Price Tag</h2>
+        <span class="stock-status-pill" [class.out]="(item()?.currentStock ?? 8) <= 0">
+          <span class="dot" aria-hidden="true"></span>
+          In Stock ({{ item()?.currentStock ?? 8 }})
+        </span>
+      </div>
+
+      <!-- Teak Lounge Showcase Illustration Stage (392x192) -->
+      <div class="showcase-stage">
+        <div class="stage-overlay-chips">
+          <span class="stage-chip">product_id: #{{ displayProductId() }}</span>
+          <span class="stage-chip">Grade-A Teak</span>
+        </div>
+
+        <svg viewBox="0 0 392 192" fill="none" class="showcase-svg" aria-hidden="true">
+          <rect width="392" height="192" rx="12" fill="url(#showcaseBg)" />
+          <ellipse cx="196" cy="158" rx="164" ry="12" fill="#073763" fill-opacity="0.26" />
+          <!-- 3-Seater Teak Lounge Suite matching Figma 18:1654 -->
+          <rect x="60" y="64" width="196" height="58" rx="8" fill="#7A4B2B" />
+          <rect x="68" y="70" width="58" height="38" rx="5" fill="#EBF3FA" />
+          <rect x="129" y="70" width="58" height="38" rx="5" fill="#EBF3FA" />
+          <rect x="190" y="70" width="58" height="38" rx="5" fill="#EBF3FA" />
+          <rect x="64" y="110" width="188" height="24" rx="5" fill="#D5E5F5" />
+          <rect x="56" y="134" width="204" height="10" rx="3" fill="#5D361C" />
+          <rect x="66" y="144" width="8" height="28" rx="2" fill="#462814" />
+          <rect x="242" y="144" width="8" height="28" rx="2" fill="#462814" />
+          <rect x="52" y="92" width="12" height="48" rx="3" fill="#5D361C" />
+          <rect x="252" y="92" width="12" height="48" rx="3" fill="#5D361C" />
+          <!-- Matching Single Lounge Chair -->
+          <rect x="280" y="82" width="76" height="54" rx="7" fill="#7A4B2B" />
+          <rect x="288" y="88" width="60" height="30" rx="5" fill="#EBF3FA" />
+          <rect x="286" y="118" width="64" height="20" rx="4" fill="#D5E5F5" />
+          <rect x="278" y="138" width="80" height="8" rx="2" fill="#5D361C" />
+          <rect x="286" y="146" width="7" height="26" rx="2" fill="#462814" />
+          <rect x="343" y="146" width="7" height="26" rx="2" fill="#462814" />
+          <defs>
+            <linearGradient id="showcaseBg" x1="0" y1="0" x2="392" y2="192" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#1E5582" />
+              <stop offset="1" stop-color="#0D2D4B" />
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+
+      <p class="price-card-caption">PRINTABLE SHOWROOM PRICE CARD &amp; EAN-13 SKU TAG</p>
+
+      <!-- Printable Showroom Price Card (18:1677) -->
+      <div class="printable-price-card">
+        <div class="card-brand-banner">
+          <span class="brand-logo-box" aria-hidden="true">W</span>
+          <div>
+            <strong>WIMALASIRI FURNITURE · KOTTAWA</strong>
+            <small>High Level Road, Kottawa · Official Showroom Floor Tag</small>
+          </div>
+        </div>
+
+        <h3 class="tag-product-title">{{ displayTitle() }}</h3>
+        <p class="tag-spec-line">
+          Category: {{ item()?.category ?? 'Living Room' }} ({{ item()?.categoryCode ?? 'CAT-01' }}) · Material: Seasoned Ceylon Teak
+        </p>
+        <p class="tag-spec-line">
+          Dimensions: 84&quot; × 32&quot; × 30&quot; · Matte PU Lacquer · 10-Yr Warranty
+        </p>
+
+        <hr class="tag-divider" />
+
+        <div class="tag-price-sku-row">
+          <div>
+            <span class="vat-caption">SHOWROOM RETAIL PRICE (INCL. VAT)</span>
+            <strong class="tag-big-price">{{ formattedPriceWithCents() }}</strong>
+          </div>
+          <div class="sku-code-box">
+            <span class="sku-box-label">SKU CODE</span>
+            <strong class="sku-box-val">{{ item()?.skuCode ?? 'FF-LIV-001' }}</strong>
+          </div>
+        </div>
+
+        <!-- EAN-13 Barcode Box (18:1692) -->
+        <div class="barcode-box">
+          <div class="ean13-bars" aria-hidden="true">
+            @for (bar of barcodeBars; track $index) {
+              <span
+                class="bar-line"
+                [style.width.px]="bar.width"
+                [class.tall]="bar.tall"
+              ></span>
+            }
+          </div>
+          <p class="barcode-digits">{{ formattedBarcodeSpaced() }}</p>
+        </div>
+
+        <p class="pos-ready-caption">
+          POS Counter Ready · Scan EAN-13 Barcode on Member 1 POS Screen
+        </p>
+      </div>
+
+      <!-- Bottom Tag Action Buttons (18:1734, 18:1736) -->
+      <div class="left-bottom-actions">
+        <button type="button" class="btn-download-pdf" (click)="printPriceTag()">
+          Download Tag PDF
+        </button>
+        <button
+          type="button"
+          class="btn-edit-specs"
+          (click)="editItemSpecs()"
+          [disabled]="!permissions.has('inventory.edit')"
+        >
+          Edit Item Specs (v3)
+        </button>
+      </div>
+    </aside>
+
+    <!-- Right Column: Database Record & POS Exposure + SKU Trigger Log -->
+    <div class="right-column-stack">
+      <!-- Top Card: Database Record & Live POS Stock Exposure (18:1738) -->
+      <section class="db-exposure-card" aria-labelledby="db-card-title">
+        <div class="db-card-header">
+          <h2 id="db-card-title">Database Record &amp; Live POS Stock Exposure (finished_furniture)</h2>
+          <span class="controller-pill">
+            <span class="dot" aria-hidden="true"></span>
+            FinishedGoodsController
+          </span>
+        </div>
+
+        <hr class="card-line" />
+
+        <!-- 4 Mini KPI Boxes -->
+        <div class="kpi-mini-grid">
+          <div class="mini-kpi">
+            <span class="kpi-label">CURRENT STOCK</span>
+            <strong class="kpi-val">{{ item()?.currentStock ?? 8 }} Units</strong>
+            <span class="kpi-sub green">● Available for POS</span>
+          </div>
+
+          <div class="mini-kpi">
+            <span class="kpi-label">MIN REORDER LEVEL</span>
+            <strong class="kpi-val">{{ item()?.minReorderLevel ?? 4 }} Units</strong>
+            <span class="kpi-sub blue">{{ reorderBufferLabel() }}</span>
+          </div>
+
+          <div class="mini-kpi">
+            <span class="kpi-label">TOTAL FLOOR VALUE</span>
+            <strong class="kpi-val">{{ totalFloorValueLabel() }}</strong>
+            <span class="kpi-sub muted">{{ item()?.currentStock ?? 8 }} × {{ formattedPriceShort() }}</span>
+          </div>
+
+          <div class="mini-kpi">
+            <span class="kpi-label">DB TRIGGER STATUS</span>
+            <strong class="kpi-trigger-name">trg_pos_stock_deduct</strong>
+            <span class="kpi-sub green">● Auto-Deduct Enabled</span>
+          </div>
+        </div>
+
+        <!-- Technical Metadata Box (18:1761) -->
+        <div class="db-metadata-box">
+          <div class="meta-top-grid">
+            <div>
+              <span class="meta-label">PRIMARY KEY (product_id)</span>
+              <strong class="meta-val">{{ displayProductId() }} (INT · 3NF Normalized)</strong>
+            </div>
+            <div>
+              <span class="meta-label">FOREIGN KEY (category_id)</span>
+              <strong class="meta-val">{{ item()?.categoryCode ?? 'CAT-01' }} · {{ item()?.category ?? 'Living Room' }}</strong>
+            </div>
+            <div>
+              <span class="meta-label">SHOWROOM ZONE</span>
+              <strong class="meta-val">{{ item()?.showroomZone ?? 'Ground Floor · Bay A2' }}</strong>
+            </div>
+          </div>
+
+          <hr class="meta-divider" />
+
+          <div class="meta-bottom-grid">
+            <div>
+              <span class="meta-label">WOOD &amp; UPHOLSTERY GRADE</span>
+              <strong class="meta-val">Seasoned Ceylon Teak · 32D High-Density Foam</strong>
+            </div>
+            <div>
+              <span class="meta-label">API ENDPOINT (MEMBER 1 POS LINK)</span>
+              <code class="api-endpoint-code">GET /api/finished-goods/{{ item()?.skuCode ?? 'FF-LIV-001' }}/availability</code>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Bottom Card: SKU Stock Movements & trg_pos_stock_deduct Execution Log (18:1773) -->
+      <section class="trigger-log-card" aria-labelledby="trigger-log-title">
+        <div class="trigger-log-header">
+          <div>
+            <h2 id="trigger-log-title">SKU Stock Movements &amp; trg_pos_stock_deduct Execution Log</h2>
+            <p class="trigger-sub">
+              Real-time audit trail from stock_movements table for SKU {{ item()?.skuCode ?? 'FF-LIV-001' }}
+            </p>
+          </div>
+          <button type="button" class="btn-quick-audit" (click)="quickAuditCount()">
+            Quick Audit Count
+          </button>
+        </div>
+
+        <div class="table-responsive">
+          <table class="trigger-table">
+            <thead>
+              <tr>
+                <th scope="col">MOVEMENT ID &amp; TIME</th>
+                <th scope="col">MOVEMENT TYPE / DB TRIGGER</th>
+                <th scope="col" class="col-right">DELTA</th>
+                <th scope="col" class="col-right">AFTER</th>
+                <th scope="col">REFERENCE</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of triggerLogs(); track row.movementCode) {
+                <tr>
+                  <td>
+                    <div class="mov-id-cell">
+                      <strong>{{ row.movementCode }}</strong>
+                      <span>{{ row.dateTimeLabel }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="trigger-pill" [attr.data-tone]="row.triggerTone">
+                      {{ row.triggerBadgeLabel }}
+                    </span>
+                  </td>
+                  <td class="col-right">
+                    <span
+                      class="delta-val"
+                      [class.pos]="row.isPositive"
+                      [class.neg]="!row.isPositive && !row.isNeutral"
+                      [class.neutral]="row.isNeutral"
+                    >
+                      {{ row.deltaLabel }}
+                    </span>
+                  </td>
+                  <td class="col-right">
+                    <strong class="after-val">{{ row.afterLabel }}</strong>
+                  </td>
+                  <td class="ref-code">{{ row.reference }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="trigger-rule-callout">
+          PostgreSQL Trigger Rule: Every confirmed row in invoice_items automatically decrements current_stock.
+        </div>
+      </section>
+    </div>
+  </div>
+</section>

@@ -17,6 +17,14 @@
 .profile-chip { gap: 12px; }
 .profile-meta { text-align: right; }
 .profile-avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #075b91, #1685c5); color: #fff; font-size: 13px; font-weight: 700; display: grid; place-items: center; border: 2px solid #fff; }
+.inv-section-switcher { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 12px; margin-bottom: 12px; background: #fff; border: 1px solid #cfe2f3; border-radius: 12px; flex-wrap: wrap; }
+.switcher-label { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #526b85; padding-left: 4px; }
+.switcher-pills { display: inline-flex; gap: 6px; background: #f0f6fc; padding: 4px; border-radius: 10px; border: 1px solid #d8e8f7; }
+.switch-option { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; color: #4a6785; text-decoration: none; transition: all .15s ease; }
+.switch-option:hover { color: #073763; background: #e3effb; }
+.switch-option.active-option { background: linear-gradient(90deg, #075b91, #1685c5); color: #fff; box-shadow: 0 2px 6px rgba(7,91,145,.22); }
+.switch-badge { padding: 2px 7px; border-radius: 999px; font-size: 10px; font-weight: 700; background: rgba(255,255,255,.22); color: inherit; }
+.switch-option:not(.active-option) .switch-badge { background: #dceaf7; color: #075b91; }
 .module-subnav { display: flex; align-items: center; gap: 6px; padding: 6px; margin-bottom: 18px; background: #fff; border: 1px solid #cfe2f3; border-radius: 12px; overflow-x: auto; }
 .subnav-tab { padding: 7px 13px; border-radius: 8px; font-size: 12px; font-weight: 600; color: #4a6785; text-decoration: none; white-space: nowrap; }
 .subnav-tab:hover { background: #eaf3fc; color: #073763; }

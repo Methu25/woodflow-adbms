@@ -10,6 +10,14 @@
 .breadcrumb-separator { color: #C5BCB1; }
 .status-pill-live { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: #EBF5EE; color: #2D6A4F; font-size: 11px; font-weight: 700; letter-spacing: .02em; border: 1px solid #C8E6D3; }
 .status-dot-pulse { width: 7px; height: 7px; border-radius: 50%; background: #2D6A4F; }
+.inv-section-switcher { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 12px; margin-bottom: 12px; background: #FFFFFF; border: 1px solid #E8E2D9; border-radius: 12px; flex-wrap: wrap; }
+.switcher-label { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #7A6F64; padding-left: 4px; }
+.switcher-pills { display: inline-flex; gap: 6px; background: #F4F1EA; padding: 4px; border-radius: 10px; border: 1px solid #E5E0D5; }
+.switch-option { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; color: #6C5E53; text-decoration: none; transition: all .15s ease; }
+.switch-option:hover { color: #2A241F; background: #EAE4D8; }
+.switch-option.active-option { background: #A44A3F; color: #FFFFFF; box-shadow: 0 2px 6px rgba(164,74,63,.24); }
+.switch-badge { padding: 2px 7px; border-radius: 999px; font-size: 10px; font-weight: 700; background: rgba(255,255,255,.22); color: inherit; }
+.switch-option:not(.active-option) .switch-badge { background: #E5DEC9; color: #5C4D42; }
 .subnav-bar { background: #FFFFFF; border: 1px solid #E8E2D9; border-radius: 12px; padding: 6px; margin-bottom: 20px; overflow-x: auto; box-shadow: 0 1px 3px rgba(42,36,31,.04); }
 .subnav-link { padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; color: #7A6F64; text-decoration: none; white-space: nowrap; transition: all .15s ease; }
 .subnav-link:hover { background: #F3EFEA; color: #2A241F; }

@@ -12,6 +12,21 @@
     </div>
   </div>
 
+  <!-- Inventory Section Switcher (Option 1: Finished Furniture Inventory vs Option 2: Raw Materials & Supplies) -->
+  <div class="inv-section-switcher" role="navigation" aria-label="Inventory module switcher">
+    <span class="switcher-label">Inventory Workspace Mode</span>
+    <div class="switcher-pills">
+      <a routerLink="/inventory" class="switch-option">
+        <span class="switch-badge">Option 1</span>
+        Finished Furniture Inventory
+      </a>
+      <a routerLink="/inventory/raw-materials" class="switch-option active-option">
+        <span class="switch-badge">Option 2</span>
+        Raw Materials &amp; Supplies
+      </a>
+    </div>
+  </div>
+
   <!-- Shared Sub-Navigation Bar across all Raw Materials Screens + Link to Finished Goods -->
   <nav class="subnav-bar" aria-label="Raw Materials Sub-navigation">
     <a routerLink="/inventory/raw-materials" class="subnav-link active-link">01. Stock Dashboard</a>
@@ -21,7 +36,6 @@
     <a routerLink="/inventory/raw-materials/consumption" class="subnav-link">05. Consumption Log</a>
     <a routerLink="/inventory/raw-materials/reorder" class="subnav-link">06. Low-Stock Reorder</a>
     <a routerLink="/inventory/raw-materials/allocation" class="subnav-link">07. Job Allocation</a>
-    <a routerLink="/inventory" class="subnav-showroom-link">Showroom Finished Goods &rarr;</a>
   </nav>
 
   <!-- Header Row -->

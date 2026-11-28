@@ -42,6 +42,21 @@
     </div>
   </header>
 
+  <!-- Inventory Section Switcher (Member 5 Finished Furniture vs Member 6 Raw Materials & Supplies) -->
+  <div class="inv-section-switcher" role="navigation" aria-label="Inventory module switcher">
+    <span class="switcher-label">Inventory Workspace Mode</span>
+    <div class="switcher-pills">
+      <a routerLink="/inventory" class="switch-option active-option">
+        <span class="switch-badge">Option 1</span>
+        Finished Furniture Inventory
+      </a>
+      <a routerLink="/inventory/raw-materials" class="switch-option">
+        <span class="switch-badge">Option 2</span>
+        Raw Materials &amp; Supplies
+      </a>
+    </div>
+  </div>
+
   <!-- Module Sub-Navigation Bar -->
   <nav class="module-subnav" aria-label="Finished Furniture Inventory navigation">
     @for (tab of navTabs; track tab.route) {

@@ -1,0 +1,303 @@
+<div class="rm-container">
+  <!-- Top Utility Bar -->
+  <div class="top-utility-bar">
+    <div class="breadcrumb-trail">
+      <a routerLink="/inventory">Inventory</a>
+      <span class="breadcrumb-separator">/</span>
+      <a routerLink="/inventory/raw-materials">Raw Materials</a>
+      <span class="breadcrumb-separator">/</span>
+      <span>Suppliers Directory</span>
+    </div>
+    <div class="status-pill-live">
+      <span class="status-dot-pulse"></span>
+      <span>Approved Timber Mills & Hardware Importers</span>
+    </div>
+  </div>
+
+  <!-- Inventory Section Switcher (Option 1: Finished Furniture Inventory vs Option 2: Raw Materials & Supplies) -->
+  <div class="inv-section-switcher" role="navigation" aria-label="Inventory module switcher">
+    <span class="switcher-label">Inventory Workspace Mode</span>
+    <div class="switcher-pills">
+      <a routerLink="/inventory" class="switch-option">
+        <span class="switch-badge">Option 1</span>
+        Finished Furniture Inventory
+      </a>
+      <a routerLink="/inventory/raw-materials" class="switch-option active-option">
+        <span class="switch-badge">Option 2</span>
+        Raw Materials &amp; Supplies
+      </a>
+    </div>
+  </div>
+
+  <!-- Shared Sub-Navigation Bar across all 7 Raw Materials Screens -->
+  <nav class="subnav-bar" aria-label="Raw Materials Sub-navigation">
+    <a routerLink="/inventory/raw-materials" class="subnav-link">01. Stock Dashboard</a>
+    <a routerLink="/inventory/raw-materials/new" class="subnav-link">02. New Material Master</a>
+    <a routerLink="/inventory/raw-materials/grn" class="subnav-link">03. Restock GRN</a>
+    <a routerLink="/inventory/suppliers" class="subnav-link active-link">04. Suppliers</a>
+    <a routerLink="/inventory/raw-materials/consumption" class="subnav-link">05. Consumption Log</a>
+    <a routerLink="/inventory/raw-materials/reorder" class="subnav-link">06. Low-Stock Reorder</a>
+    <a routerLink="/inventory/raw-materials/allocation" class="subnav-link">07. Job Allocation</a>
+  </nav>
+
+  <!-- Header Row -->
+  <div class="header-row">
+    <div class="header-titles">
+      <h1>Approved Supplier & Mill Directory</h1>
+      <p>Accredited Sri Lankan timber mills, hardware importers, coating chemical manufacturers and board distributors</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn-primary-rm" (click)="openRegisterModal()">+ Register New Supplier</button>
+    </div>
+  </div>
+
+  <!-- 4 KPI Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">Accredited Suppliers</div>
+      <div class="kpi-value">{{ totalSuppliers() }}</div>
+      <div class="kpi-sub">Across 5 Supply Domains</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Active Mill Accounts</div>
+      <div class="kpi-value">{{ activeSuppliersCount() }}</div>
+      <div class="kpi-sub">Ready for Immediate Restock</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Avg Delivery Turnaround</div>
+      <div class="kpi-value">{{ avgLeadTime() }} Days</div>
+      <div class="kpi-sub">Order to Yard Receipt</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Contracted Materials</div>
+      <div class="kpi-value">{{ totalContractedMaterials() }}</div>
+      <div class="kpi-sub">Fixed Price Master Agreements</div>
+    </div>
+  </div>
+
+  <!-- Filter & Search Bar -->
+  <div class="filter-bar">
+    <div class="category-pills">
+      @for (cat of categories; track cat) {
+        <button
+          type="button"
+          class="category-pill"
+          [class.active]="selectedCategory() === cat"
+          (click)="selectCategory(cat)">
+          {{ cat }}
+        </button>
+      }
+    </div>
+    <div class="search-box">
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Search mill name, code, contact..."
+        [value]="searchQuery()"
+        (input)="onSearchInput($event)" />
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="empty-state">Loading accredited suppliers directory...</div>
+  } @else if (errorMessage()) {
+    <div class="empty-state" style="color: #dc2626;">{{ errorMessage() }}</div>
+  } @else {
+    <!-- Suppliers Grid -->
+    <div class="suppliers-grid">
+      @for (s of filteredSuppliers(); track s.supplierId) {
+        <div class="supplier-card" [class.inactive]="!s.isActive">
+          <div class="supplier-header">
+            <div>
+              <h3 class="supplier-title">{{ s.companyName }}</h3>
+              <span class="supplier-code">{{ s.supplierCode }}</span>
+            </div>
+            <span class="badge badge-rating">&starf; {{ s.rating | number:'1.2-2' }}</span>
+          </div>
+
+          <div class="supplier-badge-row">
+            <span class="badge badge-cat">{{ s.primaryCategory }}</span>
+            <span class="badge badge-lead">&#9201; {{ s.avgLeadTimeDays }} Days Lead</span>
+            <span class="badge badge-cat">{{ s.materialsSuppliedCount }} Materials</span>
+          </div>
+
+          <div class="supplier-details">
+            <div class="detail-item">
+              <span class="detail-label">Contact:</span>
+              <strong>{{ s.contactPerson || 'Sales Desk' }}</strong>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Phone:</span>
+              <span>{{ s.phone || 'N/A' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Email:</span>
+              <span>{{ s.email || 'N/A' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Address:</span>
+              <span>{{ s.address || 'Sri Lanka' }}</span>
+            </div>
+          </div>
+
+          <!-- Contracted Materials -->
+          <div class="materials-section">
+            <div class="materials-title">Contracted Supplies</div>
+            <div class="materials-chips">
+              @for (m of s.contractedMaterials; track m.materialId) {
+                <span class="material-chip">
+                  <span>{{ m.materialName }}</span>
+                  <span class="price">Rs. {{ m.unitPrice | number:'1.2-2' }}</span>
+                </span>
+              } @empty {
+                <span style="font-size: 11px; color: #6f88a2;">Direct Sourcing Agreement</span>
+              }
+            </div>
+          </div>
+
+          <div class="supplier-actions">
+            <button
+              type="button"
+              class="status-toggle"
+              [class.ACTIVE]="s.isActive"
+              [class.INACTIVE]="!s.isActive"
+              (click)="toggleStatus(s)">
+              <span class="status-dot-pulse" [style.background]="s.isActive ? '#16a34a' : '#dc2626'"></span>
+              <span>{{ s.isActive ? 'Active Supplier' : 'Inactive (Archived)' }}</span>
+            </button>
+            <a [routerLink]="['/inventory/raw-materials/grn']" [queryParams]="{ supplierId: s.supplierId }" class="btn-secondary-rm" style="height: 32px; font-size: 12px; padding: 0 12px;">
+              + Issue GRN
+            </a>
+          </div>
+        </div>
+      } @empty {
+        <div class="empty-state" style="grid-column: 1/-1;">
+          No suppliers found matching the selected criteria.
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Modal: Register New Supplier -->
+  @if (showRegisterModal()) {
+    <div class="modal-overlay" (click)="closeRegisterModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2 class="modal-title">Register Accredited Supplier</h2>
+          <button type="button" class="btn-close" (click)="closeRegisterModal()">&times;</button>
+        </div>
+
+        <form (ngSubmit)="submitNewSupplier()">
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label for="supplierCode">Supplier Code *</label>
+              <input
+                id="supplierCode"
+                type="text"
+                class="form-control"
+                placeholder="e.g. SUP-COL-06"
+                [value]="newSupplierCode()"
+                (input)="newSupplierCode.set($any($event.target).value.toUpperCase())"
+                required />
+            </div>
+            <div class="form-group">
+              <label for="primaryCategory">Primary Category *</label>
+              <select
+                id="primaryCategory"
+                class="form-control"
+                [value]="newPrimaryCategory()"
+                (change)="newPrimaryCategory.set($any($event.target).value)">
+                @for (c of categories.slice(1); track c) {
+                  <option [value]="c">{{ c }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="companyName">Company / Mill Name *</label>
+            <input
+              id="companyName"
+              type="text"
+              class="form-control"
+              placeholder="e.g. Kandy Hardwood Mills (Pvt) Ltd"
+              [value]="newCompanyName()"
+              (input)="newCompanyName.set($any($event.target).value)"
+              required />
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label for="contactPerson">Contact Person</label>
+              <input
+                id="contactPerson"
+                type="text"
+                class="form-control"
+                placeholder="e.g. Anura Wickramasinghe"
+                [value]="newContactPerson()"
+                (input)="newContactPerson.set($any($event.target).value)" />
+            </div>
+            <div class="form-group">
+              <label for="phone">Phone Number *</label>
+              <input
+                id="phone"
+                type="text"
+                class="form-control"
+                placeholder="e.g. +94 77 987 6543"
+                [value]="newPhone()"
+                (input)="newPhone.set($any($event.target).value)"
+                required />
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label for="email">Email Address</label>
+              <input
+                id="email"
+                type="email"
+                class="form-control"
+                placeholder="e.g. sales@kandymills.lk"
+                [value]="newEmail()"
+                (input)="newEmail.set($any($event.target).value)" />
+            </div>
+            <div class="form-group">
+              <label for="leadTimeDays">Average Lead Time (Days)</label>
+              <input
+                id="leadTimeDays"
+                type="number"
+                min="1"
+                class="form-control"
+                [value]="newLeadTimeDays()"
+                (input)="newLeadTimeDays.set($any($event.target).value)" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="address">Yard / Office Address</label>
+            <input
+              id="address"
+              type="text"
+              class="form-control"
+              placeholder="e.g. No. 12 Industrial Zone, Katugastota, Kandy"
+              [value]="newAddress()"
+              (input)="newAddress.set($any($event.target).value)" />
+          </div>
+
+          @if (modalError()) {
+            <div style="font-size: 12px; color: #dc2626; margin-bottom: 12px; font-weight: 600;">
+              {{ modalError() }}
+            </div>
+          }
+
+          <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; border-top: 1px solid #e1edf8; padding-top: 14px;">
+            <button type="button" class="btn-secondary-rm" (click)="closeRegisterModal()">Cancel</button>
+            <button type="submit" class="btn-primary-rm" [disabled]="submittingModal()">
+              {{ submittingModal() ? 'Registering...' : 'Register Supplier' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

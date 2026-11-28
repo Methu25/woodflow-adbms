@@ -175,6 +175,14 @@ export class RawMaterialsService {
     return this.http.get<RawMaterialItem>(`${this.rawMaterialsUrl}/${id}`);
   }
 
+  listCatalog(includeInactive = false): Observable<RawMaterialItem[]> {
+    let params = new HttpParams();
+    if (includeInactive) {
+      params = params.set('includeInactive', 'true');
+    }
+    return this.http.get<RawMaterialItem[]>(`${this.rawMaterialsUrl}/catalog`, { params });
+  }
+
   createMaterial(payload: CreateRawMaterialPayload): Observable<RawMaterialItem> {
     return this.auth.refreshCsrf().pipe(
       switchMap(() => this.http.post<RawMaterialItem>(this.rawMaterialsUrl, payload))

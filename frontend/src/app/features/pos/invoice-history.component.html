@@ -1,0 +1,453 @@
+<section class="pos-page" aria-labelledby="inv-history-heading">
+  <!-- Figma Top Utility Bar -->
+  <header class="top-utility-bar">
+    <div class="global-search-box">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <circle cx="7" cy="7" r="5.25" stroke="#68839E" stroke-width="1.6" />
+        <path d="M11 11L14.2 14.2" stroke="#68839E" stroke-width="1.6" stroke-linecap="round" />
+      </svg>
+      <input
+        type="search"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="onSearch($event)"
+        placeholder="Search invoice #, customer or phone..."
+        aria-label="Search invoice number, customer or phone"
+      />
+      <span class="kbd-shortcut" aria-hidden="true">Ctrl+K</span>
+    </div>
+
+    <div class="utility-right">
+      <div class="date-location-chip">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <rect x="2" y="3" width="12" height="11" rx="2" stroke="#1685C5" stroke-width="1.4" />
+          <path d="M2 6.5H14M5 1.8V3.8M11 1.8V3.8" stroke="#1685C5" stroke-width="1.4" stroke-linecap="round" />
+        </svg>
+        <div>
+          <p class="date-label">Fri, 13 Nov 2026</p>
+          <p class="showroom-sub">14:22 PM · Till #01 open</p>
+        </div>
+      </div>
+
+      <a class="notification-bell" routerLink="/pos/till-closing" title="Till Closing">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M8 2.2C5.9 2.2 4.2 3.9 4.2 6V9.2L2.9 10.8V11.6H13.1V10.8L11.8 9.2V6C11.8 3.9 10.1 2.2 8 2.2Z" stroke="#073763" stroke-width="1.4" />
+          <path d="M6.5 12.6C6.7 13.4 7.3 13.9 8 13.9C8.7 13.9 9.3 13.4 9.5 12.6" stroke="#073763" stroke-width="1.4" stroke-linecap="round" />
+        </svg>
+        <span class="bell-badge">3</span>
+      </a>
+
+      <span class="vertical-divider" aria-hidden="true"></span>
+
+      <div class="profile-chip">
+        <div class="profile-meta">
+          <p class="profile-name">{{ cashierName() }}</p>
+          <p class="profile-role">{{ cashierRole() }}</p>
+        </div>
+        <img class="profile-avatar-img" src="/assets/pos/cashier-avatar.png" alt="Cashier profile" />
+      </div>
+    </div>
+  </header>
+
+  <nav class="module-subnav" aria-label="Showroom POS navigation">
+    @for (tab of navTabs; track tab.route) {
+      <a
+        [routerLink]="tab.route"
+        routerLinkActive="active-tab"
+        [routerLinkActiveOptions]="{ exact: tab.exact }"
+        class="subnav-tab"
+      >
+        {{ tab.label }}
+      </a>
+    }
+  </nav>
+
+  <!-- Page Header Row (Matches Screen 02) -->
+  <div class="page-header-row">
+    <div>
+      <h1 id="inv-history-heading">Invoice History &amp; Reprint</h1>
+      <p class="page-subtitle">Search counter invoices, reprint customer receipts or initiate owner-approved refunds</p>
+    </div>
+
+    <a routerLink="/pos" class="btn-header-primary">
+      🛒 + New Sale
+    </a>
+  </div>
+
+  @if (feedbackMessage()) {
+    <div style="margin-bottom: 14px; padding: 10px 14px; border-radius: 10px; background: #dcfce7; border: 1px solid #16a34a; color: #15803d; font-size: 13px; font-weight: 600;">
+      ✓ {{ feedbackMessage() }}
+    </div>
+  }
+  @if (errorMessage()) {
+    <div role="alert" style="margin-bottom: 14px; padding: 10px 14px; border-radius: 10px; background: #fee2e2; border: 1px solid #ef4444; color: #991b1b; font-size: 13px; font-weight: 600;">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <div class="history-layout">
+    <!-- Left Column: Filter Card + Invoices Table -->
+    <div>
+      <div class="history-filter-card">
+        <div class="inv-search-box">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <circle cx="7" cy="7" r="5.2" stroke="#68839E" stroke-width="1.5" />
+            <path d="M11 11L14.2 14.2" stroke="#68839E" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+          <input
+            type="search"
+            [ngModel]="searchQuery()"
+            (ngModelChange)="onSearch($event)"
+            placeholder="INV-2026 or customer..."
+            aria-label="Filter by invoice number or customer"
+          />
+        </div>
+
+        <button type="button" class="date-filter-btn" (click)="toggleDateFilter()">
+          📅 {{ filterTodayOnly() ? '13 Nov 2026' : 'All Dates (13 Nov)' }}
+        </button>
+
+        @for (mode of paymentFilters; track mode) {
+          <button
+            type="button"
+            class="mode-pill"
+            [class.active]="selectedPayment() === mode"
+            (click)="selectPaymentFilter(mode)"
+          >
+            {{ mode }}
+          </button>
+        }
+      </div>
+
+      <div class="inv-table-card">
+        <table class="inv-table">
+          <thead>
+            <tr>
+              <th>INVOICE NUMBER</th>
+              <th>CUSTOMER</th>
+              <th>DATE</th>
+              <th>AMOUNT</th>
+              <th>PAYMENT</th>
+              <th>STATUS</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (inv of pagedInvoices(); track inv.invoiceId) {
+              <tr
+                [class.selected-row]="selectedInvoice()?.invoiceId === inv.invoiceId"
+                (click)="selectRow(inv)"
+              >
+                <td class="inv-no-cell">{{ inv.invoiceNumber }}</td>
+                <td><strong>{{ inv.customerName }}</strong></td>
+                <td style="color: #526b85;">{{ inv.invoiceDate | date:'dd MMM · HH:mm' }}</td>
+                <td [class.inv-amt-void]="inv.invoiceStatus === 'VOIDED'">
+                  <strong>{{ formatWhole(inv.totalAmount) }}</strong>
+                </td>
+                <td style="color: #526b85; font-weight: 700;">{{ inv.paymentModeLabel }}</td>
+                <td>
+                  <span class="status-chip" [ngClass]="statusBadgeClass(inv.invoiceStatus)">
+                    <span class="st-dot" aria-hidden="true"></span>
+                    {{ statusLabel(inv.invoiceStatus) }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+
+        <div class="table-footer">
+          <span>Showing 1–{{ pagedInvoices().length }} of {{ totalCount() }} invoices · Today &amp; yesterday</span>
+          <div class="page-btns">
+            <button type="button" class="pg-btn" [class.active]="currentPage() === 1" (click)="currentPage.set(1)">1</button>
+            <button type="button" class="pg-btn" [class.active]="currentPage() === 2" (click)="currentPage.set(2)">2</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Selected Invoice Detail & Confirm Void Card -->
+    @if (selectedInvoice(); as sel) {
+      <aside class="detail-panel" aria-label="Selected invoice details">
+        <div class="det-head">
+          <div>
+            <h2 class="det-inv-no">{{ sel.invoiceNumber }}</h2>
+            <p class="det-issued">
+              Issued {{ sel.invoiceDate | date:'dd MMM yyyy, HH:mm' }} · {{ sel.tillNumber }} · {{ sel.billedByName }}
+            </p>
+          </div>
+          <span class="status-chip" [ngClass]="statusBadgeClass(sel.invoiceStatus)">
+            <span class="st-dot" aria-hidden="true"></span>
+            {{ statusLabel(sel.invoiceStatus) }}
+          </span>
+        </div>
+
+        <div class="det-cust-box">
+          <div class="det-cust-left">
+            <span class="det-avatar">{{ sel.customerInitial }}</span>
+            <div>
+              <p class="cust-name" style="margin: 0; font-size: 12.5px; font-weight: 700;">{{ sel.customerName }}</p>
+              <p class="det-issued">{{ sel.customerPhone }} · {{ sel.customerAddress || 'Walk-in Customer' }}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            style="border: 0; background: #dcebfa; color: #075b91; padding: 4px 10px; border-radius: 99px; font-size: 11px; font-weight: 700; cursor: pointer;"
+            (click)="showDetailDrawer.set(true)"
+          >
+            Drawer
+          </button>
+        </div>
+
+        <p class="det-label">LINE ITEMS</p>
+        <div class="det-lines-box">
+          @for (item of sel.items; track item.itemId) {
+            <div class="det-line-row">
+              <span>{{ item.quantity }}× {{ item.itemName }}</span>
+              <span>{{ formatWhole(item.subtotal) }}</span>
+            </div>
+          }
+          @if (sel.discountAmount > 0) {
+            <div class="det-disc-row">
+              <span>Seasonal Discount ({{ sel.discountPercent }}%)</span>
+              <span>-{{ formatWhole(sel.discountAmount) }}</span>
+            </div>
+          }
+        </div>
+
+        <div class="det-pay-box">
+          <p class="det-pay-sub">
+            Payment: {{ sel.paymentModeLabel }} ({{ formatWhole(sel.cashReceived) }} · Change {{ formatWhole(sel.changeDue) }})
+          </p>
+          <div class="det-net-row">
+            <span>Net Total Paid</span>
+            <strong>{{ formatWhole(sel.totalAmount) }}</strong>
+          </div>
+        </div>
+
+        <button type="button" class="btn-reprint" (click)="showReprintDialog.set(true)">
+          🖨 Reprint Invoice
+        </button>
+
+        <button
+          type="button"
+          class="btn-void-outline"
+          [disabled]="sel.invoiceStatus === 'VOIDED' || sel.invoiceStatus === 'REFUNDED'"
+          (click)="openMultiStepVoid()"
+        >
+          🔒 Void / Refund Invoice (Owner Only)
+        </button>
+
+        <!-- Inline Confirm Void / Refund Box (Matches Screen 02 right bottom card) -->
+        @if (sel.invoiceStatus !== 'VOIDED' && sel.invoiceStatus !== 'REFUNDED') {
+          <div class="void-inline-box">
+            <p class="void-inline-title">⚠ Confirm Void / Refund</p>
+            <p class="void-inline-sub">
+              Owner authorization required to void invoice #{{ sel.invoiceNumber }} and restore {{ selectedUnitsCount() }} unit(s) to stock.
+            </p>
+
+            <label>Owner Security PIN</label>
+            <input
+              type="password"
+              maxlength="8"
+              [ngModel]="inlinePin()"
+              (ngModelChange)="inlinePin.set($event)"
+              placeholder="••••"
+              aria-label="Owner Security PIN"
+            />
+
+            <label>Reason</label>
+            <input
+              type="text"
+              [ngModel]="inlineReason()"
+              (ngModelChange)="inlineReason.set($event)"
+              placeholder="Customer requested cancellation"
+              aria-label="Void reason"
+            />
+
+            <div class="dlg-actions" style="margin-top: 4px;">
+              <button type="button" class="btn-dlg btn-dlg-cancel" (click)="inlineReason.set('')">Cancel</button>
+              <button
+                type="button"
+                class="btn-dlg btn-dlg-danger"
+                [disabled]="submitting()"
+                (click)="confirmInlineVoid()"
+              >
+                Confirm Void
+              </button>
+            </div>
+          </div>
+        } @else {
+          <div class="dlg-card" style="background: #f8fafc;">
+            <p class="dlg-section-title">Invoice {{ statusLabel(sel.invoiceStatus) }}</p>
+            <p class="dlg-sub">Reason: {{ sel.voidReason || 'Recorded in audit_logs' }}</p>
+          </div>
+        }
+      </aside>
+    }
+  </div>
+</section>
+
+<!-- Figma 196:470: Invoice History / Invoice Detail (Drawer) -->
+@if (showDetailDrawer() && selectedInvoice(); as drawerInv) {
+  <div class="pos-overlay pos-drawer-backdrop" role="dialog" aria-modal="true" aria-label="Invoice Detail Drawer">
+    <div class="pos-drawer">
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div class="dlg-header">
+          <div>
+            <h2 class="dlg-title">{{ drawerInv.invoiceNumber }}</h2>
+            <p class="dlg-sub">{{ drawerInv.invoiceDate | date:'dd MMM yyyy · HH:mm' }} · Cashier: {{ drawerInv.billedByName }}</p>
+          </div>
+          <span class="pill-tag pill-green">{{ statusLabel(drawerInv.invoiceStatus) }}</span>
+        </div>
+
+        <div class="dlg-card">
+          <p class="dlg-section-title">{{ drawerInv.customerName }}</p>
+          <p class="dlg-sub">{{ drawerInv.customerPhone }} · {{ drawerInv.customerAddress || 'Walk-in Customer' }}</p>
+        </div>
+
+        <div class="dlg-card">
+          <p class="det-label">LINE ITEMS</p>
+          @for (it of drawerInv.items; track it.itemId) {
+            <div class="dlg-row">
+              <span>{{ it.quantity }}x {{ it.itemName }}</span>
+              <strong>{{ formatCurrency(it.subtotal) }}</strong>
+            </div>
+          }
+          <hr class="dlg-divider" />
+          @if (drawerInv.discountAmount > 0) {
+            <div class="dlg-row">
+              <span>Seasonal Discount ({{ drawerInv.discountPercent }}%)</span>
+              <strong style="color: #15803d;">-{{ formatCurrency(drawerInv.discountAmount) }}</strong>
+            </div>
+          }
+          <div class="dlg-row dlg-row-total">
+            <span>Net Total Paid</span>
+            <strong>{{ formatCurrency(drawerInv.totalAmount) }}</strong>
+          </div>
+        </div>
+
+        <div class="dlg-card">
+          <p class="det-label">PAYMENT DETAILS</p>
+          <div class="dlg-row"><span>Mode &amp; Reference</span><strong>{{ drawerInv.paymentModeLabel }} ({{ drawerInv.paymentReference || 'Counter #01' }})</strong></div>
+          <div class="dlg-row"><span>Cash Received</span><strong>{{ formatCurrency(drawerInv.cashReceived) }}</strong></div>
+          <div class="dlg-row"><span>Change Due</span><strong>{{ formatCurrency(drawerInv.changeDue) }}</strong></div>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <button type="button" class="btn-dlg btn-dlg-primary" (click)="showDetailDrawer.set(false); showReprintDialog.set(true)">
+          Reprint Receipt
+        </button>
+        <button
+          type="button"
+          class="btn-void-outline"
+          [disabled]="drawerInv.invoiceStatus === 'VOIDED' || drawerInv.invoiceStatus === 'REFUNDED'"
+          (click)="showDetailDrawer.set(false); openMultiStepVoid()"
+        >
+          Void / Refund (Owner Only)
+        </button>
+        <button type="button" class="btn-dlg btn-dlg-cancel" (click)="showDetailDrawer.set(false)">Close Drawer</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Figma 196:512: Invoice History / Void / Refund (Multi-step) -->
+@if (showMultiStepVoidModal() && selectedInvoice(); as vInv) {
+  <div class="pos-overlay" role="dialog" aria-modal="true" aria-label="Void or Refund Invoice">
+    <div class="pos-dialog pos-dialog-wide">
+      <div class="dlg-header">
+        <div>
+          <h2 class="dlg-title">Void / Refund Invoice #{{ vInv.invoiceNumber }}</h2>
+          <p class="dlg-sub">Reverses showroom stock &amp; records audit_logs entry atomically</p>
+        </div>
+        <span class="pill-tag pill-red">Owner Only</span>
+      </div>
+
+      <div class="steps-bar">
+        <span class="pill-tag pill-green">1. Choose items ✓</span>
+        <span class="pill-tag pill-green">2. Enter reason ✓</span>
+        <span class="pill-tag" style="background: #1685c5; color: #fff;">3. Owner approval</span>
+        <span class="pill-tag" style="background: #fff; color: #64748b;">4. Confirm</span>
+      </div>
+
+      <div class="dlg-card" style="background: #f1f5f9;">
+        <p class="dlg-section-title" style="font-size: 12px;">Step 1 — Selected Items to Void / Return</p>
+        @for (line of vInv.items; track line.itemId) {
+          <label class="item-check-row">
+            <span>
+              <input
+                type="checkbox"
+                [checked]="selectedVoidItemIds().includes(line.itemId)"
+                (change)="toggleVoidItemSelection(line.itemId)"
+              />
+              {{ line.quantity }}x {{ line.itemName }} (Restore +{{ line.quantity }} unit)
+            </span>
+            <strong>{{ formatCurrency(line.subtotal) }}</strong>
+          </label>
+        }
+      </div>
+
+      <div class="dlg-field">
+        <label>Step 2 — Refund / Void Reason *</label>
+        <input
+          type="text"
+          [ngModel]="modalVoidReason()"
+          (ngModelChange)="modalVoidReason.set($event)"
+          placeholder="Customer requested exchange for Kandy King Teak Bed"
+        />
+      </div>
+
+      <div class="dlg-card" style="background: #fee2e2; border-color: #ef4444;">
+        <p class="dlg-section-title" style="color: #991b1b;">Step 3 — Owner Authorization Required</p>
+        <div class="dlg-field">
+          <label>Owner Security PIN (Wimalasiri) *</label>
+          <input
+            type="password"
+            maxlength="8"
+            [ngModel]="modalOwnerPin()"
+            (ngModelChange)="modalOwnerPin.set($event)"
+            placeholder="••••"
+          />
+        </div>
+        <div class="dlg-row dlg-row-total" style="color: #991b1b;">
+          <span>Net Refund Amount</span>
+          <strong style="color: #991b1b;">{{ formatCurrency(multiStepRefundAmount()) }}</strong>
+        </div>
+      </div>
+
+      <div class="dlg-actions">
+        <button type="button" class="btn-dlg btn-dlg-cancel" (click)="showMultiStepVoidModal.set(false)">Back</button>
+        <button type="button" class="btn-dlg btn-dlg-danger" [disabled]="submitting()" (click)="confirmMultiStepVoid()">
+          Confirm Void / Refund
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Reprint Receipt Dialog (Figma 196:417) -->
+@if (showReprintDialog() && selectedInvoice(); as rep) {
+  <div class="pos-overlay" role="dialog" aria-modal="true" aria-label="Reprint Receipt">
+    <div class="pos-dialog">
+      <div class="dlg-header">
+        <div>
+          <h2 class="dlg-title" style="font-size: 16px;">Wimalasiri Furniture · Kottawa</h2>
+          <p class="dlg-sub">{{ rep.invoiceNumber }} · {{ rep.invoiceDate | date:'dd MMM yyyy, HH:mm a' }}</p>
+        </div>
+        <span class="pill-tag pill-green">{{ statusLabel(rep.invoiceStatus) }} · {{ rep.paymentModeLabel }}</span>
+      </div>
+      <p class="dlg-sub" style="margin: 0;">Customer: {{ rep.customerName }} ({{ rep.customerPhone }}) · Cashier: {{ rep.billedByName }}</p>
+      <hr class="dlg-divider" />
+      @for (line of rep.items; track line.itemId) {
+        <div class="dlg-row"><span>{{ line.quantity }}x {{ line.itemName }}</span><strong>{{ formatCurrency(line.subtotal) }}</strong></div>
+      }
+      <hr class="dlg-divider" />
+      <div class="dlg-row dlg-row-total"><span>Total Paid</span><strong>{{ formatCurrency(rep.totalAmount) }}</strong></div>
+      <div class="dlg-actions">
+        <a [href]="rep.whatsappShareUrl" target="_blank" rel="noopener" class="btn-dlg btn-dlg-whatsapp">Send on WhatsApp</a>
+        <button type="button" class="btn-dlg btn-dlg-primary" (click)="printReceipt()">Print</button>
+        <button type="button" class="btn-dlg btn-dlg-cancel" (click)="showReprintDialog.set(false)">Close</button>
+      </div>
+    </div>
+  </div>
+}

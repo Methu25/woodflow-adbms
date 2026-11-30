@@ -90,6 +90,24 @@ export const routes: Routes = [
         loadComponent: () => import('./features/inventory/showroom-catalog.component').then(m => m.ShowroomCatalogComponent),
       },
       {
+        path: 'pos/invoices',
+        canActivate: [permissionGuard], data: { permission: 'sales.view' },
+        title: 'Invoice History & Reprint | WoodFlow',
+        loadComponent: () => import('./features/pos/invoice-history.component').then(m => m.InvoiceHistoryComponent),
+      },
+      {
+        path: 'pos/till-closing',
+        canActivate: [permissionGuard], data: { permission: 'sales.view' },
+        title: 'Till Closing | WoodFlow',
+        loadComponent: () => import('./features/pos/till-closing.component').then(m => m.TillClosingComponent),
+      },
+      {
+        path: 'pos',
+        canActivate: [permissionGuard], data: { permission: 'sales.view' },
+        title: 'Counter POS / Billing | WoodFlow',
+        loadComponent: () => import('./features/pos/pos-counter.component').then(m => m.PosCounterComponent),
+      },
+      {
         path: 'finance/advances/issue',
         title: 'Advance Issuance Form | WoodFlow',
         loadComponent: () => import('./features/finance/advance-issuance.component').then(m => m.AdvanceIssuanceComponent),
